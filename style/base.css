@@ -1,0 +1,537 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+#headerbox {
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #lightblue;
+}
+#headerbox h1 {
+  display: block;
+  height: 70px;
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  color: #b3b3b3;
+  color: rgba(255, 255, 255, 0.3);
+  margin-block-start: 10px;
+  margin-block-end: -.9em;
+  
+  text-shadow: -1px -1px rgba(0, 0, 0, 0.2);
+  -webkit-text-rendering: optimizeLegibility;
+  -moz-text-rendering: optimizeLegibility;
+  -ms-text-rendering: optimizeLegibility;
+  -o-text-rendering: optimizeLegibility;
+  text-rendering: optimizeLegibility;
+}
+
+#headerboxlink {
+  color: black ;
+  border-style: solid;
+  border-width: 1px;
+  border-color: black;
+}
+#headerboxlink a:link {
+  text-decoration: inherit;
+}
+#headerboxlink:hover {
+  background: #3366FF;
+}
+#titlebox {
+  width: 100%;
+  background: #D5CCFF;
+  color: black ;
+  height: 1em;
+  text-align: center;
+  padding: 3px 3px 8px ;
+}
+table {
+  border-collapse: collapse;
+  width: 100% ;
+}
+th, td {
+  border: 1px solid black;
+  padding: 4px;
+}
+th {
+  cursor: pointer;
+}
+th:hover {
+  background:  yellow;
+}
+tr.head {
+  background: #CCFFFF ;
+}
+tr:hover {
+  background: lightyellow ;
+}
+tr, li {
+  background: #CCCCFF ;
+  min-height: 1em;
+}
+tr:nth-child(odd), li:nth-child(odd) {
+  margin: 4px 0 0 0;
+  border-style: double none none none ;
+  padding: 4px 0 0 0;
+  background: #E6F2FF ;
+}
+tr.choice, li.choice {
+  background: gold !important;
+}
+tr:nth-child(odd):hover, li:nth-child(even):hover {
+  background: lightyellow ;
+}
+
+.PatientData li {
+  background: #E6F2FF ;
+  margin: 0 0 0 0;
+  border-style: double none none none ;
+  padding: 4px;
+}
+
+.PatientData li:nth-child(odd) {
+  background: #CCCCFF ;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.divbutton {
+  margin: 1px;
+  padding: 3px;
+  border: 3px;
+  display: inline-block;
+  background: #3366FF;
+  font-size: 14px;
+  vertical-align: baseline;
+  font-family: inherit;
+  color: white;
+  border-style: groove ;
+  -webkit-appearance: none;
+  /*-moz-appearance: none;*/
+  -ms-appearance: none;
+  -o-appearance: none;
+  appearance: none;
+}
+
+.divbutton:disabled {
+  color: grey;
+  background: #9eb6ff ;
+}
+ 
+#deleteedit {
+  background: red;
+  float: right;
+}
+.entryfield_text {
+  min-height: 1em;
+  display: inline-block;
+}
+  
+body {
+  font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.4em;
+  background: #8C9BFB;
+  color: #4d4d4d;
+  width: 100%;
+  margin: 0 auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-font-smoothing: antialiased;
+  -ms-font-smoothing: antialiased;
+  -o-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+}
+
+#missiondbody {
+  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
+  margin: 0 0 0 0;
+  border: 1px solid #ccc;
+  position: relative;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.2),
+        0 25px 50px 0 rgba(0, 0, 0, 0.15);
+}
+
+.pageOverlay {
+  display: none ;
+}
+
+#NoteList li:nth-child(odd) {
+  font-style: italic;
+  display: flex;
+  width: 100%;
+}
+footer {
+  color: darkblue;
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 10px;
+  text-align: center;
+  font-size: 12px;
+}
+
+#syncstatus, #userstatus {
+  background: lightblue;
+  border: 4px;
+}
+
+#userbutton, #remotebutton {
+  background: #99ddff;
+}
+
+.entryfield_image {
+  max-width: 20%;
+  display: inline-block;
+  height: auto ;
+}
+.FloatPicture {
+    position: absolute;
+    z-index: 1;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    top: 0px;
+    max-height: 100% ;
+    max-width: auto ;
+}
+@media only and (orientation: landscape) {
+  .entryfield_image {
+    max-height: 20%;
+    display: inline-block;
+    width: auto ;
+  }
+}
+#imageInput, .imageBar, #imageQ {
+  display:none;
+}
+.editable {
+  border: 1px solid darkgray;
+  width: 100%;
+}
+.editor {
+    border:solid 1px #ccc;
+    padding: 20px;
+    min-height:200px;
+}
+.editToolbar {
+    border:solid 1px #ddd;
+    background:#f4f4f4;
+    padding: 5px;
+    border-radius:3px;
+}
+.editToolbar button {
+  background: lightblue;
+}
+.editToolbar span {
+    cursor:pointer;
+    background: inherit;
+}
+.editToolbar span:hover {
+    color: yellow;
+}
+.edit_note {
+  display: inline-block;
+  background: yellow;
+  color: black;
+  border: 1px solid red;
+  margin: 1px 3px 1px 1px ;
+}
+.inly {
+  display : inline-block;
+}
+.edit_note:disabled {
+  background: #ffffcc;
+  color: grey;
+}
+#textdiv, #NoteNewText div:nth-child(3) {
+  background: gold;
+  min-height: 1em;
+  border: 2px solid black;
+}
+.tbardel:disabled {
+  background: #ffffcc;
+  color: grey;
+}
+.return {
+  background: green;
+}
+.delete {
+  background: red !important;
+  float: right;
+}
+.divbutton:hover {
+  color: yellow;
+}
+.divbutton:disabled {
+  background: #ffffcc;
+  color: grey;
+}
+@media print {  
+  @page {
+    size: 6in 4in portrait; /* landscape */
+    margin: 0;
+  }
+}
+#printCard {
+  margin: .3in ;
+    position: absolute ;
+    background: lightgrey ;
+    left: 0 ;
+    top: 0 ;
+    border: -2px solid black ;
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    height: 100%;
+    align-items: flex-start;
+    page-break-before: avoid;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+}
+.rowCard {
+    display: flex;
+    flex-flow: column nowrap;
+    flex-grow: 1;
+    justify-content: space-between;
+    padding: 1px;
+}
+.rowCard div {
+    width: 100% ;
+}
+.rowCard:first-child {
+    flex-grow: 0;
+    flex-basis: 180px;
+}
+#printCard table {
+    table-layout: auto;
+    border-collapse: collapse;
+    border: 0;
+  }
+#printCard tr {
+    background: white;
+    color: black;
+}
+#printCard td {
+    word-wrap: break-word;
+    width: 70% ;
+  }
+#printCard td:nth-child(1) {
+    width: 30% ;
+    font-weight: bold;
+  }
+}
+#splash_screen {
+  display: block ;
+  background: #3366CC;
+}
+  
+#PatientPhotoContent{
+  display: flex ;
+  background: #b3b3ff ;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row ; 
+}
+#MainMenuContent, #DownloadContent, #AdministrationContent,  #SendUserContent {
+  display: flex ;
+  background: #b3b3ff ;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column ; 
+}
+#PatientPhotoButtons {
+  display: flex;
+  color: white;
+  flex-direction: row ;
+  justify-content: space-around;
+}
+.PatientProcButtons {
+  display: flex;
+  flex-direction: column;
+}
+#InvalidPatientContent {
+    padding: 5px ;
+}
+.PatientData input {
+    background: #F6F6F6 ;
+    size: 35 ;
+}
+.PatientData textarea {
+    background: #F6F6F6 ;
+    vertical-align: top;
+    rows: 3;
+    cols: 35;
+}
+.print_screen {
+    display: none ;
+}
+.work_screen {
+    display: none ;
+}
+#UserNameContent {
+  background: #5e6cc7;
+  color: white;
+  display: flex ;
+  justify-content: center;
+  align-items: center;
+}
+#footerflex {
+  display: flex;
+  color: white;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+/* Datepicker https://code-boxx.com/simple-datepicker-pure-javascript-css */
+/* (A) POPUP */
+.picker-wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+}
+.picker-wrap.show {
+  opacity: 1;
+  visibility: visible;
+}
+.picker-wrap .picker {
+  margin: 50vh auto 0 auto;
+  transform: translateY(-50%);
+}
+
+/* (B) CONTAINER */
+.picker {
+  max-width: 300px;
+  border: 1px solid #eee;
+  background: #fafafa;
+  padding: 10px;
+}
+
+/* (C) MONTH + YEAR */
+.picker-m, .picker-y {
+  width: 50%;
+  padding: 5px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+/* (D) DAY */
+.picker-d table {
+  color: #333;
+  border-collapse: separate;
+  width: 100%;
+  margin-top: 10px;
+}
+.picker-d table td {
+  width: 14.28%; /* 7 EQUAL COLUMNS */
+  padding: 5px;
+  text-align: center;
+}
+/* HEADER */
+.picker-d-h td {
+  font-weight: bold;
+}
+/* BLANK DATES */
+.picker-d-b {
+  background: #ddd;
+}
+/* TODAY */
+.picker-d-td {
+  background: #ffe0d4;
+}
+/* PICKABLE DATES */
+.picker-d-d:hover {
+  cursor: pointer;
+  background: #2d68c4;
+  color: #fff;
+}
+/* UNPICKABLE DATES */
+.picker-d-dd {
+  color: #aaa;
+  background: #ddd;
+}
+/* time-pick https://code-boxx.com/simple-time-picker-javascript-css */
+/* (A) FOR THE POPUP TIME PICKER */
+#lp-pop, #tp-pop {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s;
+}
+#lp-pop.show, #tp-pop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* (B) TIME PICKER ITSELF */
+.tp {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 320px;
+  background: #fff;
+  border: 1px solid #eee;
+}
+.tp-box > *::selection {
+  background: transparent;
+}
+#lp-pop .tp, #tp-pop .tp {
+  margin: 50vh auto 0 auto;
+  transform: translateY(-50%);
+}
+
+/* (C) HR + MIN + AM/PM */
+.tp-box {
+  width: 33%;
+  padding: 0 15px;
+  text-align: center;
+  box-sizing: border-box;
+}
+.tp-up, .tp-down {
+  font-size: 32px;
+  font-weight: bold;
+  color: #e01717;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.tp-val {
+  box-sizing: border-box;
+  width: 100%;
+  background: #f2f2f2;
+  border: 1px solid #eee;
+  padding: 5px;
+  text-align: center;
+  font-size: 22px;
+}
+
+/* (D) OK BUTTON */
+.tp-ok {
+  width: 100%;
+  background: #ce3535;
+  color: #fff;
+  border: 0;
+  padding: 15px 0;
+  margin: 10px;
+  cursor: pointer;
+}
