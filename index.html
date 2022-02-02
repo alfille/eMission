@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Medical Mission Database</title>
+        <title>eMission System</title>
         <link rel="shortcut icon" type="image/png" href="images/missiondb64.png"/>
         <link rel="stylesheet" href="style/base.css">
         <link rel="manifest" href="manifest.json">
@@ -12,7 +12,7 @@
     <body>
         <header class="work_screen">
             <div id="headerbox">
-                <div id="headerboxlink"><a href="https://www.github.com/alfille/missiondb" target="_blank" title="Go to MissionDb program website"><h1>Mission<br>Database</h1></a></div>
+                <div id="headerboxlink"><a href="https://www.github.com/alfille/emission" target="_blank" title="Go to eMission System website"><h1>eMission<br>System</h1></a></div>
                 <div id="buttonheader">
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
@@ -120,6 +120,8 @@
                     <button type="button" class="divbutton" onclick="showPage( 'PatientList' )">Patient List</button>
                     <button type="button" class="divbutton" onclick="showPage( 'RemoteDatabaseInput' )">Remote Database Setup</button>
                     <button type="button" class="divbutton" onclick="showPage( 'Administration' )">Administration</button>
+                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
+                    <button type="button" class="divbutton delete" onclick="clearLocal()">Clear local data</button>
                 </div>
             </div>
             <!-- body: Administration -->
@@ -302,11 +304,11 @@
         <!-- Splash screen -->
         <div id="splash_screen">
             <b><center>
-            <h1>Mission Database</h1>
-            <img src="images/missiondb512.png" alt="MissionDb Medical Mission patient database">
+            <h1>eMission System</h1>
+            <img src="images/missiondb512.png" alt="eMission System medical patient database">
             <hr>
                 If the application does not appear, contact:.<br>
-                <a href="mailto:palfille@partners.org?subject=missiondb error">missiondb development team</a>
+                <a href="mailto:palfille@partners.org?subject=eMission System error">eMission System team</a>
             <hr>
             </center></b>
         </div>

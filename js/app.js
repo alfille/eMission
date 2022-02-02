@@ -2612,6 +2612,19 @@ function forceReplicate(id=null) {
     }
 }
 
+function clearLocal() {
+    const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
+    if ( remove ) {
+        deleteCookie( "patientId" );
+        deleteCookie("remoteCouch");
+        deleteCookie("operationId");
+        deleteCookie( "commentId" );
+        db.destroy()
+        .finally( () => location.reload() );
+    }
+    showPage( "MainMenu" );
+}
+
 function Setup() {
     getCookie ( "patientId" );
     getCookie ( "commentId" );
