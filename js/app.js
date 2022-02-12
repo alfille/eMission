@@ -23,12 +23,19 @@ var UniqueProcedure;
 
 // Create/Open the database (locally) 
 var db ; // will be Pouchdb local copy 
-var admin_db = null;
-const remoteAdmin = {
+var user_db = null;
+var security_db = null ;
+const remoteUser = {
     database: "_users" ,
     username: "admin",
-    password: "",
-    address: "",
+    password: "", // set in SuperUser
+    address: "", // set in SuperUser
+    };
+const remoteSecurity = {
+    database: "" , // set in SuperUser
+    username: "", // set in SuperUser
+    password: "", // set in SuperUser
+    address: "", // set in SuperUser
     };
 
 // For remote replication
@@ -149,20 +156,20 @@ const structOperation = [
     {
         name: "Procedure",
         hint: "Surgical operation / procedure",
-        type: "calclist",
-        choices: "byProcedure"
+        type: "list",
+        query: "byProcedure"
     },
     {
         name: "Surgeon",
         hint: "Surgeon(s) involved",
-        type: "calclist",
-        choices: "bySurgeon"
+        type: "list",
+        query: "bySurgeon"
     },
     {
         name: "Equipment",
         hint: "Special equipment",
-        type: "calclist",
-        choices: "byEquipment"
+        type: "list",
+        query: "byEquipment"
     },
     {
         name: "Status",
@@ -269,6 +276,23 @@ const structNewUser = [
     }
 ];
 
+const structUserList = [
+    {
+        name: "name",
+        alias: "User",
+        hint: "Regular users with access",
+        type: "checkbox",
+        userlist: "",
+    },
+    {
+        name: "admin",
+        alias: "User",
+        hint: "Administrator users with access",
+        type: "checkbox",
+        userlist: "",
+    },
+];
+
 const structEditUser = [
     {
         name: "name",
@@ -312,11 +336,11 @@ const structSuperUser = [
 
 // Create pouchdb indexes. Used for links between records and getting list of choices
 // change version number to force a new version
-function createIndexes() {
+function createQueries() {
     let ddoclist = [
     {
         _id: "_design/bySurgeon" ,
-        version: 1,
+        version: 2,
         views: {
             bySurgeon: {
                 map: function( doc ) {
@@ -330,12 +354,12 @@ function createIndexes() {
     },
     {
         _id: "_design/byEquipment" ,
-        version: 1,
+        version: 2,
         views: {
             byEquipment: {
                 map: function( doc ) {
                     if ( doc.type=="operation" ) {
-                        emit( doc.Surgeon );
+                        emit( doc.Equipment );
                     }
                 }.toString(),
                 reduce: '_count',
@@ -344,12 +368,12 @@ function createIndexes() {
     },
     { 
         _id: "_design/byProcedure" ,
-        version: 1,
+        version: 2,
         views: {
             byProcedure: {
                 map: function( doc ) {
                     if ( doc.type=="operation" ) {
-                        emit( doc.Surgeon );
+                        emit( doc.Procedure );
                     }
                 }.toString(),
                 reduce: '_count',
@@ -451,194 +475,152 @@ class PatientData {
         struct.forEach( ( item, idx ) => {
             let li = document.createElement("li");
             li.setAttribute("data-index",idx);
-            let l = document.createElement("label");
-            li.appendChild(l);
+            let lab = document.createElement("label");
+            li.appendChild(lab);
+            let localname = [item.name,idx,ipair].map( x=>x+'').join("_");
             
             if ( "alias" in item ) {
-                l.appendChild( document.createTextNode(item.alias + ": ") );
+                lab.appendChild( document.createTextNode(item.alias + ": ") );
             } else {
-                l.appendChild( document.createTextNode(item.name + ": ") );
+                lab.appendChild( document.createTextNode(item.name + ": ") );
             }
-            l.title = item.hint;
+            lab.title = item.hint;
 
-            let i = null;
+            let choices = Promise.resolve([]) ;
+            if ( "choices" in item ) {
+                choices = Promise.resolve(item.choices) ;
+            } else if ( "query" in item ) {
+                choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
+            } else if ( "userlist" in item ) {
+                choices = getUsersAll(true).then( u=>u.rows.map(r=>r.doc.name) ) ;
+            }  
+
+            let inp = null;
+            let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
+            console.log(item.name, preVal, doc?.[item.name]);
             switch( item.type ) {
                 case "radio":
                     {
-                    let v  = "";
-                    let any_choices = item.choices.length > 0;
-                    if ( item.name in doc ) { 
-                        v = doc[item.name];
-                        if ( !item.choices.includes(v) && any_choices ) {
-                            v = item.choices[0];
-                        }
-                    } else if ( any_choices ) {
-                        v = item.choices[0];
-                    }
-                        
-                    item.choices.forEach( (c) => {
-                        i = document.createElement("input");
-                        i.type = "radio";
-                        i.name = item.name;
-                        i.value = c;
-                        if ( c == v ) {
-                            i.checked = true;
-                            i.disabled = false;
+                    choices
+                    .then( clist => clist.forEach( (c) => {
+                        inp = document.createElement("input");
+                        inp.type = item.type;
+                        inp.name = localname;
+                        inp.value = c;
+                        inp.disabled = true;
+                        if ( c == preVal??"" ) {
+                            inp.checked = true;
+                            inp.disabled = false;
                         } else {
-                            i.disabled = true;
+                            inp.disabled = true;
                         }
-                        i.title = item.hint;
-                        l.appendChild(i);
-                        l.appendChild( document.createTextNode(c) );
-                    }); 
+                        inp.title = item.hint;
+                        lab.appendChild(inp);
+                        lab.appendChild( document.createTextNode(c) );
+                    })); 
+                    }
+                    break ;
+
+                case "checkbox":
+                    {
+                    choices
+                    .then( clist => clist.forEach( (c) => {
+                        inp = document.createElement("input");
+                        inp.type = item.type;
+                        inp.name = localname;
+                        inp.value = c;
+                        inp.disabled = true;
+                        if ( (preVal??[]).includes(c) ) {
+                            inp.checked = true;
+                            inp.disabled = false;
+                        } else {
+                            inp.disabled = true;
+                        }
+                        inp.title = item.hint;
+                        lab.appendChild(inp);
+                        lab.appendChild( document.createTextNode(c) );
+                    })); 
                     }
                     break;
+
                 case "list":
                     {
-                    let v  = "";
-                    let any_choices = item.choices.length > 0;
-                    if ( item.name in doc ) {
-                        v = doc[item.name];
-                    } else if ( any_choices ) {
-                        v = item.choices[0];
-                    }
                     let dlist = document.createElement("datalist");
-                    dlist.id = [item.choices,ipair,idx].map(i=>i+'').join("_") ;
+                    dlist.id = localname ;
                         
-                    item.choices.forEach( (c) => {
+                    choices
+                    .then( clist => clist.forEach( (c) => {
                         let op = document.createElement("option");
                         op.value = c;
                         dlist.appendChild(op);
-                        });
-                    let id = document.createElement("input");
-                    id.type = "text";
-                    id.setAttribute( "list", dlist.id );
-                    id.value = v;
-                    id.readonly = true;
-                    id.disabled = true;
-                    l.appendChild( dlist );
-                    l.appendChild( id );                    
-                    }
-                    break;
-                case "calclist":
-                    {
-                    // make the choice list generated by a query
-                    // note the list is generated asynchronously, so will change dynamically
-                    let dlist = document.createElement("datalist");
-                    dlist.id = [item.choices,ipair,idx].map( i => i+'' ).join("_") ;
-                    db.query(item.choices,{group:true,reduce:true})
-                    .then( q => {
-                        q.rows
-                        .map( qq => qq.key )
-                        .filter( c => c.length>0 )
-                        .forEach( c => {
-                            let op = document.createElement("option");
-                            op.value = c;
-                            dlist.appendChild(op);
-                            });
-                        }) ;
-
-                    let v  = "";
-                    if ( item.name in doc ) {
-                        v = doc[item.name];
-                    }
-                        
-                    let id = document.createElement("input");
-                    id.type = "text";
-                    id.setAttribute( "list", dlist.id );
-                    id.value = v;
-                    id.readonly = true;
-                    id.disabled = true;
-                    l.appendChild( dlist );
-                    l.appendChild( id );                    
+                        }));
+                    let inpD = document.createElement("input");
+                    inpD.type = "text";
+                    inpD.setAttribute( "list", dlist.id );
+                    inpD.value = preVal??"";
+                    inpD.readonly = true;
+                    inpD.disabled = true;
+                    lab.appendChild( dlist );
+                    lab.appendChild( inpD );                    
                     }
                     break;
                 case "datetime":
                 case "datetime-local":
                     {
-                    let d = null;
-                    if ( item.name in doc ) { 
-                        d = new Date( doc[item.name] );
-                    }
-                    this.DateTimetoInput(d).forEach( (f) => l.appendChild(f) );
+                    let d = preVal ? new Date(preVal) : null ;
+                    this.DateTimetoInput(d).forEach( (f) => lab.appendChild(f) );
                     }
                     break;
                 case "date":
                     {
-                    let v  = "";
-                    if ( item.name in doc ) { 
-                        v = doc[item.name];
-                    }
-                        
-                    let id = document.createElement("input");
-                    id.type = "text";
-                    id.pattern="\d+-\d+-\d+";
-                    id.size = 10;
-                    id.value = v;
-                    id.title = "Date in format YYYY-MM-DD";
+                    let inpD = document.createElement("input");
+                    inpD.type = "text";
+                    inpD.pattern="\d+-\d+-\d+";
+                    inpD.size = 10;
+                    inpD.value = preVal??"";
+                    inpD.title = "Date in format YYYY-MM-DD";
                     
-                    l.appendChild(id);
+                    lab.appendChild(inpD);
                     }
                     break;
                 case "time":
                     {
-                    let v  = "";
-                    if ( item.name in doc ) { 
-                        v = doc[item.name];
-                    }
-                        
-                    let it = document.createElement("input");
-                    it.type = "text";
-                    it.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
-                    it.size = 9;
-                    it.value = v;
-                    it.title = "Time in format HH:MM PM or HH:MM AM";
+                    let inpT = document.createElement("input");
+                    inpT.type = "text";
+                    inpT.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
+                    inpT.size = 9;
+                    inpT.value = preVal??"";
+                    inpT.title = "Time in format HH:MM PM or HH:MM AM";
                     
-                    l.appendChild(it);
+                    lab.appendChild(inpT);
                     }
                     break;
                 case "length":
                     {
-                    let v  = 0;
-                    if ( item.name in doc ) { 
-                        v = doc[item.name];
-                    }
-                        
-                    let it = document.createElement("input");
-                    it.type = "text";
-                    it.pattern="\d+:[0-5][0-9]";
-                    it.size = 6;
-                    it.value = this.HMfromMin(v);
-                    it.title = "Time length in format HH:MM";
+                    let inpT = document.createElement("input");
+                    inpT.type = "text";
+                    inpT.pattern="\d+:[0-5][0-9]";
+                    inpT.size = 6;
+                    inpT.value = this.HMfromMin(preVal??"");
+                    inpT.title = "Time length in format HH:MM";
                     
-                    l.appendChild(it);
+                    lab.appendChild(inpT);
                     }
-                    break;
-                case "checkbox":
-                    i = document.createElement("input");
-                    i.type = item.type;
-                    i.title = item.hint;
-                    i.checked = doc[item.name];
-                    i.disabled = true;
-                    l.appendChild(i);
                     break;
                 case "textarea" :
-                    if ( i == null ) {
-                        i = document.createElement("textarea");
+                    if ( inp == null ) {
+                        inp = document.createElement("textarea");
                     }
                     // fall through
                 default:
-                    if ( i == null ) {
-                        i = document.createElement("input");
-                        i.type = item.type;
+                    if ( inp == null ) {
+                        inp = document.createElement("input");
+                        inp.type = item.type;
                     }
-                    i.title = item.hint;
-                    i.readOnly = true;
-                    i.value = "";
-                    if ( item.name in doc ) {
-                        i.value = doc[item.name];
-                    }
-                    l.appendChild(i);
+                    inp.title = item.hint;
+                    inp.readOnly = true;
+                    inp.value = preVal??"" ;
+                    lab.appendChild(inp);
                     break;
             }                
             
@@ -658,29 +640,29 @@ class PatientData {
             [vdate, vtime] = [ "", "" ];
             }
             
-        let id = document.createElement("input");
-        id.type = "text";
-        id.size = 10;
-        id.pattern="\d+-\d+-\d+";
-        id.value = vdate;
-        id.title = "Date in format YYYY-MM-DD";
+        let inpD = document.createElement("input");
+        inpD.type = "text";
+        inpD.size = 10;
+        inpD.pattern="\d+-\d+-\d+";
+        inpD.value = vdate;
+        inpD.title = "Date in format YYYY-MM-DD";
         
-        let it = document.createElement("input");
-        it.type = "text";
-        it.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
-        it.size = 9;
-        it.value = vtime;
-        it.title = "Time in format HH:MM AM or HH:MM PM";
-        return [ id, it ];
+        let inpT = document.createElement("input");
+        inpT.type = "text";
+        inpT.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
+        inpT.size = 9;
+        inpT.value = vtime;
+        inpT.title = "Time in format HH:MM AM or HH:MM PM";
+        return [ inpD, inpT ];
     }
 
     DateTimefromInput( field ) {
-        let i = field.querySelectorAll("input");
+        let inp = field.querySelectorAll("input");
         try {
-            var d =  this.YYYYMMDDtoDate( i[0].value ); // date
+            var d =  this.YYYYMMDDtoDate( inp[0].value ); // date
             
             try {
-                let t = this.AMto24( i[1].value ); // time
+                let t = this.AMto24( inp[1].value ); // time
                 d.setHours( t.hr );
                 d.setMinutes( t.min );
                 } 
@@ -807,16 +789,14 @@ class PatientData {
             let ul     = this.ul[ipair];
             ul.querySelectorAll("li").forEach( (li) => {
                 let idx = li.getAttribute("data-index");
+                let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
                 if ( ( "readonly" in struct[idx] ) && struct[idx].readonly == "true" ) {
                     return;
                 }
                 switch ( struct[idx].type ) {
                     case "radio":
-                        document.getElementsByName(struct[idx].name).forEach( (i) => i.disabled = false );
-                        break;
                     case "checkbox":
-                        li.querySelector("input").disabled = false;
-                        li.querySelector("input").readOnly = false;
+                        document.getElementsByName(localname).forEach( (i) => i.disabled = false );
                         break;
                     case "date":
                         picker.attach({
@@ -847,7 +827,6 @@ class PatientData {
                         li.querySelector("textarea").readOnly = false;
                         break;
                     case "list":
-                    case "calclist":
                         li.querySelector("input").readOnly = false;
                         li.querySelector("input").disabled = false;
                         break;
@@ -872,36 +851,37 @@ class PatientData {
             changed[ipair] = false;
             ul.querySelectorAll("li").forEach( (li) => {
                 let idx = li.getAttribute("data-index");
-                let v = "";
+                let postVal = "";
                 let name = struct[idx].name;
+                let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
                 switch ( struct[idx].type ) {
                     case "radio":
-                        document.getElementsByName(name).forEach( (i) => {
-                            if ( i.checked == true ) {
-                                v = i.value;
-                            }
-                        });
+                        postVal = [...document.getElementsByName(localname)]
+                            .filter( i => i.checked )
+                            .map(i=>i.value)[0];
                         break;
                     case "datetime":
                     case "datetime-local":
-                        v = this.DateTimefromInput( li );
+                        postVal = this.DateTimefromInput( li );
                         break;
                     case "checkbox":
-                        v = li.querySelector("input").checked;
+                        postVal = [...document.getElementsByName(localname)]
+                            .filter( i => i.checked )
+                            .map( i => i.value );
                         break;
                     case "length":
-                        v = this.HMtoMin( li.querySelector("input").value );
+                        postVal = this.HMtoMin( li.querySelector("input").value );
                         break;
                     case "textarea":
-                        v = li.querySelector("textarea").value;
+                        postVal = li.querySelector("textarea").value;
                         break;
                     default:
-                        v = li.querySelector("input").value;
+                        postVal = li.querySelector("input").value;
                         break;
                 }
-                if ( doc[name]==undefined || doc[name] != v ) {
-                    changed[ipair] = true;
-                    doc[name] = v;
+                if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
+                    changed[ipair] = true ;
+                    Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
                 }
             });
         }
@@ -973,12 +953,28 @@ class NewPatientData extends PatientData {
 class SuperUserData extends NewPatientData {
     savePatientData() {
         this.loadDocData();
-        remoteAdmin.username = this.doc[0].username;
-        remoteAdmin.password = this.doc[0].password;
-        admin_db = setRemoteDB( remoteAdmin );
-        // test connection
-        getUsersAll( false )
-        .then( doclist => showPage( "UserList" ) )
+
+        closeRemoteDB()
+        .then( () => {
+            // remote User database
+            remoteUser.username = this.doc[0].username;
+            remoteUser.password = this.doc[0].password;
+            user_db = openRemoteDB( remoteUser );
+
+            // admin access to this database
+            remoteSecurity.username = remoteUser.username;
+            remoteSecurity.password = remoteUser.password;
+            remoteSecurity.address  = remoteCouch.address;
+            remoteSecurity.database = remoteCouch.database;        
+            security_db = openRemoteDB( remoteSecurity );
+
+            return security_db.get("_security")
+            })
+        .then( doc => {
+            return getUsersAll( true ); // test connection
+            })
+        .then( doclist => {
+            showPage( "UserList" ); })
         .catch( err => {
             alert( err );
             showPage( "SuperUser" );
@@ -993,7 +989,7 @@ class NewUserData extends NewPatientData {
         this.doc[0].type = "user";
         this.doc[0].roles = [ this.doc[0].roles ];
         userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
-        admin_db.put( this.doc[0] )
+        user_db.put( this.doc[0] )
         .then( response => {
             selectUser( response.id );
             showPage( "SendUser" );
@@ -1010,7 +1006,7 @@ class EditUserData extends PatientData {
         if ( this.loadDocData()[0] ) {
             this.doc[0].roles = [ this.doc[0].roles ];
             userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
-            admin_db.put( this.doc[0] )
+            user_db.put( this.doc[0] )
             .then( response => showPage( "SendUser" ) )
             .catch( err => {
                 console.log(err);
@@ -1038,7 +1034,7 @@ function getUsersAll(attachments) {
     } else {
         doc.limit = 0;
     }
-    return admin_db.allDocs(doc);
+    return user_db.allDocs(doc);
 }
 
 class Tbar {
@@ -1085,7 +1081,7 @@ class Tbar {
         this.working.textDiv.contentEditable = true;
         this.working.img     = document.createElement("img");
         this.working.img.classList.add("entryfield_image");
-        this.working.img.onclick = ShowBigPicture(this);
+        this.working.img.onclick = showBigPicture(this);
         this.working.upload = null ;
     }
 
@@ -1352,8 +1348,8 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "SuperUser":
-            remoteAdmin.address = remoteCouch.address;
-            objectPatientData = new SuperUserData( Object.assign({},remoteAdmin), structSuperUser );
+            remoteUser.address = remoteCouch.address;
+            objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
             break;
             
         case "UserList":
@@ -1369,12 +1365,12 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "UserEdit":
-            if ( admin_db == null ) {
+            if ( user_db == null ) {
                 showPage( "SuperUser" );
             } else if ( userId == null ) {
                 showPage( "UserList" );
             } else {
-                admin_db.get( userId )
+                user_db.get( userId )
                 .then( doc => {
                     doc.roles = doc.roles[0]; // unarray
                     objectPatientData = new EditUserData( doc, structEditUser );
@@ -1388,12 +1384,12 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "SendUser":
-            if ( admin_db == null ) {
+            if ( user_db == null ) {
                 showPage( "SuperUser" );
             } else if ( userId == null || !(userId in userPass) ) {
                 showPage( "UserList" );
             } else {
-                admin_db.get( userId )
+                user_db.get( userId )
                 .then( doc => sendUser( doc ) )
                 .catch( err => {
                     console.log( err );
@@ -1463,7 +1459,7 @@ function showPage( state = "PatientList" ) {
             if ( patientId ) {
                 selectPatient( patientId );
                 getPatient( true )
-                .then( (doc) => PatientPhoto( doc ) )
+                .then( (doc) => patientPhoto( doc ) )
                 .catch( (err) => {
                     console.log(err);
                     showPage( "InvalidPatient" );
@@ -1542,7 +1538,7 @@ function showPage( state = "PatientList" ) {
             if ( patientId ) {
                 // New note only
                 unselectNote();
-                NoteNew();
+                noteNew();
             } else {
                 showPage( "PatientList" );
             }
@@ -1550,7 +1546,7 @@ function showPage( state = "PatientList" ) {
             
        case "NoteImage":
             if ( patientId ) {
-                NoteImage();
+                noteImage();
             } else {
                 showPage( "PatientList" );
             }
@@ -1888,7 +1884,7 @@ function deletePatient() {
     }
 }
 
-function PatientPhoto( doc ) {
+function patientPhoto( doc ) {
     let d = document.getElementById("PatientPhotoContent");
     let c = document.getElementById("phototemplate");
     d.innerHTML = "";
@@ -2114,10 +2110,10 @@ function sendUser( doc ) {
 
 function deleteUser() {
     if ( userId ) {
-        admin_db.get( userId )
+        user_db.get( userId )
         .then( (doc) => {
             if ( confirm("Delete user" + doc.name + ".\n -- Are you sure?") ) {
-                return admin_db.remove(doc) ;
+                return user_db.remove(doc) ;
             } else {
                 throw "No delete";
             }
@@ -2206,7 +2202,7 @@ class NoteList extends PatientData {
                 let imagedata = getImageFromDoc( note.doc );
                 let img = document.createElement("img");
                 img.classList.add("entryfield_image");
-                img.addEventListener('click', (e) => ShowBigPicture(img) );
+                img.addEventListener('click', (e) => showBigPicture(img) );
                 img.src = imagedata;
                 li.appendChild(img);
                 }
@@ -2300,14 +2296,14 @@ function putImageInDoc( doc, itype, idata ) {
     };
 }
 
-function NoteNew() {
+function noteNew() {
     document.getElementById("NoteNewLabel").innerHTML = noteTitle();
     let d = document.getElementById("NoteNewText");
     d.innerHTML = "";
     editBar.startedit( d );
 }
 
-function NoteImage() {
+function noteImage() {
     let inp = document.getElementById("imageInput");
     if ( isAndroid() ) {
         inp.removeAttribute("capture");
@@ -2453,12 +2449,12 @@ function printCard() {
         });
 }
 
-function HideBigPicture( target ) {
+function hideBigPicture( target ) {
     target.src = "";
     target.style.display = "none";
 }
 
-function ShowBigPicture( target ) {
+function showBigPicture( target ) {
     let big = document.getElementsByClassName( "FloatPicture" )[0];
     big.src = target.src;
     big.style.display = "block";
@@ -2552,7 +2548,7 @@ function parseQuery() {
     return r;
 }
 
-function setRemoteDB( DBstruct ) {
+function openRemoteDB( DBstruct ) {
     if ( DBstruct && remoteFields.every( k => k in DBstruct )  ) {
         return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
             "skip_setup": "true",
@@ -2567,6 +2563,12 @@ function setRemoteDB( DBstruct ) {
     }
 }
         
+function closeRemoteDB() {
+    return Promise.all( [
+        user_db ? user_db.close() : Promise.resolve(true),
+        security_db ? security_db.close() : Promise.resolve(true),
+        ]);
+}
 
 var SyncHandler = null;
     
@@ -2574,7 +2576,7 @@ var SyncHandler = null;
 var remoteDB;
 
 function foreverSync() {
-    remoteDB = setRemoteDB( remoteCouch ); // null initially
+    remoteDB = openRemoteDB( remoteCouch ); // null initially
     document.getElementById( "userstatus" ).value = remoteCouch.username;
     if ( remoteDB ) {
         const synctext = document.getElementById("syncstatus");
@@ -2625,7 +2627,7 @@ function clearLocal() {
     showPage( "MainMenu" );
 }
 
-function Setup() {
+function cookies_n_query() {
     getCookie ( "patientId" );
     getCookie ( "commentId" );
     getCookie ( "displayState" );
@@ -2657,7 +2659,7 @@ window.onload = () => {
     // Initial start
     show_screen(true);
 
-    const ds = Setup() ; // look for remoteCouch and other cookies
+    const ds = cookies_n_query() ; // look for remoteCouch and other cookies
 
     // local copy
     db = new PouchDB( remoteCouch.database );
@@ -2669,7 +2671,7 @@ window.onload = () => {
         switch (displayState) {
             case "PatientList":
             case "OperationList":
-            case "PatientPhoto":
+            case "patientPhoto":
                 showPage( displayState );
                 break;
             default:
@@ -2681,7 +2683,7 @@ window.onload = () => {
     foreverSync();
 
     // design document creation (assync)
-    createIndexes();
+    createQueries();
 
     db.viewCleanup()
     .catch( err => console.log(err) );
@@ -2699,7 +2701,7 @@ window.onload = () => {
         case "PatientList":
         case "MainMenu":
         case "Administration":
-        case "PatientPhoto":
+        case "patientPhoto":
         case "NoteList":
         case "OperationList":
         case "RemoteDatabaseInput":
@@ -2719,7 +2721,7 @@ window.onload = () => {
             showPage( "PatientList" );
             break;
         default:
-            showPage( "PatientPhoto" );
+            showPage( "patientPhoto" );
             break;
     }
 };
