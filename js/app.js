@@ -17,11 +17,7 @@ var operationId;
 var remoteCouch;
 var NoPhoto = "style/NoPhoto.png";
 
-var UniqueSurgeons;
-var UniqueEquipment;
-var UniqueProcedure;
-
-// Create/Open the database (locally) 
+// Database handles and  
 var db ; // will be Pouchdb local copy 
 var user_db = null;
 var security_db = null ;
@@ -276,20 +272,20 @@ const structNewUser = [
     }
 ];
 
-const structUserList = [
+const structAccess = [
     {
         name: "name",
-        alias: "User",
+        alias: "Users",
         hint: "Regular users with access",
         type: "checkbox",
-        userlist: "",
+        userlist: "name",
     },
     {
         name: "admin",
-        alias: "User",
-        hint: "Administrator users with access",
+        alias: "Administrators",
+        hint: "Administrative users with access",
         type: "checkbox",
-        userlist: "",
+        userlist: "name",
     },
 ];
 
@@ -334,7 +330,8 @@ const structSuperUser = [
     } ,
 ];
 
-// Create pouchdb indexes. Used for links between records and getting list of choices
+// Create pouchdb indexes.
+// Used for links between records and getting list of choices
 // change version number to force a new version
 function createQueries() {
     let ddoclist = [
@@ -451,7 +448,7 @@ class PatientData {
             ++ this.pairs;
         } 
         
-        this.ButtonStatus( true );
+        this.buttonStatus( true );
         [...document.getElementsByClassName("edit_note")].forEach( (e) => {
             e.disabled = false;
         });
@@ -492,15 +489,13 @@ class PatientData {
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
             } else if ( "userlist" in item ) {
-                choices = getUsersAll(true).then( u=>u.rows.map(r=>r.doc.name) ) ;
+                choices = getUsersAll(true).then( u=>u.rows.map(r=>r.doc[item.userlist]) ) ;
             }  
 
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
-            console.log(item.name, preVal, doc?.[item.name]);
             switch( item.type ) {
                 case "radio":
-                    {
                     choices
                     .then( clist => clist.forEach( (c) => {
                         inp = document.createElement("input");
@@ -518,11 +513,9 @@ class PatientData {
                         lab.appendChild(inp);
                         lab.appendChild( document.createTextNode(c) );
                     })); 
-                    }
                     break ;
 
                 case "checkbox":
-                    {
                     choices
                     .then( clist => clist.forEach( (c) => {
                         inp = document.createElement("input");
@@ -540,7 +533,6 @@ class PatientData {
                         lab.appendChild(inp);
                         lab.appendChild( document.createTextNode(c) );
                     })); 
-                    }
                     break;
 
                 case "list":
@@ -554,69 +546,50 @@ class PatientData {
                         op.value = c;
                         dlist.appendChild(op);
                         }));
-                    let inpD = document.createElement("input");
-                    inpD.type = "text";
-                    inpD.setAttribute( "list", dlist.id );
-                    inpD.value = preVal??"";
-                    inpD.readonly = true;
-                    inpD.disabled = true;
+                    inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.setAttribute( "list", dlist.id );
+                    inp.value = preVal??"";
+                    inp.readonly = true;
+                    inp.disabled = true;
                     lab.appendChild( dlist );
-                    lab.appendChild( inpD );                    
+                    lab.appendChild( inp );                    
                     }
                     break;
                 case "datetime":
                 case "datetime-local":
-                    {
-                    let d = preVal ? new Date(preVal) : null ;
-                    this.DateTimetoInput(d).forEach( (f) => lab.appendChild(f) );
-                    }
+                    inp = preVal ? new Date(preVal) : null ;
+                    this.DateTimetoInput(inp).forEach( (f) => lab.appendChild(f) );
                     break;
                 case "date":
-                    {
-                    let inpD = document.createElement("input");
-                    inpD.type = "text";
-                    inpD.pattern="\d+-\d+-\d+";
-                    inpD.size = 10;
-                    inpD.value = preVal??"";
-                    inpD.title = "Date in format YYYY-MM-DD";
-                    
-                    lab.appendChild(inpD);
-                    }
+                    inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.pattern="\d+-\d+-\d+";
+                    inp.size = 10;
+                    inp.value = preVal??"";
+                    inp.title = "Date in format YYYY-MM-DD";
+                    lab.appendChild(inp);
                     break;
                 case "time":
-                    {
-                    let inpT = document.createElement("input");
-                    inpT.type = "text";
-                    inpT.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
-                    inpT.size = 9;
-                    inpT.value = preVal??"";
-                    inpT.title = "Time in format HH:MM PM or HH:MM AM";
-                    
-                    lab.appendChild(inpT);
-                    }
+                    inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
+                    inp.size = 9;
+                    inp.value = preVal??"";
+                    inp.title = "Time in format HH:MM PM or HH:MM AM";
+                    lab.appendChild(inp);
                     break;
                 case "length":
-                    {
-                    let inpT = document.createElement("input");
-                    inpT.type = "text";
-                    inpT.pattern="\d+:[0-5][0-9]";
-                    inpT.size = 6;
-                    inpT.value = this.HMfromMin(preVal??"");
-                    inpT.title = "Time length in format HH:MM";
-                    
-                    lab.appendChild(inpT);
-                    }
+                    inp = document.createElement("input");
+                    inp.type = "text";
+                    inp.pattern="\d+:[0-5][0-9]";
+                    inp.size = 6;
+                    inp.value = this.HMfromMin(preVal??"");
+                    inp.title = "Time length in format HH:MM";
+                    lab.appendChild(inp);
                     break;
-                case "textarea" :
-                    if ( inp == null ) {
-                        inp = document.createElement("textarea");
-                    }
-                    // fall through
                 default:
-                    if ( inp == null ) {
-                        inp = document.createElement("input");
-                        inp.type = item.type;
-                    }
+                    inp = document.createElement( item.type=="textarea" ? "textarea" : "input" );
                     inp.title = item.hint;
                     inp.readOnly = true;
                     inp.value = preVal??"" ;
@@ -756,7 +729,7 @@ class PatientData {
         }
     }
 
-    ButtonStatus( bool ) {
+    buttonStatus( bool ) {
         [...document.getElementsByClassName('savedata')].forEach( (e) => {
             e.disabled = bool;
         });
@@ -783,7 +756,7 @@ class PatientData {
     }                
 
     clickEdit() {
-        this.ButtonStatus( false );
+        this.buttonStatus( false );
         for ( let ipair=0; ipair<this.pairs; ++ipair ) {
             let struct = this.struct[ipair];
             let ul     = this.ul[ipair];
@@ -815,7 +788,7 @@ class PatientData {
                         break;
                     case "datetime":
                     case "datetime-local":
-                        var i = li.querySelectorAll("input");
+                        const i = li.querySelectorAll("input");
                         picker.attach({
                             element: i[0],
                         });
@@ -968,12 +941,6 @@ class SuperUserData extends NewPatientData {
             remoteSecurity.database = remoteCouch.database;        
             security_db = openRemoteDB( remoteSecurity );
 
-            return security_db.get("_security")
-            })
-        .then( doc => {
-            return getUsersAll( true ); // test connection
-            })
-        .then( doclist => {
             showPage( "UserList" ); })
         .catch( err => {
             alert( err );
@@ -1018,6 +985,18 @@ class EditUserData extends PatientData {
             // no password to send
             console.log("No password", userPass) ;
             showPage( "UserList" );
+        }
+    }
+}
+
+class AccessData extends PatientData {
+    savePatientData() {
+        if ( this.loadDocData()[0] ) {
+            security_db.put( this.doc[0] )
+                .catch( err => console.log(err) )
+                .finally( () => showPage( "UserList" ) );
+        } else {
+            showPage( "UserList" ) ;
         }
     }
 }
@@ -1180,7 +1159,7 @@ class Nbar extends Tbar {
             } else {
                 // new note
                 createNote(
-                    this.working.upload && this.working.upload !== "remove" ? image : null,
+                    this.working.upload && this.working.upload !== "remove" ? this.working.upload : null,
                     this.working.textDiv.innerText )
                 .catch( (err) => console.log(err) )
                 .finally( () => this.leave("NoteList") );
@@ -1356,13 +1335,25 @@ function showPage( state = "PatientList" ) {
             objectUserTable = new UserTable( ["name", "role", "email", "type", ] );
             getUsersAll(true)
             .then( docs => objectUserTable.fill(docs.rows ) )
-            .catch( (err) => console.log(err) );
+            .catch( (err) => {
+                console.log(err) ;
+                showPage ( "SuperUser" )
+                });
             break;
 
         case "UserNew":
             unselectUser();
             objectPatientData = new NewUserData( {}, structNewUser );
             break;
+
+        case "Access":
+            security_db.get("_security")
+            .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
+            .catch ( err => {
+                console.log(err);
+                showPage( "SuperUser" ) ;
+                });
+            break ;
             
         case "UserEdit":
             if ( user_db == null ) {
@@ -1429,7 +1420,6 @@ function showPage( state = "PatientList" ) {
                 if ( operationId ) {
                     db.query("bySurgeon",{group:true,reduce:true})
                     .then( s => {
-                        UniqueSurgeons = s.rows.map( ss => ss.key );
                         return db.get( operationId );
                         })
                     .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
@@ -1487,7 +1477,6 @@ function showPage( state = "PatientList" ) {
                 let args;
                 db.query("bySurgeon",{group:true,reduce:true})
                 .then( s => {
-                    UniqueSurgeons = s.rows.map( ss => ss.key );
                     return getPatient( false ) ;
                     })
                 .then( (doc) => {
@@ -2377,7 +2366,7 @@ function saveImage() {
     .finally( () => { 
         document.getElementById('imageCheck').src = "";
         showPage( "NoteList" );
-        })
+        });
 }
 
 function show_screen( bool ) {
@@ -2508,11 +2497,9 @@ function downloadAll() {
         return getOperationsAll();
         })
     .then ( doclist => {
-        doclist.rows.forEach( row => {
-            if ( new Date(row.doc["Date-Time"]) != "Invalid Date" ) {
-                olist[row.doc.patient_id] = row.doc;
-            }
-            });
+        doclist.rows
+        .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
+        .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
         return getNotesAll();
         })
     .then( doclist => {

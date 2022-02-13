@@ -44,7 +44,8 @@
                     <!-- top: UserList -->
                     <div class="UserList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Main Menu</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'UserNew' )">Add User</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'UserNew' )"Access Permissions>Add User</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'Access' )"></button>
                         <button type="button" class="divbutton" onclick="showPage( 'UserEdit' )" id="editreviewuser">Review/Edit User</button>
                     </div>
                     <!-- top: OperationList -->
@@ -69,8 +70,8 @@
                         <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Proceed</button>
                         <button type="button" class="divbutton discarddata return" onclick="showPage( 'Administration' )">Cancel</button>
                     </div>
-                    <!-- top: UserNew -->
-                    <div class="PatientData UserNew pageOverlay">
+                    <!-- top: UserNew Access -->
+                    <div class="PatientData UserNew Access pageOverlay">
                         <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'UserList' )">Cancel</button>
                     </div>
@@ -160,8 +161,8 @@
                     <table id="OperationsList"></table>
                 </div>
             </div>
-            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit -->
-            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit pageOverlay">
+            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access -->
+            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access pageOverlay">
                 <div id="PatientDataContent" ></div>
             </div>
             <!-- body: PatientPhoto -->
