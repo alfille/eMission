@@ -11,6 +11,7 @@ var userPass = {};
 
 // globals cookie backed
 var displayState;
+var objectDisplayState ;
 var patientId;
 var noteId;
 var operationId;
@@ -1272,7 +1273,7 @@ function unselectPatient() {
     deleteCookie ( "patientId" );
     unselectNote();
     unselectOperation();
-    if ( displayState == "PatientList" ) {
+    if ( objectDisplayState.test("PatientList") ) {
         let pt = document.getElementById("PatientTable");
         if ( pt ) {
             let rows = pt.rows;
@@ -1288,7 +1289,7 @@ function unselectPatient() {
 function unselectOperation() {
     operationId = null;
     deleteCookie( "operationId" );
-    if ( displayState == "OperationList" ) {
+    if ( objectDisplayState.test("OperationList") ) {
         let ot = document.getElementById("OperationsList");
         if ( ot ) {
             let rows = ot.rows;
@@ -1305,10 +1306,77 @@ function unselectUser() {
     document.getElementById("editreviewuser").disabled = true;
 }
 
-function showPage( state = "PatientList" ) {
-    setCookie( "displayState", state );
+class DisplayState {
+    constructor() {
+        const path = getCookie( "displayState" );
+        if ( !Array.isArray(path) ) {
+            this.path = [];
+        } else {
+            this.path = path;
+        }
 
-    Array.from(document.getElementsByClassName("pageOverlay")).forEach( (v) => v.style.display = v.classList.contains(displayState) ? "block" : "none" );
+        const safeIndex = [
+            "MainMenu",
+            "PatientList",
+            "PatientPhoto",
+            "NoteList",
+            "OperationList",
+            "SuperUser",
+            "Administration",
+            "PatientMedical",
+            "PatientDemographics",
+            ]
+            .map(p=>this.path.indexOf(p))
+            .filter(i=>i>-1)
+            .reduce( (x,y)=>Math.min(x,y) , 1000 );
+        
+        if ( safeIndex == 1000 ) {
+            this.path = [] ;
+            setCookie ( "displayState", this.path ) ;
+        } else {
+            this.next( this.path[safeIndex] );
+        }
+    }
+
+    back() {
+        this.path.shift() ;
+        if ( this.path.length == 0 ) {
+            this.path = [ "MainMenu" ];
+        }
+        setCookie ( "displayState", this.path ) ;
+    }
+
+    current() {
+        if ( this.path.length == 0 ) {
+            this.path = [ "MainMenu" ];
+        }
+        return this.path[0];
+    }
+
+    next( page = null ) {
+        if ( page == "back" ) {
+            this.back()
+        } else if ( page == null ) {
+            return ;
+        } else if ( this.path.indexOf( page ) < 0 ) {
+            this.path.unshift( page ) ;
+            setCookie ( "displayState", this.path ) ;
+        } else {
+            this.path = this.path.slice( this.path.indexOf(page) ) ;
+            setCookie ( "displayState", this.path ) ;
+        }
+    }
+
+    test( page ) {
+        return this.current()==page ;
+    }
+}
+
+function showPage( state = "PatientList" ) {
+    objectDisplayState.next(state) ;
+
+    Array.from(document.getElementsByClassName("pageOverlay"))
+        .forEach( (v) => v.style.display = v.classList.contains(objectDisplayState.current()) ? "block" : "none" );
 
     objectPatientData = null;
     objectNoteList = null;
@@ -1316,7 +1384,7 @@ function showPage( state = "PatientList" ) {
     objectOperationTable = null;
     objectUserTable = null;
 
-    switch( displayState ) {           
+    switch( objectDisplayState.current() ) {           
        case "MainMenu":
        case "Administration":
        case "Download":
@@ -1944,7 +2012,7 @@ function deleteOperation() {
     
 function selectNote( cid ) {
     setCookie( "noteId", cid );
-    if ( displayState == "NoteList" ) {
+    if ( objectDisplayState.test("NoteList") ) {
         // highlight the list row
         let li = document.getElementById("NoteList").getElementsByTagName("LI");
         if ( li && (li.length > 0) ) {
@@ -1961,7 +2029,7 @@ function selectNote( cid ) {
 
 function unselectNote() {
     deleteCookie ( "noteId" );
-    if ( displayState == "NoteList" ) {
+    if ( objectDisplayState.test("NoteList") ) {
         let li = document.getElementById("NoteList").li;
         if ( li && (li.length > 0) ) {
             for ( let l of li ) {
@@ -2617,7 +2685,7 @@ function clearLocal() {
 function cookies_n_query() {
     getCookie ( "patientId" );
     getCookie ( "commentId" );
-    getCookie ( "displayState" );
+    objectDisplayState = new DisplayState();
     getCookie ( "operationId" );
 
     // need to establish remote db and credentials
@@ -2630,15 +2698,14 @@ function cookies_n_query() {
         remoteFields.forEach( f => remoteCouch[f] = qline[f] );
         setCookie( "remoteCouch", remoteCouch );
     } else if ( getCookie( "remoteCouch" ) == null ) {
-        showPage( "RemoteDatabaseInput" ); // forces reload
+        objectDisplayState.next( "RemoteDatabaseInput" ); // forces reload
     }    
 
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
         selectPatient( qline.patientId );
-        return "PatientPhoto";
+        objectDisplayState.next("PatientPhoto");
     }
-    return displayState;
 }
 
 // Application starting point
@@ -2646,7 +2713,7 @@ window.onload = () => {
     // Initial start
     show_screen(true);
 
-    const ds = cookies_n_query() ; // look for remoteCouch and other cookies
+    cookies_n_query() ; // look for remoteCouch and other cookies
 
     // local copy
     db = new PouchDB( remoteCouch.database );
@@ -2655,11 +2722,11 @@ window.onload = () => {
         since: 'now',
         live: true
     }).on('change', (change) => {
-        switch (displayState) {
+        switch (objectDisplayState.current()) {
             case "PatientList":
             case "OperationList":
-            case "patientPhoto":
-                showPage( displayState );
+            case "PatientPhoto":
+                showPage( null );
                 break;
             default:
                 break;
@@ -2676,39 +2743,5 @@ window.onload = () => {
     .catch( err => console.log(err) );
     
     // now jump to proper page
-    switch ( ds ) {
-        case "UserList":
-        case "UserNew":
-        case "UserEdit":
-        case "SendUser":
-        case "SuperUser":
-            showPage ( "MainMenu" );
-            break;
-            
-        case "PatientList":
-        case "MainMenu":
-        case "Administration":
-        case "patientPhoto":
-        case "NoteList":
-        case "OperationList":
-        case "RemoteDatabaseInput":
-        case "PatientDemographics":
-        case "PatientMedical":
-            showPage( ds );
-            break;
-        case "OperationEdit":
-            showPage( "OperationList" );
-            break;
-        case "NoteNew":
-        case "NoteImage":
-            showPage( "NoteList" );
-            break;
-        case "PatientNew":
-        case "InvalidPatient":
-            showPage( "PatientList" );
-            break;
-        default:
-            showPage( "patientPhoto" );
-            break;
-    }
+    showPage( null ) ;
 };
