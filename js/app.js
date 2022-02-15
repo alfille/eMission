@@ -2216,7 +2216,7 @@ class NoteList extends PatientData {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
         } else {
             this.ul = document.createElement('ul');
-            this.ul.setAttribute( "id", "NoteList" );
+            this.ul.id = "NoteList" ;
             parent.appendChild(this.ul);
             notelist.rows.forEach( note => {
                 let li1 = this.liLabel(note);
