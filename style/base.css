@@ -81,7 +81,7 @@ ul {
   overflow: auto;
 }
 
-.divbutton {
+.divbutton, a {
   margin: 1px;
   padding: 3px;
   border: 3px;
@@ -248,7 +248,7 @@ footer {
   background: red !important;
   float: right;
 }
-.divbutton:hover {
+.divbutton:hover, a:hover {
   color: yellow;
 }
 .divbutton:disabled {

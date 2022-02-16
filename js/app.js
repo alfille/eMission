@@ -2698,7 +2698,7 @@ function cookies_n_query() {
         remoteFields.forEach( f => remoteCouch[f] = qline[f] );
         setCookie( "remoteCouch", remoteCouch );
     } else if ( getCookie( "remoteCouch" ) == null ) {
-        objectDisplayState.next( "RemoteDatabaseInput" ); // forces reload
+        throw "Need manual database entry" ;
     }    
 
     // first try the search field
@@ -2713,35 +2713,41 @@ window.onload = () => {
     // Initial start
     show_screen(true);
 
-    cookies_n_query() ; // look for remoteCouch and other cookies
+    try {
+        cookies_n_query() ; // look for remoteCouch and other cookies
+        
+        db = new PouchDB( remoteCouch.database ); // open local copy
+        console.log(document.getElementById("headerboxlink"));
+        document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
+        
+        db.changes({
+            since: 'now',
+            live: true
+        }).on('change', (change) => {
+            switch (objectDisplayState.current()) {
+                case "PatientList":
+                case "OperationList":
+                case "PatientPhoto":
+                    showPage( null );
+                    break;
+                default:
+                    break;
+            }
+        });
 
-    // local copy
-    db = new PouchDB( remoteCouch.database );
+        // start sync
+        foreverSync();
 
-    db.changes({
-        since: 'now',
-        live: true
-    }).on('change', (change) => {
-        switch (objectDisplayState.current()) {
-            case "PatientList":
-            case "OperationList":
-            case "PatientPhoto":
-                showPage( null );
-                break;
-            default:
-                break;
+        // design document creation (assync)
+        createQueries();
+        db.viewCleanup()
+        .catch( err => console.log(err) );
+        
+        // now jump to proper page
+        showPage( null ) ;
         }
-    });
-
-    // start sync
-    foreverSync();
-
-    // design document creation (assync)
-    createQueries();
-
-    db.viewCleanup()
-    .catch( err => console.log(err) );
-    
-    // now jump to proper page
-    showPage( null ) ;
+    catch (err) {
+        console.log(err);
+        showPage("RemoteDatabaseInput"); // forces program reload
+        }
 };
