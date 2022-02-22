@@ -9,7 +9,7 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  background: #lightblue;
+  background: inherit;
 }
 #headerboxlink img {
   color: blue ;
@@ -108,8 +108,41 @@ ul {
   background: red;
   float: right;
 }
+.entryfield_image {
+  max-width: 20%;
+  display: inline-block;
+  height: auto ;
+}
+.entryfield_image:hover {
+    position:relative;
+    width:40%;
+    height:auto;
+    display:block;
+    z-index:9;
+}.FloatPicture {
+    position: absolute;
+    z-index: 1;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    top: 0px;
+    max-height: 100% ;
+    max-width: auto ;
+}
+@media only and (orientation: landscape) {
+  .entryfield_image {
+    max-height: 20%;
+    display: inline-block;
+    width: auto ;
+  }
+}
 .entryfield_text {
   min-height: 1em;
+  display: block;
+}
+.entryfield_title {
+  font-weight: bold;
   display: inline-block;
 }
   
@@ -167,29 +200,6 @@ footer {
   background: #99ddff;
 }
 
-.entryfield_image {
-  max-width: 20%;
-  display: inline-block;
-  height: auto ;
-}
-.FloatPicture {
-    position: absolute;
-    z-index: 1;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: auto;
-    margin-bottom: auto;
-    top: 0px;
-    max-height: 100% ;
-    max-width: auto ;
-}
-@media only and (orientation: landscape) {
-  .entryfield_image {
-    max-height: 20%;
-    display: inline-block;
-    width: auto ;
-  }
-}
 #imageInput, .imageBar, #imageQ {
   display:none;
 }
@@ -315,12 +325,21 @@ footer {
 }
   
 #PatientPhotoContent{
-  display: flex ;
   background: #b3b3ff ;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row ; 
 }
+
+.PatientPhotoRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding-bottom: 2px;
+}
+.PatientPhotoColumn {
+    display: flex;
+    flex-direction: column;
+    align-content: start;
+}
+
 #MainMenuContent, #DownloadContent, #AdministrationContent,  #SendUserContent {
   display: flex ;
   background: #b3b3ff ;
@@ -331,6 +350,9 @@ footer {
 #PatientPhotoButtons {
   display: flex;
   color: white;
+  background: #b3b3ff;
+  border-top: 1px solid black;
+  padding-top: 2px;
   flex-direction: row ;
   justify-content: space-around;
 }

@@ -1032,36 +1032,24 @@ class Tbar {
         this.buttonsdisabled(true);
     }
     
-    leave(page) {
+    leave(page="back") {
         this.is_active = false;
         this.buttonsdisabled(false);
         showPage(page);
     }
 
-    fieldset( existingdiv, toolbarclass ) {
+    fieldset( existingdiv, editclass ) {
         this.existing = {};
-        this.existing.parent  = existingdiv;
-        this.existing.textDiv = existingdiv.querySelector( ".entryfield_text" );
-        this.existing.oldText = "";
-        this.existing.img     = existingdiv.querySelector( ".entryfield_image" );
-        if ( this.existing.textDiv ) {
-            this.existing.oldText = this.existing.textDiv.innerText;
-        } else {
-            this.existing.textDiv = document.createElement("div");
-            this.existing.textDiv.classList.add("entryfield_text");
-            this.existing.oldText = "";
-        }
+        this.parent  = existingdiv;
+        this.existing.oldText = existingdiv.querySelector( ".entryfield_text" ).innerText;
+        this.existing.oldTitle= existingdiv.querySelector( ".entryfield_title" ).innerText;
+        this.existing.src     = existingdiv.querySelector( ".entryfield_image" ).src;
 
         this.working = {};
-        this.working.parent  = existingdiv;
-        this.working.toolbar = document.getElementById("templates").querySelector(toolbarclass).cloneNode(true);
-        this.working.newText = this.existing.oldText;
-        this.working.textDiv = document.createElement("div");
-        this.working.textDiv.innerText = this.existing.oldText;
-        this.working.textDiv.contentEditable = true;
-        this.working.img     = document.createElement("img");
-        this.working.img.classList.add("entryfield_image");
-        this.working.img.onclick = showBigPicture(this);
+        cloneClass( editclass, existingdiv );
+        this.parent.querySelector(".entryfield_image").src = this.existing.src;
+        this.parent.querySelector(".entryfield_title").innerText = this.existing.oldTitle;
+        this.parent.querySelector(".entryfield_text").innerText = this.existing.oldText;
         this.working.upload = null ;
     }
 
@@ -1080,21 +1068,21 @@ class Tbar {
     }
 
     getImage() {
-        this.working.toolbar.querySelector(".imageBar").click();
+        this.parent.querySelector(".imageBar").click();
     }
 
     handleImage() {
-        const files = this.working.parent.querySelector('.imageBar') ;
+        const files = this.parent.querySelector('.imageBar') ;
         this.working.upload = files.files[0];
-        this.working.img.src = URL.createObjectURL(this.working.upload);
-        this.working.img.style.display = "block";
-        this.working.toolbar.querySelector(".tbarxpic").disabled = false;
+        this.parent.querySelector(".entryfield_image").src = URL.createObjectURL(this.working.upload);
+        this.parent.querySelector(".entryfield_image").style.display = "block";
+        this.parent.querySelector(".tbarxpic").disabled = false;
     }
 
     removeImage() {
-        this.working.img.style.display = "none";
+        this.parent.querySelector(".entryfield_image").style.display = "none";
         this.working.upload = "remove";
-        this.working.toolbar.querySelector(".tbarxpic").disabled = true;
+        this.parent.querySelector(".tbarxpic").disabled = true;
     }
 }
 
@@ -1113,28 +1101,20 @@ class Nbar extends Tbar {
             unselectNote();
             this.deletefunc = null;
         }
-        this.fieldset( existingdiv, ".editToolbar" );
-        if ( this.existing.textDiv == null ) {
-            this.existing.textDiv = document.createElement("div");
-            this.existing.textDiv.classList.add("entryfield_text");
-            this.existing.oldText = "";
-        }
+        this.fieldset( existingdiv, ".notetemplate_edit" );
             
-        this.working.toolbar.querySelector(".tbarxpic").disabled = (this.existing.img  == null);
-        this.working.toolbar.querySelector(".tbardel").style.visibility = (this.deletefunc!=null) ? "visible" : "hidden";
+        this.parent.querySelector(".tbardel").style.visibility = (this.deletefunc!=null) ? "visible" : "hidden";
 
-        if ( this.existing.img  ) {
-            this.working.img.src = this.existing.img.src;
-            this.working.img.style.display = "block";
+        if ( this.parent.querySelector(".entryfield_image")?.src != null  ) {
+            console.log("block");
+            this.parent.querySelector(".tbarxpic").disabled = false;
+            this.parent.querySelector(".entryfield_image").style.display = "block";
         } else {
-            this.working.img.style.display = "none";
+            console.log("none");
+            this.parent.querySelector(".tbarxpic").disabled = true;
+            this.parent.querySelector(".entryfield_image").style.display = "none";
         }
 
-        // elements of the working fields
-        this.working.parent.innerHTML = "";
-        this.working.parent.appendChild(this.working.img );
-        this.working.parent.appendChild(this.working.toolbar);
-        this.working.parent.appendChild(this.working.textDiv);
         return true;
     }
 
@@ -1144,7 +1124,8 @@ class Nbar extends Tbar {
                 // existing note
                 db.get(noteId)
                 .then( (doc) => {
-                    doc.text = this.working.textDiv.innerText;
+                    doc.text = this.parent.querySelector(".entryfield_text").innerText;
+                    doc.title = this.parent.querySelector(".entryfield_title").innerText;
                     doc.patient_id = patientId;
                     doc.type = "note";
                     if ( this.working.upload == null ) {
@@ -1161,7 +1142,8 @@ class Nbar extends Tbar {
                 // new note
                 createNote(
                     this.working.upload && this.working.upload !== "remove" ? this.working.upload : null,
-                    this.working.textDiv.innerText )
+                    this.parent.querySelector(".entryfield_text").innerText,
+                    this.parent.querySelector(".entryfield_title").innerText )
                 .catch( (err) => console.log(err) )
                 .finally( () => this.leave("NoteList") );
             }
@@ -1169,35 +1151,26 @@ class Nbar extends Tbar {
     }
 }
     
-var editBar = new Nbar();        
+var editBar;        
 
 class Pbar extends Tbar {
     // for PatientPhoto
     startedit() {
-        let existingdiv = document.getElementById("PatientPhotoContent");
+        let existingdiv = document.getElementById("PatientPhotoContent2");
         if ( this.active() ) {
             return false;
         }
         this.enter();
-        this.fieldset( existingdiv, ".photoToolbar" );
-        this.working.textDiv.contentEditable = false;
+        this.fieldset( existingdiv, ".phototemplate_edit" );
             
-        this.working.toolbar.querySelector(".tbarxpic").disabled = false;
+        this.parent.querySelector(".tbarxpic").disabled = false;
 
-        this.working.img.src = this.existing.img.src;
-        this.working.img.style.display = "block";
-
-        // elements of the working fields
-        this.working.parent.innerHTML = "";
-        this.working.parent.appendChild(this.working.img );
-        this.working.parent.appendChild(this.working.toolbar);
-        this.working.parent.appendChild(this.working.textDiv);
         return true;
     }
 
     removeImage() {
         this.working.upload = "remove";
-        this.working.img.src = NoPhoto;
+        this.parent.querySelector(".entryfield_image").src = NoPhoto;
     }
 
     saveedit() {
@@ -1214,13 +1187,11 @@ class Pbar extends Tbar {
                     return db.put( doc );
                 })
                 .catch( (err)  => console.log(err) )
-                .finally( () => this.leave("PatientPhoto") );
+                .finally( () => this.leave() );
             }
         }
     }    
 }
-    
-var photoBar = new Pbar();        
 
 function selectPatient( pid ) {
     if ( patientId != pid ) {
@@ -1383,6 +1354,7 @@ function showPage( state = "PatientList" ) {
     objectPatientTable = null;
     objectOperationTable = null;
     objectUserTable = null;
+    editBar = null;
 
     switch( objectDisplayState.current() ) {           
        case "MainMenu":
@@ -1514,6 +1486,7 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientPhoto":
+            editBar = new Pbar() ;
             if ( patientId ) {
                 selectPatient( patientId );
                 getPatient( true )
@@ -1578,6 +1551,7 @@ function showPage( state = "PatientList" ) {
             break;
 
         case "NoteList":            
+            editBar = new Nbar() ;
             if ( patientId ) {
                 getPatient( false )
                 .then( () => getNotes(true) )
@@ -1592,6 +1566,7 @@ function showPage( state = "PatientList" ) {
             break;
             
          case "NoteNew":
+            editBar = new Nbar() ;
             if ( patientId ) {
                 // New note only
                 unselectNote();
@@ -1602,6 +1577,7 @@ function showPage( state = "PatientList" ) {
             break;
             
        case "NoteImage":
+            editBar = new Nbar() ;
             if ( patientId ) {
                 noteImage();
             } else {
@@ -1941,21 +1917,20 @@ function deletePatient() {
     }
 }
 
+function cloneClass( fromClass, target ) {
+    let c = document.getElementById("templates").querySelector(fromClass);
+    console.log(fromClass,target,c);
+    target.innerHTML = "";
+    c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
+}    
+
 function patientPhoto( doc ) {
-    let d = document.getElementById("PatientPhotoContent");
-    let c = document.getElementById("phototemplate");
-    d.innerHTML = "";
-    c.childNodes.forEach( cc => {
-        d.appendChild(cc.cloneNode(true) );
-    });
+    console.log("doc",doc);
+    let d = document.getElementById("PatientPhotoContent2");
+
+    cloneClass( ".phototemplate", d );
+    loadTemplate( d, doc, NoPhoto );
     
-    let p = document.getElementById("PatientPhotoContent").getElementsByTagName("img")[0];
-    try {
-        p.src = getImageFromDoc( doc );
-        }
-    catch( err ) {
-        p.src = NoPhoto;
-        }
     dropPictureinNote( d );
 }
 
@@ -2255,23 +2230,8 @@ class NoteList extends PatientData {
             li.classList.add("choice");
         }
         if ( "doc" in note ) {
-            try {
-                let imagedata = getImageFromDoc( note.doc );
-                let img = document.createElement("img");
-                img.classList.add("entryfield_image");
-                img.addEventListener('click', (e) => showBigPicture(img) );
-                img.src = imagedata;
-                li.appendChild(img);
-                }
-            catch(err) {
-                console.log(err);
-                }
-
-            let textdiv = document.createElement("div");
-            textdiv.innerText = ("text" in note.doc) ? note.doc.text : "";
-            li.addEventListener( 'dblclick', (e) => editBar.startedit( li ) );
-            textdiv.classList.add("entryfield_text");
-            li.appendChild(textdiv);
+            cloneClass( ".notetemplate", li );
+            loadTemplate ( li, note.doc )
         }    
         
         li.addEventListener( 'click', (e) => {
@@ -2297,6 +2257,26 @@ class NoteList extends PatientData {
     }
 }
 
+function loadTemplate( parent, doc, defaultSrc="" ) {
+    let pqi = parent.querySelector(".entryfield_image") ;
+    pqi.style.display="inline-block";
+    try {
+        let imagedata = getImageFromDoc( doc );
+        pqi.addEventListener('click', (e) => showBigPicture(img) );
+        pqi.src = imagedata;
+        }
+    catch(err) {
+        pqi.src=defaultSrc;
+        }
+    if ( pqi.src == "undefined" || pqi.src == "" ) {
+        pqi.src = "";
+        pqi.style.display="none";
+    }
+    parent.querySelector(".entryfield_title").innerText = doc?.title ?? "";
+    parent.querySelector(".entryfield_text").innerText = doc?.text ?? "";
+    parent.addEventListener( 'dblclick', (e) => editBar.startedit( parent ) );
+}
+
 function dropPictureinNote( target ) {
         // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
     target.addEventListener('dragover', e => {
@@ -2317,7 +2297,7 @@ function dropPictureinNote( target ) {
             reader.onload = e2 =>
                 fetch(e2.target.result)
                 .then( b64 => b64.blob() )
-                .then( blb => createNote( blb, "" ) )
+                .then( blb => createNote( blb, "", "" ) )
                 .catch( (err) => console.log(err) ) ;
             reader.readAsDataURL(file); // start reading the file data.
             });
@@ -2354,9 +2334,12 @@ function putImageInDoc( doc, itype, idata ) {
 }
 
 function noteNew() {
+    let d = document.getElementById("NoteNewContent");
+    cloneClass ( ".notetemplate", d );
+    d.querySelector(".entryfield_image").src = null;
+    d.querySelector(".entryfield_title").innerText = "";
+    d.querySelector(".entryfield_text").innerText = "";
     document.getElementById("NoteNewLabel").innerHTML = noteTitle();
-    let d = document.getElementById("NoteNewText");
-    d.innerHTML = "";
     editBar.startedit( d );
 }
 
@@ -2373,11 +2356,12 @@ function quickImage() {
     document.getElementById("imageQ").click();
 }
 
-function createNote( image, text ) {
+function createNote( image, text, title="" ) {
     // returns a promise
     let doc = {
         _id: makeNoteId(),
-        text: "",
+        text: text,
+        title: title,
         author: remoteCouch.username,
         type: "note",
         patient_id: patientId,
@@ -2394,10 +2378,8 @@ function createNote( image, text ) {
 function quickImage2() {
     const files = document.getElementById('imageQ');
     const image = files.files[0];
-    console.log(files);
-    console.log(files.files);
 
-    createNote( image, "" )
+    createNote( image, "", "" )
     .then( () => showPage( "NoteList" ) )
     .catch( (err) => {
         console.log(err);
@@ -2429,7 +2411,7 @@ function saveImage() {
     const image = files.files[0];
     const text = document.getElementById("annotation").innerText;
 
-    createNote( image, text )
+    createNote( image, text, "" )
     .catch( (err) => console.log(err) )
     .finally( () => { 
         document.getElementById('imageCheck').src = "";

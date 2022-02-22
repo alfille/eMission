@@ -169,11 +169,7 @@
             <!-- body: PatientPhoto -->
             <div class="PatientPhoto pageOverlay">
                 <div id="PatientPhotoContent" >
-                    <img class="entryfield_image" onclick="showBigPicture(this)">
-                    <div class="entryfield_text">
-                        <button class="edit_note libutton" type="button" onClick="photoBar.startedit()">Edit</button>
-                        Patient Photo
-                    </div>
+                    <div id="PatientPhotoContent2"></div>
                 </div>
                 <div id="PatientPhotoButtons">
                     <div class="PatientProcButtons">
@@ -214,11 +210,8 @@
             </div>
             <!-- body: NoteNew (quick note) -->
             <div class="NoteNew pageOverlay">
-                <div id="NoteNewContent">
-                    <img id="NoteNewImage" class="entryfield_image" onclick="showBigPicture(this)">
-                    <label for="NoteNewText" id="NoteNewLabel"></label>
-                    <div id="NoteNewText" class="editable"></div>
-                </div>
+                <div id="NoteNewLabel"></div>
+                <div id="NoteNewContent"></div>
             </div>
             <!-- body: NoteImage (quick photo) -->
             <div class="NoteImage pageOverlay">
@@ -242,28 +235,52 @@
         </div>
         <!-- copyable parts -->
         <div id="templates" class="pageOverlay">
-            <div class="editToolbar">
-                <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
-                <button type="button" onclick="editBar.leave('NoteList')"><span><B>Cancel</B></span></button>
-                <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
-                <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                <button type="button" onclick="editBar.deleteedit()" class="tbardel delete" title="Delete note"><span><B>Delete</B></span></button>
-                <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
-            </div>
-            <div class="photoToolbar">
-                <button type="button" onclick="photoBar.saveedit()"><span><B>Save</B></span></button>
-                <button type="button" onclick="photoBar.leave('PatientPhoto')"><span><B>Cancel</B></span></button>
-                <button type="button" onclick="photoBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
-                <button type="button" onclick="photoBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                <input type="file" accept="image/*" class="imageBar" onchange="photoBar.handleImage()" capture="environment">
-            </div>
            <button class="edit_note libutton" type="button">Edit</button>
-            <div id="phototemplate">
-                <img class="entryfield_image" onclick="showBigPicture(this)">
-                <div class="entryfield_text">
-                    <button class="edit_note libutton" type="button" onClick="photoBar.startedit()">Edit</button>
-                    Patient Photo
+            <!-- PatientPhoto display -->
+            <div class="phototemplate">
+                <div class="PatientPhotoRow">
+                    <img class="entryfield_image" onclick="showBigPicture(this)">
+                    <div class="PatientPhotoColumn">
+                        <div class="entryfield_title"></div>
+                        <div class="entryfield_text">Patient photo</div>
+                        <button class="edit_note libutton" type="button" onClick="editBar.startedit()">Edit</button>
+                    </div>
                 </div>
+            </div>
+            <!-- PatientPhoto edit -->
+            <div class="phototemplate_edit PatientPhotoColumn">
+                <img class="entryfield_image" onclick="showBigPicture(this)">
+                <div class="photoToolbar">
+                    <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
+                    <button type="button" onclick="editBar.leave()"><span><B>Cancel</B></span></button>
+                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
+                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                </div>
+                <div>
+                    <label>Title: <div class="entryfield_title" contenteditable></div></label>
+                </div>
+                <div class="entryfield_text" contenteditable></div>
+            </div>
+            <!-- Note display -->
+            <div class="notetemplate">
+                <img class="entryfield_image" onclick="showBigPicture(this)">
+                <div class="entryfield_title"></div>
+                <div class="entryfield_text"></div>
+            </div>
+            <!-- Note edit -->
+            <div class="notetemplate_edit">
+                <img class="entryfield_image" onclick="showBigPicture(this)">
+                <div class="editToolbar">
+                    <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
+                    <button type="button" onclick="editBar.leave()"><span><B>Cancel</B></span></button>
+                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
+                    <button type="button" onclick="editBar.deleteedit()" class="tbardel delete" title="Delete note"><span><B>Delete</B></span></button>
+                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                </div>
+                <label>Title: <div class="entryfield_title" contenteditable></div></label>
+                <div class="entryfield_text" contenteditable></div>
             </div>
             <fieldset><legend><button type="button" value="show" onclick="objectPatientData.fsclick(this)">&#10134;</button></legend></fieldset>
         </div>
