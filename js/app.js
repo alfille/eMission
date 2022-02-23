@@ -43,9 +43,18 @@ const RecordFormat = {
         patient: "p" ,
         operation: "o" ,
         note: "c" ,
+        mission: "m",
         } ,
     version: 0,
 };
+
+var missionId = [
+        RecordFormat.type.mission,
+        RecordFormat.version,
+        "",
+        "",
+        "", 
+        ].join(";");
 
 // used to generate data entry pages "PatientData" type
 const structNewPatient = [
@@ -331,6 +340,44 @@ const structSuperUser = [
     } ,
 ];
 
+const structMission = [
+    {
+        name: "Organization",
+        hint: "Mission organization",
+        type: "text",
+    } , 
+    {
+        name: "Name",
+        hint: "Mission Name",
+        type: "text",
+    },
+    {
+        name: "Location",
+        hint: "Where is the mission?",
+        type: "text",
+    },
+    {
+        name: "StartDate",
+        hint: "First day of mission",
+        type: "date",
+    },
+    {
+        name: "EndDate",
+        hint: "Last day of mission",
+        type: "date",
+    },
+    {
+        name: "LocalContact",
+        hint: "Who and how to contact local facility",
+        type: "textarea",
+    },
+    {
+        name: "Energency",
+        hint: "Emergency contact",
+        type: "textarea",
+    },
+];
+
 // Create pouchdb indexes.
 // Used for links between records and getting list of choices
 // change version number to force a new version
@@ -478,9 +525,9 @@ class PatientData {
             let localname = [item.name,idx,ipair].map( x=>x+'').join("_");
             
             if ( "alias" in item ) {
-                lab.appendChild( document.createTextNode(item.alias + ": ") );
+                lab.appendChild( document.createTextNode(`${item.alias}: `) );
             } else {
-                lab.appendChild( document.createTextNode(item.name + ": ") );
+                lab.appendChild( document.createTextNode(`${item.name}: `) );
             }
             lab.title = item.hint;
 
@@ -875,6 +922,13 @@ class PatientData {
     }
 }
 
+class MissionData extends PatientData {
+    savePatientData() {
+        this.saveChanged( "MainMenu" );
+    }
+}    
+
+
 class OperationData extends PatientData {
     savePatientData() {
         this.saveChanged( "OperationList" );
@@ -1175,7 +1229,7 @@ class Pbar extends Tbar {
 
     saveedit() {
         if ( this.active() ) {
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 getPatient( true )
                 .then( (doc) => {
                     if ( this.working.upload == null ) {
@@ -1208,12 +1262,20 @@ function selectPatient( pid ) {
             objectPatientTable.highlight();
         }
         document.getElementById("editreviewpatient").disabled = false;
-        document.getElementById( "titlebox" ).innerHTML = "Name: <B>"+doc.LastName+"</B>, <B>"+doc.FirstName+"</B>  DOB: <B>"+doc.DOB+"</B>";
+        document.getElementById( "titlebox" ).innerHTML = `Name: <B>${doc.LastName}, ${doc.FirstName}</B>  DOB: <B>${doc.DOB}</B>`;
         })
     .catch( (err) => {
         console.log(err);
         unselectPatient();
         });
+}
+
+function selectMission() {
+    unselectPatient();
+    patientId = missionId;
+    db.get(missionId)
+    .then( doc => document.getElementById( "titlebox" ).innerHTML = `Mission: <B>${doc.Organization}: ${doc.Name}</B> to <B>${doc.Location}</B> on <B>${doc.StartDate} - ${doc.EndDate}</B>` )
+    .catch( err => document.getElementById( "titlebox" ).innerHTML = "" ) ;
 }
 
 function selectOperation( oid ) {
@@ -1238,6 +1300,10 @@ function selectUser( uid ) {
     }
     document.getElementById("editreviewuser").disabled = false;
 }    
+
+function patientSelected() {
+    return ( patientId != null ) && ( patientId != missionId ) ;
+}
 
 function unselectPatient() {
     patientId = null;
@@ -1288,6 +1354,8 @@ class DisplayState {
 
         const safeIndex = [
             "MainMenu",
+            "Mission",
+            "MissionDetails",
             "PatientList",
             "PatientPhoto",
             "NoteList",
@@ -1360,6 +1428,7 @@ function showPage( state = "PatientList" ) {
        case "MainMenu":
        case "Administration":
        case "Download":
+       case "Settings":
             break;
             
         case "RemoteDatabaseInput":
@@ -1434,7 +1503,7 @@ function showPage( state = "PatientList" ) {
             getPatientsAll(true)
             .then( (docs) => {
                 objectPatientTable.fill(docs.rows );
-                if ( patientId ) {
+                if ( patientSelected() ) {
                     selectPatient( patientId );
                 } else {
                     unselectPatient();
@@ -1456,7 +1525,7 @@ function showPage( state = "PatientList" ) {
             break;
         
         case "OperationEdit":
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 if ( operationId ) {
                     db.query("bySurgeon",{group:true,reduce:true})
                     .then( s => {
@@ -1487,7 +1556,7 @@ function showPage( state = "PatientList" ) {
             
         case "PatientPhoto":
             editBar = new Pbar() ;
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 selectPatient( patientId );
                 getPatient( true )
                 .then( (doc) => patientPhoto( doc ) )
@@ -1500,8 +1569,22 @@ function showPage( state = "PatientList" ) {
             }
             break;
             
+        case "MissionDetails":
+            selectMission();
+            db.get( missionId )
+            .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
+            .catch( (err) => {
+                let doc = {
+                    _id: missionId,
+                    author: remoteCouch.username,
+                    type: "mission",
+                };
+                objectPatientData = new MissionData( doc, structMission ) ;
+                });
+            break;
+            
         case "PatientDemographics":
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 getPatient( false )
                 .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
                 .catch( (err) => {
@@ -1514,7 +1597,7 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientMedical":
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 let args;
                 db.query("bySurgeon",{group:true,reduce:true})
                 .then( s => {
@@ -1550,9 +1633,18 @@ function showPage( state = "PatientList" ) {
             unselectPatient();
             break;
 
+        case "MissionList":            
+            editBar = new Nbar() ;
+            selectMission() ;
+            db.get( missionId )
+            .then( () => getNotes(true ) )
+            .then( notelist => objectNoteList = new NoteList(notelist) )
+            .catch( err=> showPage( "MissionDetails" ) ) ;
+            break;
+            
         case "NoteList":            
             editBar = new Nbar() ;
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 getPatient( false )
                 .then( () => getNotes(true) )
                 .then( notelist => objectNoteList = new NoteList(notelist) )
@@ -1567,10 +1659,12 @@ function showPage( state = "PatientList" ) {
             
          case "NoteNew":
             editBar = new Nbar() ;
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 // New note only
                 unselectNote();
                 noteNew();
+            } else if ( patientId == missionId ) {
+                showPage( 'MissionList' ) ;
             } else {
                 showPage( "PatientList" );
             }
@@ -1578,7 +1672,7 @@ function showPage( state = "PatientList" ) {
             
        case "NoteImage":
             editBar = new Nbar() ;
-            if ( patientId ) {
+            if ( patientSelected() ) {
                 noteImage();
             } else {
                 showPage( "PatientList" );
@@ -1597,8 +1691,7 @@ function setCookie( cname, value ) {
     //console.log(cname,"value",value);
     let date = new Date();
     date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
-    const expires = " expires=" + date.toUTCString();
-    document.cookie = cname + "=" + encodeURIComponent(JSON.stringify(value)) + "; " + expires + "; path=/";
+    document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; path=/`;
 }
 
 function deleteCookie( cname ) {
@@ -1607,7 +1700,7 @@ function deleteCookie( cname ) {
 }
 
 function getCookie( cname ) {
-    const name = cname + "=";
+    const name = `${cname}=`;
     let ret = null;
     decodeURIComponent(document.cookie).split('; ').filter( val => val.indexOf(name) === 0 ).forEach( val => {
         try {
@@ -1871,7 +1964,7 @@ function splitNoteId( nid=noteId ) {
 }
 
 function deletePatient() {
-    if ( patientId ) {        
+    if ( patientSelected() ) {        
         let pdoc;
         let ndocs;
         let odocs;
@@ -1890,16 +1983,16 @@ function deletePatient() {
             // get operations
             odocs = docs.rows;
             // Confirm question
-            let c = "Delete patient \n   " + pdoc.FirstName + " " + pdoc.LastName + " DOB: " + pdoc.DOB + "\n    ";
+            let c = `Delete patient \n   ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}\n    `;
             if (ndocs.length == 0 ) {
                 c += "(no associated notes on this patient) \n   ";
             } else {
-                c += "also delete "+ndocs.length+" associated notes\n   ";
+                c += `also delete ${ndocs.length} associated notes\n   `;
             }
             if (odocs.length == 0 ) {
                 c += "(no associated operations on this patient) \n   ";
             } else {
-                c += "also delete "+odocs.length+" associated operations\n   ";
+                c += `also delete ${odocs.length} associated operations\n   `;
             }
             c += "Are you sure?";
             if ( confirm(c) ) {
@@ -1948,7 +2041,7 @@ function deleteNote() {
             return db.get( noteId );
             })
         .then( (doc) => {
-            if ( confirm("Delete note on patient " + pdoc.FirstName + " " + pdoc.LastName + " DOB: " + pdoc.DOB + ".\n -- Are you sure?") ) {
+            if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
                 return doc;
             } else {
                 throw "No delete";
@@ -1971,7 +2064,7 @@ function deleteOperation() {
             return db.get( operationId );
             })
         .then( (doc) => {
-            if ( confirm("Delete operation\<"+doc.Procedure+">\n on patient " + pdoc.FirstName + " " + pdoc.LastName + " DOB: " + pdoc.DOB + ".\n -- Are you sure?") ) {
+            if ( confirm(`Delete operation \<${doc.Procedure}\>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
                 return doc;
             } else {
                 throw "No delete";
@@ -2144,7 +2237,7 @@ function deleteUser() {
     if ( userId ) {
         user_db.get( userId )
         .then( (doc) => {
-            if ( confirm("Delete user" + doc.name + ".\n -- Are you sure?") ) {
+            if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
                 return user_db.remove(doc) ;
             } else {
                 throw "No delete";
@@ -2380,11 +2473,8 @@ function quickImage2() {
     const image = files.files[0];
 
     createNote( image, "", "" )
-    .then( () => showPage( "NoteList" ) )
-    .catch( (err) => {
-        console.log(err);
-        showPage( "NoteList" );
-        });
+    .catch( (err) => console.log(err) )
+    .finally( () => showPage( patientId==missionId ? "MissionList" : "NoteList" ) ); 
 }
 
 function getImage() {
@@ -2522,11 +2612,11 @@ function downloadPatients() {
         csv += doclist.rows
             .map( row => fields
                 .map( f => row.doc[f] || "" )
-                .map( v => typeof(v) == "number" ? v : '"'+v+'"' )
+                .map( v => typeof(v) == "number" ? v : `"${v}"` )
                 .join(',')
                 )
             .join( '\n' );
-        downloadCSV( csv, 'mdbPatient.csv' );
+        downloadCSV( csv, `${remoteCouch.database}Patient.csv` );
         });
 }
 
@@ -2535,7 +2625,7 @@ function downloadAll() {
     const ofields = [ "Complaint", "Procedure", "Surgeon", "Equipment", "Status", "Date-Time", "Duration", "Lateratility" ]; 
     let csv = pfields
                 .concat(ofields,["Notes"])
-                .map( f => '"'+f+'"' )
+                .map( f => `"${f}"` )
                 .join(',')+'\n';
     let plist;
     let olist = {};
@@ -2558,11 +2648,11 @@ function downloadAll() {
             .map( row =>
                 pfields
                 .map( f => row.doc[f] || "" )
-                .map( v => typeof(v) == "number" ? v : '"'+v+'"' )
+                .map( v => typeof(v) == "number" ? v : `"${v}"` )
                 .concat(
                     (row.id in olist) ? ofields
                                         .map( ff => olist[row.id][ff] || "" )
-                                        .map( v => typeof(v) == "number" ? v : '"'+v+'"' )
+                                        .map( v => typeof(v) == "number" ? v : `"${v}"` )
                                         :
                                         ofields.map( ff => "" ) ,
                     [nlist[row.id]]
@@ -2570,7 +2660,7 @@ function downloadAll() {
                 .join(',')
                 )
             .join( '\n' );
-        downloadCSV( csv, 'mdbAllData.csv' );
+        downloadCSV( csv, `${remoteCouch.database}AllData.csv` );
         });
 }
 

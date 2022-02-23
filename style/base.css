@@ -340,7 +340,7 @@ footer {
     align-content: start;
 }
 
-#MainMenuContent, #DownloadContent, #AdministrationContent,  #SendUserContent {
+#MainMenuContent, #DownloadContent, #AdministrationContent, #SendUserContent, #SettingsContent {
   display: flex ;
   background: #b3b3ff ;
   justify-content: center;
