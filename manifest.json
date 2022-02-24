@@ -1,0 +1,22 @@
+{
+  "background_color": "#1c6ef2",
+  "description": "Medical mission simple database -- details, notes and pictures",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "eMission",
+  "orientation": "natural",
+  "scope": "/",
+  "short_name": "eMission",
+  "start_url": "/index.html",
+  "theme_color": "#45d1d3",
+  "categories": [],
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "images/emission_64x64.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    }
+  ],
+  "shortcuts": []
+}
