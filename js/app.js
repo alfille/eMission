@@ -77,6 +77,12 @@ const structNewPatient = [
     
 const structDemographics = [
     {
+		name: "Photo",
+		hint: "PatientPhoto",
+		type: "image",
+		none: NoPhoto,
+	},
+    {
         name: "LastName",
         hint: "Late name of patient",
         type: "text",
@@ -538,11 +544,23 @@ class PatientData {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
             } else if ( "userlist" in item ) {
                 choices = getUsersAll(true).then( u=>u.rows.map(r=>r.doc[item.userlist]) ) ;
-            }  
+            }
 
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
             switch( item.type ) {
+				case "image":
+					inp = document.createElement("div");
+					cloneClass( ".imagetemplate", inp ) ;
+					inp.setAttribute("data-upload",null);
+					try {
+						inp.querySelector("img").src = getImageFromDoc(doc);
+						}
+					catch {
+						inp.querySelector("img").src = item?.none??null;
+						}
+					lab.appendChild(inp);
+					break ;
                 case "radio":
                     choices
                     .then( clist => clist.forEach( (c) => {
@@ -697,7 +715,6 @@ class PatientData {
             }
     }
 
-
     HMtoMin ( inp ) {
         if ( typeof inp != 'string' ) {
             throw "bad";
@@ -801,7 +818,14 @@ class PatientData {
                 target.value = "show";
             }
         }
-    }                
+    }
+    
+    revertImage( t ) {
+		while ( t && t.nodeName != "LI" ) {
+			t = t.parentNode ;
+		}
+		console.log(t);
+	}                
 
     clickEdit() {
         this.buttonStatus( false );
@@ -815,6 +839,14 @@ class PatientData {
                     return;
                 }
                 switch ( struct[idx].type ) {
+					case "image":
+						{
+						let inp = li.querySelector("div");
+						let src = inp.querySelector("img").src;
+						cloneClass(".imagetemplate_edit",inp);
+						inp.querySelector("img").src=src;
+						}
+						break;
                     case "radio":
                     case "checkbox":
                         document.getElementsByName(localname).forEach( (i) => i.disabled = false );
@@ -876,6 +908,9 @@ class PatientData {
                 let name = struct[idx].name;
                 let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
                 switch ( struct[idx].type ) {
+					case "image":
+						// handle separately
+						break;
                     case "radio":
                         postVal = [...document.getElementsByName(localname)]
                             .filter( i => i.checked )
@@ -900,10 +935,21 @@ class PatientData {
                         postVal = li.querySelector("input").value;
                         break;
                 }
-                if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
-                    changed[ipair] = true ;
-                    Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
-                }
+                if ( struct[idx].type != "image" ) {
+					if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
+						changed[ipair] = true ;
+						Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
+					}
+				} else {
+					// image
+					let inp = li.querySelector("div");
+					let src0 = inp.getAttribute("data-src");
+					let src1 = inp.querySelector("img"),src;
+					if ( src0 != src1 ) {
+						changed[ipair] = true;
+						putImageInDoc( doc, itype, src ) ;
+					}
+				}
             });
         }
         return changed;
@@ -1355,7 +1401,7 @@ class DisplayState {
         const safeIndex = [
             "MainMenu",
             "Mission",
-            "MissionDetails",
+            "MissionInfo",
             "PatientList",
             "PatientPhoto",
             "NoteList",
@@ -1569,7 +1615,7 @@ function showPage( state = "PatientList" ) {
             }
             break;
             
-        case "MissionDetails":
+        case "MissionInfo":
             selectMission();
             db.get( missionId )
             .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
@@ -1580,6 +1626,16 @@ function showPage( state = "PatientList" ) {
                     type: "mission",
                 };
                 objectPatientData = new MissionData( doc, structMission ) ;
+                });
+            break;
+            
+        case "MissionLinks":
+            selectMission();
+            db.get( missionId )
+            .then( (doc) => missionLinks( doc ) )
+            .catch( err => {
+				console.log(err) ;
+				showPage( "MissionInfo" ) ;
                 });
             break;
             
@@ -1639,7 +1695,7 @@ function showPage( state = "PatientList" ) {
             db.get( missionId )
             .then( () => getNotes(true ) )
             .then( notelist => objectNoteList = new NoteList(notelist) )
-            .catch( err=> showPage( "MissionDetails" ) ) ;
+            .catch( err=> showPage( "MissionInfo" ) ) ;
             break;
             
         case "NoteList":            
@@ -2460,7 +2516,6 @@ function createNote( image, text, title="" ) {
         patient_id: patientId,
         date: new Date().toISOString(),
     };
-    console.log(image) ;
     if ( image ) {
         putImageInDoc( doc, image.type, image );
     }

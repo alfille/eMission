@@ -26,6 +26,12 @@
                     <div class= "Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser pageOverlay">
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
                     </div>
+                    <!-- top: MissionLink -->
+                    <div class= "MissionLink pageOverlay">
+                        <button type="button" class="divbutton" onclick="showPage( 'MissionList')">Mission Notes</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
+                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                    </div>
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput pageOverlay">
                         <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
@@ -75,8 +81,8 @@
                         <button type="button" class="divbutton delete" onclick="deleteUser()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
                     </div>
-                    <!-- top: MissionDetails -->
-                    <div class="PatientData MissionDetails pageOverlay">
+                    <!-- top: MissionInfo -->
+                    <div class="PatientData MissionInfo pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MissionList')">Mission Notes</button>
                         <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
                         <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
@@ -107,7 +113,7 @@
                     </div>
                     <!-- top: MissionList -->
                     <div class="MissionList pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'MissionDetails')">Mission Details</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton" type="button" onclick="quickImage()" title="Quick picture">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
@@ -130,7 +136,7 @@
             <!-- body: Settings -->
             <div class="Settings pageOverlay">
                 <div id="SettingsContent">
-                    <button type="button" class="divbutton" onclick="showPage( 'MissionDetails' )">Mission Details</button>
+                    <button type="button" class="divbutton" onclick="showPage( 'MissionInfo' )">Mission Info</button>
                     <button type="button" class="divbutton" onclick="showPage( 'Download' )">Download</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton" onclick="showPage( 'Administration' )">Privileged operations</button>
@@ -175,8 +181,8 @@
                     <table id="OperationsList"></table>
                 </div>
             </div>
-            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access MissionDetails -->
-            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access MissionDetails pageOverlay">
+            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access MissionInfo -->
+            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit Access MissionInfo pageOverlay">
                 <div id="PatientDataContent" ></div>
             </div>
             <!-- body: PatientPhoto -->
@@ -243,12 +249,35 @@
                 <button type="button" class="divbutton" onclick="saveImage()">Save</button>
                 <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Cancel</button>
             </div>
+            <!-- body: Mission Links -->
+            <div class="MissionLinks pageOverlay">
+                <div id="MissionLinksContent" >
+					<label>Current logo: <img id="MissionLinkOldLogo"></label>
+					<label>Upload new logo: ><input type="file" accept="image/*" id="MissionLinkNewLogo"></label>
+					<label>Mission web link: ><input type="url" id="MissionLinkURL"></label>
+					<label>Organization web link: ><input type="url" id="OrgLinkURL"></label>
+                </div>
+            </div>            
             <!-- body: FloatPicture -->
             <img class="FloatPicture pageOverlay" onclick="hideBigPicture(this)">
         </div>
         <!-- copyable parts -->
         <div id="templates" class="pageOverlay">
            <button class="edit_note libutton" type="button">Edit</button>
+            <!-- Image display -->
+            <div class="imagetemplate">
+				<img class="entryfield_image" onclick="showBigPicture(this)">
+            </div>
+            <!-- Image edit -->
+            <div class="imagetemplate_edit PatientPhotoColumn">
+                <img class="entryfield_image" onclick="showBigPicture(this)">
+                <div class="photoToolbar">
+                    <button type="button" onclick="objectPatientData.revertImage(this)"><span><B>Revert</B></span></button>
+                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
+                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                </div>
+            </div>
             <!-- PatientPhoto display -->
             <div class="phototemplate">
                 <div class="PatientPhotoRow">
