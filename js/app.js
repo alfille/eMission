@@ -618,6 +618,14 @@ class ImageQuick extends Image {
     }
 }
 
+class ImageDrop extends Image { // can only save(doc)
+    constructor( upload ) {
+        this.doc = doc;
+        this.backup="";
+        this.upload = upload;
+    }
+}
+
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
 class PatientData {
@@ -2116,7 +2124,6 @@ function cloneClass( fromClass, target ) {
 }    
 
 function patientPhoto( doc ) {
-    console.log("doc",doc);
     let d = document.getElementById("PatientPhotoContent2");
     let inp = new Image( d, doc, NoPhoto );
 
@@ -2470,7 +2477,11 @@ function dropPictureinNote( target ) {
             reader.onload = e2 =>
                 fetch(e2.target.result)
                 .then( b64 => b64.blob() )
-                .then( blb => createNote( blb, "", "" ) )
+                .then( blb => {
+                    let doc = templateNote();
+                    new ImageDrop(blb).save(doc);
+                    return db.put(doc) ;
+                    })
                 .catch( (err) => console.log(err) ) ;
             reader.readAsDataURL(file); // start reading the file data.
             });
@@ -2505,24 +2516,13 @@ function quickPhoto() {
         img.handle();
         img.save(doc)
         db.put(doc)
+        .then( () => getNotes( false ) ) // to try to prime the list
         .catch( err => console.log(err) )
         .finally( showPage( null ) );
     }
     img.display();
     img.addListen(handle);
     img.getImage()
-/*
-    let inp = document.getElementById("imageInput");
-    if ( isAndroid() ) {
-        inp.removeAttribute("capture");
-    } else {
-        inp.setAttribute("capture","environment");
-    }
-*/
-}
-
-function quickImage() {
-    document.getElementById("imageQ").click();
 }
 
 function templateNote( ) {
@@ -2546,47 +2546,6 @@ function createNote( image, text, title="" ) {
     }
 
     return db.put( doc ) ;
-}
-
-function quickImage2() {
-    const files = document.getElementById('imageQ');
-    const image = files.files[0];
-
-    createNote( image, "", "" )
-    .catch( (err) => console.log(err) )
-    .finally( () => showPage( patientId==missionId ? "MissionList" : "NoteList" ) ); 
-}
-
-function getImage() {
-    let inp = document.getElementById("imageInput");
-    inp.click();
-}
-    
-   
-//let urlObject;
-function handleImage() {
-    const files = document.getElementById('imageInput');
-    const image = files.files[0];
-
-    // change display
-    document.getElementsByClassName("QuickPhoto")[0].style.display = "none";
-    document.getElementsByClassName("QuickPhoto2")[0].style.display = "block";
-
-     // see https://www.geeksforgeeks.org/html-dom-createobjecturl-method/
-    document.getElementById('imageCheck').src = URL.createObjectURL(image);
-}    
-
-function saveImage() {
-    const files = document.getElementById('imageInput');
-    const image = files.files[0];
-    const text = document.getElementById("annotation").innerText;
-
-    createNote( image, text, "" )
-    .catch( (err) => console.log(err) )
-    .finally( () => { 
-        document.getElementById('imageCheck').src = "";
-        showPage( "NoteList" );
-        });
 }
 
 function show_screen( bool ) {

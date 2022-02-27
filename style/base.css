@@ -200,7 +200,7 @@ footer {
   background: #99ddff;
 }
 
-#imageInput, .imageBar, #imageQ {
+.imageBar {
   display:none;
 }
 .editable {

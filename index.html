@@ -22,7 +22,7 @@
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
                     </div>
-                    <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser QuickPhoto -->
+                    <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser -->
                     <div class= "Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser pageOverlay">
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
                     </div>
@@ -106,14 +106,14 @@
                     <!-- top: NoteList -->
                     <div class="NoteList pageOverlay">
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="quickImage()" title="Quick picture">&#128247;</button>
+                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage( 'QuickPhoto' )" title="Quick picture">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
                     </div>
                     <!-- top: MissionList -->
                     <div class="MissionList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="quickImage()" title="Quick picture">&#128247;</button>
+                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage('QuickPhoto')" title="Quick picture">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
                     </div>
                 </div>
@@ -198,7 +198,7 @@
                     <div class="PatientProcButtons" id="ProcList">
                         <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Notes</button>
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="quickImage()" title="Quick picture">&#128247; New Picture</button>
+                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage( 'QuickPhoto' )" title="Quick picture">&#128247; New Picture</button>
                     </div>
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="printCard()">Print Card</button>
@@ -234,25 +234,6 @@
             <!-- body: QuickPhoto (quick photo) -->
             <div class="QuickPhoto pageOverlay">
                 <div id="QuickPhotoContent"></div>
-            </div>
-            <!-- body: QuickPhoto (quick photo) -->
-<!--
-            <div class="QuickPhoto pageOverlay">
-                <input type="file" accept="image/*" id="imageInput" onchange="handleImage()" capture="environment">
-                <input type="file" accept="image/*" id="imageQ" onchange="quickImage2()" capture="environment">
-                <button type="button" class="divbutton" onclick="getImage()">&#128247; or &#119809;
-                u&#818; Gallery</button>
-                <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Cancel</button>
-            </div>
--->
-            <!-- body: QuickPhoto2 (quick photo) -->
-            <div class="QuickPhoto2 pageOverlay">
-                <div id="NoteImage2Content" ></div>
-                <img id="imageCheck" class="entryfield_image" onclick="showBigPicture(this)">
-                <label for="annotation">Image notes (optional)</label>
-                <div id="annotation" class="editable"></div>
-                <button type="button" class="divbutton" onclick="saveImage()">Save</button>
-                <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Cancel</button>
             </div>
             <!-- body: FloatPicture -->
             <img class="FloatPicture pageOverlay" onclick="hideBigPicture(this)">
