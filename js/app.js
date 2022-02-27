@@ -17,6 +17,7 @@ var noteId;
 var operationId;
 var remoteCouch;
 var NoPhoto = "style/NoPhoto.png";
+var DCTOHClogo = "style/DCTOHC.png";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
@@ -77,11 +78,11 @@ const structNewPatient = [
     
 const structDemographics = [
     {
-		name: "Photo",
-		hint: "PatientPhoto",
-		type: "image",
-		none: NoPhoto,
-	},
+        name: "Photo",
+        hint: "PatientPhoto",
+        type: "image",
+        none: NoPhoto,
+    },
     {
         name: "LastName",
         hint: "Late name of patient",
@@ -348,15 +349,31 @@ const structSuperUser = [
 
 const structMission = [
     {
+        name: "Logo",
+        hint: "logo for this organization/mission -- ~150x50 pixels",
+        type: "image",
+        none: DCTOHClogo,
+    } , 
+    {
         name: "Organization",
         hint: "Mission organization",
         type: "text",
     } , 
     {
-        name: "Name",
+        name: "OrgLink",
+        hint: "Link to organization web page",
+        type: "url",
+    } , 
+    {
+        name: "Mission",
         hint: "Mission Name",
         type: "text",
     },
+    {
+        name: "MissionLink",
+        hint: "Link to Mission web page",
+        type: "url",
+    } , 
     {
         name: "Location",
         hint: "Where is the mission?",
@@ -480,6 +497,127 @@ function createQueries() {
 function testScheduleIndex() {
 }
 
+class Image {
+    constructor( parent, doc, backup ) {
+        this.doc = doc;
+        this.parent = parent;
+        this.backup=backup;
+        this.fromDoc();
+    }
+    
+    fromDoc() {
+        let data = this.doc ?._attachments ?.image ?.data;
+        if ( data === undefined ) {
+            this.src = this.backup ?? null ;
+        } else {
+            this.src = URL.createObjectURL(data);
+        }
+        this.upload=null;
+    }
+    
+    display() {
+        let img = this.parent.querySelector( "img");
+        try { img.addEventListener( 'click', (e) => showBigPicture(img) ); }
+            catch {}
+        img.src = this.src;
+        img.style.display = this.src ? "block":"none";
+    }
+        
+    revert() {
+        this.fromDoc();
+        this.display();
+    }
+
+    addListen() {
+        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', (e) => this.revert() ); }
+            catch {}
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => this.getImage() ); }
+            catch {}
+        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', (e) => this.remove() ); }
+            catch {}
+        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', (e) => this.handle() ); }
+            catch {}
+    }
+
+    remove() {
+        this.upload="remove";
+        this.src=this.backup ?? null ;
+        this.display();
+    }
+
+    getImage() {
+        let inp = this.parent.querySelector(".imageBar");
+        if ( isAndroid() ) {
+            inp.removeAttribute("capture");
+        } else {
+            inp.setAttribute("capture","environment");
+        }
+        inp.click();
+    }
+
+    handle() {
+        const files = this.parent.querySelector('.imageBar') ;
+        this.upload = files.files[0];
+        this.src = URL.createObjectURL(this.upload);
+        this.display();
+        try { this.parent.querySelector(".imageRemove").disabled = false; }
+            catch{}
+    }
+
+    save(doc) {
+        if ( this.upload == null ) {
+        } else if ( this.upload == "remove" ) {
+            if ( "_attachments" in doc ) {
+                delete doc._attachments;
+            }
+        } else {
+            Object.assign(
+                doc,
+                { _attachments: {
+                    image: {
+                        content_type: this.upload.type,
+                        data: this.upload,
+                        }
+                }} );
+        }
+    }
+
+    changed() {
+        return this.upload != null;
+    }
+}
+
+class ImagePlus extends Image {
+    constructor(...args) {
+        super(...args);
+        this.text = this.doc?.text ?? "";
+        this.title = this.doc?.title ?? "";
+    }
+
+    display() {
+        super.display();
+        this.parent.querySelector(".entryfield_text").innerText = this.text;
+        this.parent.querySelector(".entryfield_title").innerText = this.title;
+    }
+
+    save(doc) {
+        super.save(doc);
+        console.log("Saving");
+        doc.text = this.parent.querySelector(".entryfield_text").innerText;
+        doc.title = this.parent.querySelector(".entryfield_title").innerText;
+        console.log(doc);
+    }
+}
+
+class ImageQuick extends Image {
+    addListen(hfunc) {
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => showPage('QuickPhoto') ); }
+            catch {}
+        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', (e) => hfunc() ); }
+            catch {}
+    }
+}
+
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
 class PatientData {
@@ -491,6 +629,7 @@ class PatientData {
         this.struct = [];
         this.ul = [];
         this.pairs = 0;
+        this.images={} ;
 
         for ( let iarg = 0; iarg<args.length; ++iarg ) {
             this.doc[this.pairs] = args[iarg];
@@ -549,18 +688,13 @@ class PatientData {
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
             switch( item.type ) {
-				case "image":
-					inp = document.createElement("div");
-					cloneClass( ".imagetemplate", inp ) ;
-					inp.setAttribute("data-upload",null);
-					try {
-						inp.querySelector("img").src = getImageFromDoc(doc);
-						}
-					catch {
-						inp.querySelector("img").src = item?.none??null;
-						}
-					lab.appendChild(inp);
-					break ;
+                case "image":
+                    inp = document.createElement("div");
+                    cloneClass( ".imagetemplate", inp ) ;
+                    this.images[localname] = new Image( inp, doc, item?.none ) ;
+                    this.images[localname].display() ;
+                    lab.appendChild(inp);
+                    break ;
                 case "radio":
                     choices
                     .then( clist => clist.forEach( (c) => {
@@ -821,11 +955,11 @@ class PatientData {
     }
     
     revertImage( t ) {
-		while ( t && t.nodeName != "LI" ) {
-			t = t.parentNode ;
-		}
-		console.log(t);
-	}                
+        while ( t && t.nodeName != "LI" ) {
+            t = t.parentNode ;
+        }
+        console.log(t);
+    }                
 
     clickEdit() {
         this.buttonStatus( false );
@@ -839,14 +973,11 @@ class PatientData {
                     return;
                 }
                 switch ( struct[idx].type ) {
-					case "image":
-						{
-						let inp = li.querySelector("div");
-						let src = inp.querySelector("img").src;
-						cloneClass(".imagetemplate_edit",inp);
-						inp.querySelector("img").src=src;
-						}
-						break;
+                    case "image":
+                        cloneClass(".imagetemplate_edit",li.querySelector("div"));
+                        this.images[localname].display();
+                        this.images[localname].addListen();
+                        break;
                     case "radio":
                     case "checkbox":
                         document.getElementsByName(localname).forEach( (i) => i.disabled = false );
@@ -908,9 +1039,9 @@ class PatientData {
                 let name = struct[idx].name;
                 let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
                 switch ( struct[idx].type ) {
-					case "image":
-						// handle separately
-						break;
+                    case "image":
+                        // handle separately
+                        break;
                     case "radio":
                         postVal = [...document.getElementsByName(localname)]
                             .filter( i => i.checked )
@@ -936,20 +1067,18 @@ class PatientData {
                         break;
                 }
                 if ( struct[idx].type != "image" ) {
-					if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
-						changed[ipair] = true ;
-						Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
-					}
-				} else {
-					// image
-					let inp = li.querySelector("div");
-					let src0 = inp.getAttribute("data-src");
-					let src1 = inp.querySelector("img"),src;
-					if ( src0 != src1 ) {
-						changed[ipair] = true;
-						putImageInDoc( doc, itype, src ) ;
-					}
-				}
+                    if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
+                        changed[ipair] = true;
+                        Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
+                    }
+                } else {
+                    // image
+                    console.log("image",doc);
+                    if ( this.images[localname].changed() ) {
+                        changed[ipair] = true;
+                        this.images[localname].save(doc) ;
+                    }
+                }
             });
         }
         return changed;
@@ -959,8 +1088,8 @@ class PatientData {
         let changed = this.loadDocData();
         Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
             .catch( (err) => console.log(err) )
-            .finally( () => showPage( state )
-        );
+            .finally( () => showPage( state ) )
+        ;
     }
     
     savePatientData() {
@@ -1141,16 +1270,11 @@ class Tbar {
     fieldset( existingdiv, editclass ) {
         this.existing = {};
         this.parent  = existingdiv;
-        this.existing.oldText = existingdiv.querySelector( ".entryfield_text" ).innerText;
-        this.existing.oldTitle= existingdiv.querySelector( ".entryfield_title" ).innerText;
-        this.existing.src     = existingdiv.querySelector( ".entryfield_image" ).src;
 
         this.working = {};
         cloneClass( editclass, existingdiv );
-        this.parent.querySelector(".entryfield_image").src = this.existing.src;
-        this.parent.querySelector(".entryfield_title").innerText = this.existing.oldTitle;
-        this.parent.querySelector(".entryfield_text").innerText = this.existing.oldText;
-        this.working.upload = null ;
+        this.image.display();
+        this.image.addListen();
     }
 
     buttonsdisabled( bool ) {
@@ -1166,29 +1290,12 @@ class Tbar {
         this.deletefunc();
         this.leave("NoteList");
     }
-
-    getImage() {
-        this.parent.querySelector(".imageBar").click();
-    }
-
-    handleImage() {
-        const files = this.parent.querySelector('.imageBar') ;
-        this.working.upload = files.files[0];
-        this.parent.querySelector(".entryfield_image").src = URL.createObjectURL(this.working.upload);
-        this.parent.querySelector(".entryfield_image").style.display = "block";
-        this.parent.querySelector(".tbarxpic").disabled = false;
-    }
-
-    removeImage() {
-        this.parent.querySelector(".entryfield_image").style.display = "none";
-        this.working.upload = "remove";
-        this.parent.querySelector(".tbarxpic").disabled = true;
-    }
 }
 
 class Nbar extends Tbar {
     // for notes
-    startedit( existingdiv ) {
+    startedit( existingdiv, image ) {
+        this.image = image;
         if ( this.active() ) {
             return false;
         }
@@ -1205,16 +1312,6 @@ class Nbar extends Tbar {
             
         this.parent.querySelector(".tbardel").style.visibility = (this.deletefunc!=null) ? "visible" : "hidden";
 
-        if ( this.parent.querySelector(".entryfield_image")?.src != null  ) {
-            console.log("block");
-            this.parent.querySelector(".tbarxpic").disabled = false;
-            this.parent.querySelector(".entryfield_image").style.display = "block";
-        } else {
-            console.log("none");
-            this.parent.querySelector(".tbarxpic").disabled = true;
-            this.parent.querySelector(".entryfield_image").style.display = "none";
-        }
-
         return true;
     }
 
@@ -1224,26 +1321,18 @@ class Nbar extends Tbar {
                 // existing note
                 db.get(noteId)
                 .then( (doc) => {
-                    doc.text = this.parent.querySelector(".entryfield_text").innerText;
-                    doc.title = this.parent.querySelector(".entryfield_title").innerText;
                     doc.patient_id = patientId;
                     doc.type = "note";
-                    if ( this.working.upload == null ) {
-                    } else if ( this.working.upload === "remove") {
-                        deleteImageFromDoc( doc );
-                    } else {
-                        putImageInDoc( doc, this.working.upload.type, this.working.upload );
-                    }
+                    this.image.save(doc);
                     return db.put( doc );
                     })
                 .catch( (err) => console.log(err) )
                 .finally( () => this.leave("NoteList") );
             } else {
                 // new note
-                createNote(
-                    this.working.upload && this.working.upload !== "remove" ? this.working.upload : null,
-                    this.parent.querySelector(".entryfield_text").innerText,
-                    this.parent.querySelector(".entryfield_title").innerText )
+                let doc=templateNote();
+                this.image.save(doc);
+                db.put(doc)
                 .catch( (err) => console.log(err) )
                 .finally( () => this.leave("NoteList") );
             }
@@ -1252,46 +1341,6 @@ class Nbar extends Tbar {
 }
     
 var editBar;        
-
-class Pbar extends Tbar {
-    // for PatientPhoto
-    startedit() {
-        let existingdiv = document.getElementById("PatientPhotoContent2");
-        if ( this.active() ) {
-            return false;
-        }
-        this.enter();
-        this.fieldset( existingdiv, ".phototemplate_edit" );
-            
-        this.parent.querySelector(".tbarxpic").disabled = false;
-
-        return true;
-    }
-
-    removeImage() {
-        this.working.upload = "remove";
-        this.parent.querySelector(".entryfield_image").src = NoPhoto;
-    }
-
-    saveedit() {
-        if ( this.active() ) {
-            if ( patientSelected() ) {
-                getPatient( true )
-                .then( (doc) => {
-                    if ( this.working.upload == null ) {
-                    } else if ( this.working.upload === "remove") {
-                        deleteImageFromDoc( doc );
-                    } else {
-                        putImageInDoc( doc, this.working.upload.type, this.working.upload );
-                    }
-                    return db.put( doc );
-                })
-                .catch( (err)  => console.log(err) )
-                .finally( () => this.leave() );
-            }
-        }
-    }    
-}
 
 function selectPatient( pid ) {
     if ( patientId != pid ) {
@@ -1455,6 +1504,10 @@ class DisplayState {
     test( page ) {
         return this.current()==page ;
     }
+
+    forget() {
+        this.back();
+    }
 }
 
 function showPage( state = "PatientList" ) {
@@ -1601,7 +1654,6 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientPhoto":
-            editBar = new Pbar() ;
             if ( patientSelected() ) {
                 selectPatient( patientId );
                 getPatient( true )
@@ -1617,7 +1669,7 @@ function showPage( state = "PatientList" ) {
             
         case "MissionInfo":
             selectMission();
-            db.get( missionId )
+            getPatient( true )
             .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
             .catch( (err) => {
                 let doc = {
@@ -1629,19 +1681,9 @@ function showPage( state = "PatientList" ) {
                 });
             break;
             
-        case "MissionLinks":
-            selectMission();
-            db.get( missionId )
-            .then( (doc) => missionLinks( doc ) )
-            .catch( err => {
-				console.log(err) ;
-				showPage( "MissionInfo" ) ;
-                });
-            break;
-            
         case "PatientDemographics":
             if ( patientSelected() ) {
-                getPatient( false )
+                getPatient( true )
                 .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
                 .catch( (err) => {
                     console.log(err);
@@ -1726,10 +1768,10 @@ function showPage( state = "PatientList" ) {
             }
             break;
             
-       case "NoteImage":
-            editBar = new Nbar() ;
-            if ( patientSelected() ) {
-                noteImage();
+       case "QuickPhoto":
+            objectDisplayState.forget(); // don't return here!
+            if ( patientId ) { // patient or Mission!
+                quickPhoto();
             } else {
                 showPage( "PatientList" );
             }
@@ -2076,16 +2118,15 @@ function cloneClass( fromClass, target ) {
 function patientPhoto( doc ) {
     console.log("doc",doc);
     let d = document.getElementById("PatientPhotoContent2");
+    let inp = new Image( d, doc, NoPhoto );
 
-    cloneClass( ".phototemplate", d );
-    loadTemplate( d, doc, NoPhoto );
-    
-    dropPictureinNote( d );
+    cloneClass( ".imagetemplate", d );
+    inp.display();
 }
 
 function newImage() {
     unselectNote();
-    showPage( "NoteImage" );  
+    showPage( "QuickPhoto" );  
 }
 
 function deleteNote() {
@@ -2334,6 +2375,7 @@ class NoteList extends PatientData {
         super();
         parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
+        this.images={};
 
         // show notes
         if ( notelist.rows.length == 0 ) {
@@ -2380,7 +2422,9 @@ class NoteList extends PatientData {
         }
         if ( "doc" in note ) {
             cloneClass( ".notetemplate", li );
-            loadTemplate ( li, note.doc )
+            this.images[note.id]=new ImagePlus(li,note.doc)
+            this.images[note.id].display();
+            li.addEventListener( 'dblclick', (e) => editBar.startedit( li,this.images[note.id] ) );
         }    
         
         li.addEventListener( 'click', (e) => {
@@ -2392,38 +2436,18 @@ class NoteList extends PatientData {
             picker.attach({ element: i[0] });
             tp.attach({ element: i[1] });
             selectNote( note.id );
-            editBar.startedit( li );
+            editBar.startedit( li, this.images[note.id] );
             };
         label.addEventListener( 'dblclick', (e) => {
             var i = label.querySelectorAll("input");
             picker.attach({ element: i[0] });
             tp.attach({ element: i[1] });
             selectNote( note.id );
-            editBar.startedit( li );
+            editBar.startedit( li, this.images[note.id] );
             });
 
         return li;
     }
-}
-
-function loadTemplate( parent, doc, defaultSrc="" ) {
-    let pqi = parent.querySelector(".entryfield_image") ;
-    pqi.style.display="inline-block";
-    try {
-        let imagedata = getImageFromDoc( doc );
-        pqi.addEventListener('click', (e) => showBigPicture(img) );
-        pqi.src = imagedata;
-        }
-    catch(err) {
-        pqi.src=defaultSrc;
-        }
-    if ( pqi.src == "undefined" || pqi.src == "" ) {
-        pqi.src = "";
-        pqi.style.display="none";
-    }
-    parent.querySelector(".entryfield_title").innerText = doc?.title ?? "";
-    parent.querySelector(".entryfield_text").innerText = doc?.text ?? "";
-    parent.addEventListener( 'dblclick', (e) => editBar.startedit( parent ) );
 }
 
 function dropPictureinNote( target ) {
@@ -2454,25 +2478,6 @@ function dropPictureinNote( target ) {
         });
 }
 
-function getImageFromDoc( doc ) {
-    if ( !("_attachments" in doc) ) {
-        throw "No attachments";
-    }
-    if ( !("image" in doc._attachments) ) {
-        throw "No image";
-    }
-    if ( !("data" in doc._attachments.image) ) {
-        throw "No image data";
-    }
-    return URL.createObjectURL(doc._attachments.image.data);
-}
-
-function deleteImageFromDoc( doc ) {
-    if ( "_attachments" in doc ) {
-        delete doc._attachments;
-    }
-}
-
 function putImageInDoc( doc, itype, idata ) {
     doc._attachments = {
         image: {
@@ -2485,37 +2490,57 @@ function putImageInDoc( doc, itype, idata ) {
 function noteNew() {
     let d = document.getElementById("NoteNewContent");
     cloneClass ( ".notetemplate", d );
-    d.querySelector(".entryfield_image").src = null;
-    d.querySelector(".entryfield_title").innerText = "";
-    d.querySelector(".entryfield_text").innerText = "";
+    let doc = templateNote();
+    let img = new ImagePlus( d, doc );
     document.getElementById("NoteNewLabel").innerHTML = noteTitle();
-    editBar.startedit( d );
+    editBar.startedit( d, img );
 }
 
-function noteImage() {
+function quickPhoto() {
+    let inp = document.getElementById("QuickPhotoContent");
+    cloneClass( ".imagetemplate_quick", inp );
+    let doc = templateNote();
+    let img = new ImageQuick( inp, doc );
+    function handle() {
+        img.handle();
+        img.save(doc)
+        db.put(doc)
+        .catch( err => console.log(err) )
+        .finally( showPage( null ) );
+    }
+    img.display();
+    img.addListen(handle);
+    img.getImage()
+/*
     let inp = document.getElementById("imageInput");
     if ( isAndroid() ) {
         inp.removeAttribute("capture");
     } else {
         inp.setAttribute("capture","environment");
     }
+*/
 }
 
 function quickImage() {
     document.getElementById("imageQ").click();
 }
 
-function createNote( image, text, title="" ) {
-    // returns a promise
-    let doc = {
+function templateNote( ) {
+    return {
         _id: makeNoteId(),
-        text: text,
-        title: title,
+        text: "",
+        title: "",
         author: remoteCouch.username,
         type: "note",
         patient_id: patientId,
         date: new Date().toISOString(),
     };
+}
+
+function createNote( image, text, title="" ) {
+    // returns a promise
+    let doc = templateNote();
+    doc.title = title;
     if ( image ) {
         putImageInDoc( doc, image.type, image );
     }
@@ -2544,8 +2569,8 @@ function handleImage() {
     const image = files.files[0];
 
     // change display
-    document.getElementsByClassName("NoteImage")[0].style.display = "none";
-    document.getElementsByClassName("NoteImage2")[0].style.display = "block";
+    document.getElementsByClassName("QuickPhoto")[0].style.display = "none";
+    document.getElementsByClassName("QuickPhoto2")[0].style.display = "block";
 
      // see https://www.geeksforgeeks.org/html-dom-createobjecturl-method/
     document.getElementById('imageCheck').src = URL.createObjectURL(image);
@@ -2584,7 +2609,8 @@ function printCard() {
     .then( (doc) => {
         show_screen( false );
         console.log( "print",doc);
-        let photo = document.getElementById("photoCard");
+        let img = new Image( card, doc, NoPhoto ) ;
+        img.display();
         let link = new URL(window.location.href);
         link.searchParams.append( "patientId", patientId );
         let qr = new QR(
@@ -2592,14 +2618,6 @@ function printCard() {
             link.href,
             200,200,
             4);
-        try {
-            photo.src = getImageFromDoc( doc );
-            //console.log("Image gotten".doc)
-            } 
-        catch (err) {
-            photo.src = "style/NoPhoto.png";
-            //console.log("No image",doc);
-            }
         t[0].rows[0].cells[1].innerText = doc.LastName+"' "+doc.FirstName;
         t[0].rows[1].cells[1].innerText = doc.Complaint;
         t[0].rows[2].cells[1].innerText = "";

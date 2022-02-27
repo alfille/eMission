@@ -22,15 +22,13 @@
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
                     </div>
-                    <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser -->
+                    <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser QuickPhoto -->
                     <div class= "Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser pageOverlay">
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
                     </div>
-                    <!-- top: MissionLink -->
-                    <div class= "MissionLink pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'MissionList')">Mission Notes</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                    <!-- top: QuickPhoto -->
+                    <div class= "QuickPhoto pageOverlay">
+                        <button type="button" class="divbutton return" onclick="showPage()">Return</button>
                     </div>
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput pageOverlay">
@@ -153,6 +151,7 @@
                     <button type="button" class="divbutton" onclick="showPage( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="forceReplicate()">Force Replicate</button>
                     <button type="button" class="divbutton" onclick="testScheduleIndex()">Test routines</button>
+                    <button type="button" class="divbutton" onclick="showPage('QuickPhoto')">Quick Photo</button>
                 </div>
             </div>
             <!-- body: Download -->
@@ -232,16 +231,22 @@
                 <div id="NoteNewLabel"></div>
                 <div id="NoteNewContent"></div>
             </div>
-            <!-- body: NoteImage (quick photo) -->
-            <div class="NoteImage pageOverlay">
+            <!-- body: QuickPhoto (quick photo) -->
+            <div class="QuickPhoto pageOverlay">
+                <div id="QuickPhotoContent"></div>
+            </div>
+            <!-- body: QuickPhoto (quick photo) -->
+<!--
+            <div class="QuickPhoto pageOverlay">
                 <input type="file" accept="image/*" id="imageInput" onchange="handleImage()" capture="environment">
                 <input type="file" accept="image/*" id="imageQ" onchange="quickImage2()" capture="environment">
                 <button type="button" class="divbutton" onclick="getImage()">&#128247; or &#119809;
                 u&#818; Gallery</button>
                 <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Cancel</button>
             </div>
-            <!-- body: NoteImage2 (quick photo) -->
-            <div class="NoteImage2 pageOverlay">
+-->
+            <!-- body: QuickPhoto2 (quick photo) -->
+            <div class="QuickPhoto2 pageOverlay">
                 <div id="NoteImage2Content" ></div>
                 <img id="imageCheck" class="entryfield_image" onclick="showBigPicture(this)">
                 <label for="annotation">Image notes (optional)</label>
@@ -249,15 +254,6 @@
                 <button type="button" class="divbutton" onclick="saveImage()">Save</button>
                 <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Cancel</button>
             </div>
-            <!-- body: Mission Links -->
-            <div class="MissionLinks pageOverlay">
-                <div id="MissionLinksContent" >
-					<label>Current logo: <img id="MissionLinkOldLogo"></label>
-					<label>Upload new logo: ><input type="file" accept="image/*" id="MissionLinkNewLogo"></label>
-					<label>Mission web link: ><input type="url" id="MissionLinkURL"></label>
-					<label>Organization web link: ><input type="url" id="OrgLinkURL"></label>
-                </div>
-            </div>            
             <!-- body: FloatPicture -->
             <img class="FloatPicture pageOverlay" onclick="hideBigPicture(this)">
         </div>
@@ -266,43 +262,25 @@
            <button class="edit_note libutton" type="button">Edit</button>
             <!-- Image display -->
             <div class="imagetemplate">
-				<img class="entryfield_image" onclick="showBigPicture(this)">
+                <img class="entryfield_image">
             </div>
             <!-- Image edit -->
-            <div class="imagetemplate_edit PatientPhotoColumn">
-                <img class="entryfield_image" onclick="showBigPicture(this)">
+            <div class="imagetemplate_edit">
+                <img class="entryfield_image">
                 <div class="photoToolbar">
-                    <button type="button" onclick="objectPatientData.revertImage(this)"><span><B>Revert</B></span></button>
-                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
-                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                    <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
+                    <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
+                    <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
             </div>
-            <!-- PatientPhoto display -->
-            <div class="phototemplate">
-                <div class="PatientPhotoRow">
-                    <img class="entryfield_image" onclick="showBigPicture(this)">
-                    <div class="PatientPhotoColumn">
-                        <div class="entryfield_title"></div>
-                        <div class="entryfield_text">Patient photo</div>
-                        <button class="edit_note libutton" type="button" onClick="editBar.startedit()">Edit</button>
-                    </div>
-                </div>
-            </div>
-            <!-- PatientPhoto edit -->
-            <div class="phototemplate_edit PatientPhotoColumn">
-                <img class="entryfield_image" onclick="showBigPicture(this)">
+            <!-- Quick Photo -->
+            <div class="imagetemplate_quick">
+                <img class="entryfield_image">
                 <div class="photoToolbar">
-                    <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
-                    <button type="button" onclick="editBar.leave()"><span><B>Cancel</B></span></button>
-                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
-                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                    <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
-                <div>
-                    <label>Title: <div class="entryfield_title" contenteditable></div></label>
-                </div>
-                <div class="entryfield_text" contenteditable></div>
             </div>
             <!-- Note display -->
             <div class="notetemplate">
@@ -316,10 +294,11 @@
                 <div class="editToolbar">
                     <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
                     <button type="button" onclick="editBar.leave()"><span><B>Cancel</B></span></button>
-                    <button type="button" onclick="editBar.getImage()" title="Get image"><span><B>&#128247;</B></span></button>            
-                    <button type="button" onclick="editBar.removeImage()" class="tbarxpic" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
+                    <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
+                    <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
                     <button type="button" onclick="editBar.deleteedit()" class="tbardel delete" title="Delete note"><span><B>Delete</B></span></button>
-                    <input type="file" accept="image/*" class="imageBar" onchange="editBar.handleImage()" capture="environment">
+                    <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
                 <label>Title: <div class="entryfield_title" contenteditable></div></label>
                 <div class="entryfield_text" contenteditable></div>
