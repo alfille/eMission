@@ -119,16 +119,17 @@ ul {
     height:auto;
     display:block;
     z-index:9;
-}.FloatPicture {
+}
+.FloatPicture {
     position: absolute;
-    z-index: 1;
+    z-index: 10;
     margin-left: auto;
     margin-right: auto;
     margin-top: auto;
     margin-bottom: auto;
     top: 0px;
-    max-height: 100% ;
-    max-width: auto ;
+    max-height: auto ;
+    max-width: 100% ;
 }
 @media only and (orientation: landscape) {
   .entryfield_image {
@@ -241,11 +242,6 @@ footer {
 .edit_note:disabled {
   background: #ffffcc;
   color: grey;
-}
-#textdiv, #NoteNewText div:nth-child(3) {
-  background: gold;
-  min-height: 1em;
-  border: 2px solid black;
 }
 .tbardel:disabled {
   background: #ffffcc;

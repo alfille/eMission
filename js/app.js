@@ -10,7 +10,6 @@ var userId = null; // not cookie backed
 var userPass = {};
 
 // globals cookie backed
-var displayState;
 var objectDisplayState ;
 var patientId;
 var noteId;
@@ -514,13 +513,20 @@ class Image {
         }
         this.upload=null;
     }
+
+    showBigPicture( target ) {
+        let big = document.querySelector( ".FloatPicture" );
+        big.src = target.src;
+        big.style.display = "block";
+    }
     
     display() {
         let img = this.parent.querySelector( "img");
-        try { img.addEventListener( 'click', (e) => showBigPicture(img) ); }
-            catch {}
-        img.src = this.src;
-        img.style.display = this.src ? "block":"none";
+        if ( img ) {
+            img.addEventListener( 'click', () => this.showBigPicture(img) );
+            img.src = this.src;
+            img.style.display = this.src ? "block":"none";
+        }
     }
         
     revert() {
@@ -529,13 +535,13 @@ class Image {
     }
 
     addListen() {
-        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', (e) => this.revert() ); }
+        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
             catch {}
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => this.getImage() ); }
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
             catch {}
-        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', (e) => this.remove() ); }
+        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
             catch {}
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', (e) => this.handle() ); }
+        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
             catch {}
     }
 
@@ -620,8 +626,7 @@ class ImageQuick extends Image {
 
 class ImageDrop extends Image { // can only save(doc)
     constructor( upload ) {
-        this.doc = doc;
-        this.backup="";
+        super( null, null );
         this.upload = upload;
     }
 }
@@ -847,8 +852,7 @@ class PatientData {
                 d.setHours( t.hr );
                 d.setMinutes( t.min );
                 } 
-            catch( err ) {
-                }
+            catch( err ) {}
             // convert to local time
             return d.toISOString();
             }
@@ -1212,7 +1216,7 @@ class EditUserData extends PatientData {
             this.doc[0].roles = [ this.doc[0].roles ];
             userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
             user_db.put( this.doc[0] )
-            .then( response => showPage( "SendUser" ) )
+            .then( () => showPage( "SendUser" ) )
             .catch( err => {
                 console.log(err);
                 showPage( "UserList" );
@@ -1378,7 +1382,7 @@ function selectMission() {
     patientId = missionId;
     db.get(missionId)
     .then( doc => document.getElementById( "titlebox" ).innerHTML = `Mission: <B>${doc.Organization}: ${doc.Name}</B> to <B>${doc.Location}</B> on <B>${doc.StartDate} - ${doc.EndDate}</B>` )
-    .catch( err => document.getElementById( "titlebox" ).innerHTML = "" ) ;
+    .catch( () => document.getElementById( "titlebox" ).innerHTML = "" ) ;
 }
 
 function selectOperation( oid ) {
@@ -1634,10 +1638,7 @@ function showPage( state = "PatientList" ) {
         case "OperationEdit":
             if ( patientSelected() ) {
                 if ( operationId ) {
-                    db.query("bySurgeon",{group:true,reduce:true})
-                    .then( s => {
-                        return db.get( operationId );
-                        })
+                    db.get( operationId )
                     .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
                     .catch( (err) => {
                         console.log(err);
@@ -1855,10 +1856,10 @@ class SortTable {
             let row = tbody.insertRow(-1);
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
-            row.addEventListener( 'click', (e) => {
+            row.addEventListener( 'click', () => {
                 this.selectFunc( record._id );
             });
-            row.addEventListener( 'dblclick', (e) => {
+            row.addEventListener( 'dblclick', () => {
                 this.selectFunc( record._id );
                 showPage( this.editpage );
             });
@@ -2118,7 +2119,6 @@ function deletePatient() {
 
 function cloneClass( fromClass, target ) {
     let c = document.getElementById("templates").querySelector(fromClass);
-    console.log(fromClass,target,c);
     target.innerHTML = "";
     c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
 }    
@@ -2129,11 +2129,6 @@ function patientPhoto( doc ) {
 
     cloneClass( ".imagetemplate", d );
     inp.display();
-}
-
-function newImage() {
-    unselectNote();
-    showPage( "QuickPhoto" );  
 }
 
 function deleteNote() {
@@ -2380,7 +2375,7 @@ function getNotes(attachments) {
 class NoteList extends PatientData {
     constructor( notelist ) {
         super();
-        parent = document.getElementById("NoteListContent") ;
+        let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
         this.images={};
 
@@ -2416,7 +2411,7 @@ class NoteList extends PatientData {
         this.DateTimetoInput(nt[1]).forEach( (i) => cdiv.appendChild(i) );
         cdiv.appendChild( document.createTextNode( " by "+nt[0]) );
         li.appendChild(cdiv);
-        li.addEventListener( 'click', (e) => selectNote( note.id ) );
+        li.addEventListener( 'click', () => selectNote( note.id ) );
 
         return li;
     }
@@ -2431,21 +2426,20 @@ class NoteList extends PatientData {
             cloneClass( ".notetemplate", li );
             this.images[note.id]=new ImagePlus(li,note.doc)
             this.images[note.id].display();
-            li.addEventListener( 'dblclick', (e) => editBar.startedit( li,this.images[note.id] ) );
+            li.addEventListener( 'dblclick', () => editBar.startedit( li,this.images[note.id] ) );
         }    
         
-        li.addEventListener( 'click', (e) => {
+        li.addEventListener( 'click', () => {
             selectNote( note.id );
         });
-        label.getElementsByClassName("edit_note")[0].onclick =
-            (e) => {
+        label.querySelector(".edit_note").addEventListener( 'click', () => {
             var i = label.querySelectorAll("input");
             picker.attach({ element: i[0] });
             tp.attach({ element: i[1] });
             selectNote( note.id );
             editBar.startedit( li, this.images[note.id] );
-            };
-        label.addEventListener( 'dblclick', (e) => {
+            });
+        label.addEventListener( 'dblclick', () => {
             var i = label.querySelectorAll("input");
             picker.attach({ element: i[0] });
             tp.attach({ element: i[1] });
@@ -2470,32 +2464,25 @@ function dropPictureinNote( target ) {
         e.stopPropagation();
         e.preventDefault();
         // Array of files
-        Array.from(e.dataTransfer.files)
-        .filter( file => file.type.match(/image.*/) )
-        .forEach( file => {
-            let reader = new FileReader();
-            reader.onload = e2 =>
-                fetch(e2.target.result)
-                .then( b64 => b64.blob() )
-                .then( blb => {
-                    let doc = templateNote();
-                    new ImageDrop(blb).save(doc);
-                    return db.put(doc) ;
-                    })
-                .catch( (err) => console.log(err) ) ;
-            reader.readAsDataURL(file); // start reading the file data.
-            });
-        showPage( "NoteList" );
+        Promise.all(
+            Array.from(e.dataTransfer.files)
+            .filter( file => file.type.match(/image.*/) )
+            .map( file => {
+                let reader = new FileReader();
+                reader.onload = e2 =>
+                    fetch(e2.target.result)
+                    .then( b64 => b64.blob() )
+                    .then( blb => {
+                        let doc = templateNote();
+                        new ImageDrop(blb).save(doc);
+                        return db.put(doc);
+                        });
+                reader.readAsDataURL(file); // start reading the file data.
+                }))
+                .then( () => getNotes(false) ) // refresh the list
+                .catch( err => console.log(err) )
+                .finally( () => showPage( "NoteList" ) );
         });
-}
-
-function putImageInDoc( doc, itype, idata ) {
-    doc._attachments = {
-        image: {
-            content_type: itype,
-            data: idata,
-        }
-    };
 }
 
 function noteNew() {
@@ -2537,17 +2524,6 @@ function templateNote( ) {
     };
 }
 
-function createNote( image, text, title="" ) {
-    // returns a promise
-    let doc = templateNote();
-    doc.title = title;
-    if ( image ) {
-        putImageInDoc( doc, image.type, image );
-    }
-
-    return db.put( doc ) ;
-}
-
 function show_screen( bool ) {
     document.getElementById("splash_screen").style.display = "none";
     Array.from(document.getElementsByClassName("work_screen")).forEach( (v)=> {
@@ -2572,7 +2548,7 @@ function printCard() {
         img.display();
         let link = new URL(window.location.href);
         link.searchParams.append( "patientId", patientId );
-        let qr = new QR(
+        new QR(
             card.querySelector(".qrCard"),
             link.href,
             200,200,
@@ -2613,12 +2589,6 @@ function printCard() {
 function hideBigPicture( target ) {
     target.src = "";
     target.style.display = "none";
-}
-
-function showBigPicture( target ) {
-    let big = document.getElementsByClassName( "FloatPicture" )[0];
-    big.src = target.src;
-    big.style.display = "block";
 }
 
 function downloadCSV(csv, filename) {
@@ -2679,11 +2649,11 @@ function downloadAll() {
         csv += plist
             .map( row =>
                 pfields
-                .map( f => row.doc[f] || "" )
+                .map( f => row.doc[f] ?? "" )
                 .map( v => typeof(v) == "number" ? v : `"${v}"` )
                 .concat(
                     (row.id in olist) ? ofields
-                                        .map( ff => olist[row.id][ff] || "" )
+                                        .map( ff => olist[row.id][ff] ?? "" )
                                         .map( v => typeof(v) == "number" ? v : `"${v}"` )
                                         :
                                         ofields.map( ff => "" ) ,
