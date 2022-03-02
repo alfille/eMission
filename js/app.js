@@ -16,7 +16,7 @@ var noteId;
 var operationId;
 var remoteCouch;
 var NoPhoto = "style/NoPhoto.png";
-var DCTOHClogo = "style/DCTOHC.png";
+var DCTOHClogo = "style/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
@@ -359,18 +359,13 @@ const structMission = [
         type: "text",
     } , 
     {
-        name: "OrgLink",
-        hint: "Link to organization web page",
-        type: "url",
-    } , 
-    {
         name: "Mission",
         hint: "Mission Name",
         type: "text",
     },
     {
-        name: "MissionLink",
-        hint: "Link to Mission web page",
+        name: "Link",
+        hint: "Web page of organization or mission",
         type: "url",
     } , 
     {
@@ -514,6 +509,10 @@ class Image {
         this.upload=null;
     }
 
+    source() {
+        return this.src;
+    }
+
     showBigPicture( target ) {
         let big = document.querySelector( ".FloatPicture" );
         big.src = target.src;
@@ -608,10 +607,72 @@ class ImagePlus extends Image {
 
     save(doc) {
         super.save(doc);
-        console.log("Saving");
         doc.text = this.parent.querySelector(".entryfield_text").innerText;
         doc.title = this.parent.querySelector(".entryfield_title").innerText;
-        console.log(doc);
+    }
+}
+
+class ImageNote extends ImagePlus {
+    constructor( ...args ) {
+        super( ...args );
+        this.buttonsdisabled( false );
+    }
+    
+    leave() {
+        this.buttonsdisabled( false );
+        showPage( (noteId == missionId) ? 'MissionList' : 'NoteList' );
+    }
+
+    store() {
+        this.save( this.doc );
+        db.put( this.doc )
+        .then( resp => {
+            selectNote( resp.id );
+            return getNotesAll(); // to prime list
+            })
+        .catch( err => console.log(err) )
+        .finally( () => this.leave() );
+    }
+
+    edit() {
+        this.addListen();
+        this.buttonsdisabled( true );
+        this.display();
+    }
+
+    addListen() {
+        super.addListen();
+        try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
+            catch {}
+        try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
+            catch {}
+        try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
+            catch {}
+    }
+
+    buttonsdisabled( bool ) {
+        Array.from(document.getElementsByClassName( "libutton" )).forEach( b => b.disabled=bool );
+        Array.from(document.getElementsByClassName( "divbutton" )).forEach( b => b.disabled=bool );
+    }
+
+    delete() {
+        let pdoc;
+        getPatient( false )
+        .then( (doc) => {
+            pdoc = doc;
+            return db.get( noteId );
+            })
+        .then( (doc) => {
+            if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
+                return doc;
+            } else {
+                throw "No delete";
+            }           
+            })
+        .then( (doc) => db.remove(doc) )
+        .then( () => unselectNote() )
+        .catch( (err) => console.log(err) )
+        .finally( () => this.leave() );
     }
 }
 
@@ -1258,102 +1319,6 @@ function getUsersAll(attachments) {
     return user_db.allDocs(doc);
 }
 
-class Tbar {
-    constructor() {
-        this.is_active = false;
-    }
-
-    active() {
-        // in edit mode already?
-        return this.is_active;
-    }
-
-    enter() {
-        this.is_active = true;
-        this.buttonsdisabled(true);
-    }
-    
-    leave(page="back") {
-        this.is_active = false;
-        this.buttonsdisabled(false);
-        showPage(page);
-    }
-
-    fieldset( existingdiv, editclass ) {
-        this.existing = {};
-        this.parent  = existingdiv;
-
-        this.working = {};
-        cloneClass( editclass, existingdiv );
-        this.image.display();
-        this.image.addListen();
-    }
-
-    buttonsdisabled( bool ) {
-        for ( let b of document.getElementsByClassName( "libutton" ) ) {
-            b.disabled = bool;
-        }
-        for ( let b of document.getElementsByClassName( "divbutton" ) ) {
-            b.disabled = bool;
-        }
-    }
-
-    deleteedit() {
-        this.deletefunc();
-        this.leave("NoteList");
-    }
-}
-
-class Nbar extends Tbar {
-    // for notes
-    startedit( existingdiv, image ) {
-        this.image = image;
-        if ( this.active() ) {
-            return false;
-        }
-        this.enter() ;
-        if ( noteId ) {
-            selectNote(existingdiv.getAttribute("data-id"));
-            this.buttonsdisabled( true );
-            this.deletefunc = deleteNote;
-        } else {
-            unselectNote();
-            this.deletefunc = null;
-        }
-        this.fieldset( existingdiv, ".notetemplate_edit" );
-            
-        this.parent.querySelector(".tbardel").style.visibility = (this.deletefunc!=null) ? "visible" : "hidden";
-
-        return true;
-    }
-
-    saveedit() {
-        if ( this.active() ) {
-            if ( noteId ) {
-                // existing note
-                db.get(noteId)
-                .then( (doc) => {
-                    doc.patient_id = patientId;
-                    doc.type = "note";
-                    this.image.save(doc);
-                    return db.put( doc );
-                    })
-                .catch( (err) => console.log(err) )
-                .finally( () => this.leave("NoteList") );
-            } else {
-                // new note
-                let doc=templateNote();
-                this.image.save(doc);
-                db.put(doc)
-                .catch( (err) => console.log(err) )
-                .finally( () => this.leave("NoteList") );
-            }
-        }
-    }
-}
-    
-var editBar;        
-
 function selectPatient( pid ) {
     if ( patientId != pid ) {
         // change patient -- notes dont apply
@@ -1533,7 +1498,6 @@ function showPage( state = "PatientList" ) {
     objectPatientTable = null;
     objectOperationTable = null;
     objectUserTable = null;
-    editBar = null;
 
     switch( objectDisplayState.current() ) {           
        case "MainMenu":
@@ -1680,14 +1644,15 @@ function showPage( state = "PatientList" ) {
             selectMission();
             getPatient( true )
             .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
-            .catch( (err) => {
+            .catch( () => {
                 let doc = {
                     _id: missionId,
                     author: remoteCouch.username,
                     type: "mission",
                 };
                 objectPatientData = new MissionData( doc, structMission ) ;
-                });
+                })
+            .finally( () => setMissionLink() );
             break;
             
         case "PatientDemographics":
@@ -1740,8 +1705,7 @@ function showPage( state = "PatientList" ) {
             unselectPatient();
             break;
 
-        case "MissionList":            
-            editBar = new Nbar() ;
+        case "MissionList":
             selectMission() ;
             db.get( missionId )
             .then( () => getNotes(true ) )
@@ -1749,8 +1713,7 @@ function showPage( state = "PatientList" ) {
             .catch( err=> showPage( "MissionInfo" ) ) ;
             break;
             
-        case "NoteList":            
-            editBar = new Nbar() ;
+        case "NoteList":
             if ( patientSelected() ) {
                 getPatient( false )
                 .then( () => getNotes(true) )
@@ -1765,7 +1728,6 @@ function showPage( state = "PatientList" ) {
             break;
             
          case "NoteNew":
-            editBar = new Nbar() ;
             if ( patientSelected() ) {
                 // New note only
                 unselectNote();
@@ -2130,30 +2092,7 @@ function patientPhoto( doc ) {
     cloneClass( ".imagetemplate", d );
     inp.display();
 }
-
-function deleteNote() {
-    if ( noteId ) {
-        let pdoc;
-        getPatient( false )
-        .then( (doc) => {
-            pdoc = doc;
-            return db.get( noteId );
-            })
-        .then( (doc) => {
-            if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
-                return doc;
-            } else {
-                throw "No delete";
-            }           
-            })
-        .then( (doc) => db.remove(doc) )
-        .then( () => unselectNote() )
-        .catch( (err) => console.log(err) )
-        .finally( () => showPage( "NoteList" ) );
-    }
-    return true;
-}    
-    
+   
 function deleteOperation() {
     if ( operationId ) {
         let pdoc;
@@ -2377,7 +2316,6 @@ class NoteList extends PatientData {
         super();
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
-        this.images={};
 
         // show notes
         if ( notelist.rows.length == 0 ) {
@@ -2419,33 +2357,28 @@ class NoteList extends PatientData {
     liNote( note, label ) {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );
+        let img;
         if ( noteId == note.id ) {
             li.classList.add("choice");
         }
         if ( "doc" in note ) {
             cloneClass( ".notetemplate", li );
-            this.images[note.id]=new ImagePlus(li,note.doc)
-            this.images[note.id].display();
-            li.addEventListener( 'dblclick', () => editBar.startedit( li,this.images[note.id] ) );
+            img=new ImageNote(li,note.doc);
+            img.display();
         }    
         
-        li.addEventListener( 'click', () => {
-            selectNote( note.id );
-        });
-        label.querySelector(".edit_note").addEventListener( 'click', () => {
+        let edit_note = () => {
             var i = label.querySelectorAll("input");
             picker.attach({ element: i[0] });
             tp.attach({ element: i[1] });
             selectNote( note.id );
-            editBar.startedit( li, this.images[note.id] );
-            });
-        label.addEventListener( 'dblclick', () => {
-            var i = label.querySelectorAll("input");
-            picker.attach({ element: i[0] });
-            tp.attach({ element: i[1] });
-            selectNote( note.id );
-            editBar.startedit( li, this.images[note.id] );
-            });
+            cloneClass( ".notetemplate_edit", li );
+            img.edit();
+            } ;
+        li.addEventListener( 'click', () => selectNote( note.id ) );
+        li.addEventListener( 'dblclick', () => edit_note );
+        label.querySelector(".edit_note").addEventListener( 'click', edit_note );
+        label.addEventListener( 'dblclick', edit_note );
 
         return li;
     }
@@ -2487,11 +2420,10 @@ function dropPictureinNote( target ) {
 
 function noteNew() {
     let d = document.getElementById("NoteNewContent");
-    cloneClass ( ".notetemplate", d );
+    cloneClass ( ".newnotetemplate_edit", d );
     let doc = templateNote();
-    let img = new ImagePlus( d, doc );
-    document.getElementById("NoteNewLabel").innerHTML = noteTitle();
-    editBar.startedit( d, img );
+    let img = new ImageNote( d, doc );
+    img.edit();
 }
 
 function quickPhoto() {
@@ -2666,6 +2598,19 @@ function downloadAll() {
         });
 }
 
+function setMissionLink() {
+    db.get( missionId, { attachments: true, binary: true } )
+    .then( doc => {
+        let src = new Image( null,doc).source();
+        Array.from( document.getElementsByClassName("mission_logo") )
+        .forEach( logo => {
+            logo.src=src;
+            logo.addEventListener( 'click', () => window.open(doc.Link) );
+            });
+        })
+    .catch( err => console.log(err) ) ;
+}
+
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -2677,6 +2622,7 @@ function parseQuery() {
     return r;
 }
 
+var remoteDB;
 function openRemoteDB( DBstruct ) {
     if ( DBstruct && remoteFields.every( k => k in DBstruct )  ) {
         return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
@@ -2698,12 +2644,9 @@ function closeRemoteDB() {
         security_db ? security_db.close() : Promise.resolve(true),
         ]);
 }
-
-var SyncHandler = null;
     
 // Initialise a sync process with the remote server
-var remoteDB;
-
+var SyncHandler = null;
 function foreverSync() {
     remoteDB = openRemoteDB( remoteCouch ); // null initially
     document.getElementById( "userstatus" ).value = remoteCouch.username;
@@ -2811,6 +2754,9 @@ window.onload = () => {
 
         // start sync
         foreverSync();
+
+        // set link for mission
+        setMissionLink();
 
         // design document creation (assync)
         createQueries();

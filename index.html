@@ -17,17 +17,20 @@
     <body>
         <header class="work_screen">
             <div id="headerbox">
-                <div id="headerboxlink"><img src="images/emission_top.png"></div>
+                <div id="headerboxlink"><img src="images/emission11-web-white.jpg"></div>
                 <div id="buttonheader">
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
+                        <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                     </div>
                     <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser -->
                     <div class= "Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser pageOverlay">
+                        <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto pageOverlay">
+                        <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage()">Return</button>
                     </div>
                     <!-- top: RemoteDatabaseInput -->
@@ -151,7 +154,6 @@
                     <button type="button" class="divbutton" onclick="showPage( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="forceReplicate()">Force Replicate</button>
                     <button type="button" class="divbutton" onclick="testScheduleIndex()">Test routines</button>
-                    <button type="button" class="divbutton" onclick="showPage('QuickPhoto')">Quick Photo</button>
                 </div>
             </div>
             <!-- body: Download -->
@@ -273,12 +275,26 @@
             <div class="notetemplate_edit">
                 <img class="entryfield_image">
                 <div class="editToolbar">
-                    <button type="button" onclick="editBar.saveedit()"><span><B>Save</B></span></button>
-                    <button type="button" onclick="editBar.leave()"><span><B>Cancel</B></span></button>
+                    <button type="button" class="imageSave" title="Save this note"><span><B>Save</B></span></button>
+                    <button type="button" class="imageCancel" title="Do not save any changes"><span><B>Cancel</B></span></button>
                     <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
                     <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                    <button type="button" onclick="editBar.deleteedit()" class="tbardel delete" title="Delete note"><span><B>Delete</B></span></button>
+                    <button type="button" class="imageDelete delete" title="Delete this note"><span><B>Delete</B></span></button>
+                    <input type="file" accept="image/*" class="imageBar" capture="environment">
+                </div>
+                <label>Title: <div class="entryfield_title" contenteditable></div></label>
+                <div class="entryfield_text" contenteditable></div>
+            </div>
+            <!-- New Note edit -->
+            <div class="newnotetemplate_edit">
+                <img class="entryfield_image">
+                <div class="editToolbar">
+                    <button type="button" class="imageSave" title="Save this note"><span><B>Save</B></span></button>
+                    <button type="button" class="imageCancel" title="Do not save any changes"><span><B>Cancel</B></span></button>
+                    <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
+                    <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
+                    <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
                 <label>Title: <div class="entryfield_title" contenteditable></div></label>
