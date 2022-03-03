@@ -58,8 +58,10 @@ const Router = ({ base = '', routes = [] } = {}) => ({
 const router = Router() ;
 
 const ifCacheRespond = async (request, context, event) => {
+    console.log("Look in caches",request);
     const response = await caches.match(request);
     if (response) {
+        console.log("Found")
         return response
     }
 }
@@ -70,14 +72,21 @@ const ifNetworkRespond = async (request, context, event) => {
         if (response && response.ok) {
             return response;
         }
+        console.log("No network");
     }
+}
+
+const errorRespond = async ( request, context, event ) => {
+    console.log("Error response");
+    const response = new Response();
+    return response.error();
 }
 
 const justShow = async (request, context, event) => {
     console.log( request, context ) ;
 }
 
-router.get('*', ifCacheRespond, ifNetworkRespond, justShow ) ;
+router.get('*', ifNetworkRespond, ifCacheRespond, errorRespond ) ;
 router.post('*', ifNetworkRespond ) ;
 router.put('*', ifNetworkRespond ) ;
 
@@ -91,4 +100,7 @@ self.addEventListener('install', function (event) {
 });
 
 // Link in router
-self.addEventListener('fetch', async event => event.respondWith(router.handle(event.request, {onLine: navigator.onLine}, event)) );
+self.addEventListener('fetch', event =>
+    event
+    .respondWith(router.handle(event.request, {onLine: navigator.onLine}, event))
+    );
