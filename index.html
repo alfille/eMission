@@ -9,9 +9,9 @@
         <link rel="stylesheet" href="style/base.css">
         <link rel="manifest" href="manifest.json" />
         <script type="module">
-           import 'https://cdn.jsdelivr.net/npm/@pwabuilder/pwaupdate';
-           const el = document.createElement('pwa-update');
-           document.body.appendChild(el);
+            const reg = await navigator.serviceWorker.register('/sw.js', {
+                type: 'module',
+            });
         </script>
     </head>
     <body>
@@ -23,10 +23,15 @@
                     <div class="MainMenu pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                     </div>
-                    <!-- top: Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser -->
-                    <div class= "Administration Settings SuperUser Download DatabaseInfo PatientPhoto SendUser pageOverlay">
+                    <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
+                    <div class= "Settings SuperUser Download DatabaseInfo SendUser pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                    </div>
+                    <!-- top: Administration PatientPhoto -->
+                    <div class= "Admininstration PatientPhoto pageOverlay">
+                        <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
+                        <button type="button" class="divbutton return" onclick="showPage( 'MainPage' )">Return</button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto pageOverlay">
@@ -41,7 +46,7 @@
                     </div>
                     <!-- top: PatientList -->
                     <div class="PatientList pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientNew' )">Add Patient</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientPhoto' )" id="editreviewpatient">Review/Edit Patient</button>
                     </div>

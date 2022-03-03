@@ -1146,7 +1146,6 @@ class PatientData {
                     }
                 } else {
                     // image
-                    console.log("image",doc);
                     if ( this.images[localname].changed() ) {
                         changed[ipair] = true;
                         this.images[localname].save(doc) ;
@@ -2041,12 +2040,12 @@ function deletePatient() {
             // get patient
         .then( (doc) => {
             pdoc = doc;
-            return getNotes(false);
+            return getNotes(true);
             })
         .then( (docs) => {
             // get notes
             ndocs = docs.rows;
-            return getOperations (false);
+            return getOperations(true);
             })
         .then( (docs) => {
             // get operations
@@ -2070,8 +2069,8 @@ function deletePatient() {
                 throw "No delete";
             }           
             })
-        .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.id,doc.value.rev) ) ) )
-        .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.id,doc.value.rev) ) ) )
+        .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+        .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
         .then( () => db.remove(pdoc) )
         .then( () => unselectPatient() )
         .catch( (err) => console.log(err) ) 
