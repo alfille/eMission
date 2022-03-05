@@ -3,8 +3,7 @@
 // globals not cookie backed
 var objectPatientData;
 var objectNoteList;
-var objectPatientTable = null;
-var objectOperationTable = null;
+var objectTable = null;
 var objectUserTable = null;
 var userId = null; // not cookie backed
 var userPass = {};
@@ -1329,8 +1328,8 @@ function selectPatient( pid ) {
     getPatient(false)
     .then( (doc) => {
         // highlight the list row
-        if ( objectPatientTable ) {
-            objectPatientTable.highlight();
+        if ( objectDisplayState.current() == 'PatientList' ) {
+            objectTable.highlight();
         }
         document.getElementById("editreviewpatient").disabled = false;
         document.getElementById( "titlebox" ).innerHTML = `Name: <B>${doc.LastName}, ${doc.FirstName}</B>  DOB: <B>${doc.DOB}</B>`;
@@ -1358,8 +1357,8 @@ function selectOperation( oid ) {
     setCookie ( "operationId", oid  );
     // Check patient existence
     // highlight the list row
-    if ( objectOperationTable ) {
-        objectOperationTable.highlight();
+    if ( objectDisplayState.current() == 'OperationList' ) {
+        objectTable.highlight();
     }
     document.getElementById("editreviewoperation").disabled = false;
 }
@@ -1494,8 +1493,7 @@ function showPage( state = "PatientList" ) {
 
     objectPatientData = null;
     objectNoteList = null;
-    objectPatientTable = null;
-    objectOperationTable = null;
+    objectTable = null;
     objectUserTable = null;
 
     switch( objectDisplayState.current() ) {           
@@ -1573,10 +1571,10 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientList":
-            objectPatientTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
+            objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
             getPatientsAll(true)
             .then( (docs) => {
-                objectPatientTable.fill(docs.rows );
+                objectTable.fill(docs.rows );
                 if ( patientSelected() ) {
                     selectPatient( patientId );
                 } else {
@@ -1587,9 +1585,9 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "OperationList":
-            objectOperationTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
+            objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
             getOperations(true)
-            .then( (docs) => objectOperationTable.fill(docs.rows ) )
+            .then( (docs) => objectTable.fill(docs.rows ) )
             .catch( (err) => console.log(err) );
             break;
             
@@ -1904,15 +1902,18 @@ class SortTable {
         rowsArray.sort(compare);
 
         tbody.append(...rowsArray);
+        this.scroll();
     }
 
     highlight() {
-        let rows = this.tbl.rows;
-        for ( let i = 0; i < rows.length; ++i ) {
-            if ( rows[i].getAttribute("data-id") == this.selectId() ) {
-                rows[i].classList.add('choice');
-            } else {
-                rows[i].classList.remove('choice');
+        let Rs = Array.from(this.tbl.rows);
+        Rs.forEach( r => r.classList.remove('choice');
+        let id = this.selectId();
+        if ( id ) {
+            let sr = Rs.filter( r => r.getAttribute('data-id')==id );
+            if ( sr.length > 0 ) {
+                sr.classList.forEach(r=>r.add('choice'));
+                sr[0].scrollIntoView();
             }
         }
     }
@@ -2119,7 +2120,7 @@ function selectNote( cid ) {
     setCookie( "noteId", cid );
     if ( objectDisplayState.test("NoteList") ) {
         // highlight the list row
-        let li = document.getElementById("NoteList").getElementsByTagName("LI");
+        let li = document.getElementById("NoteList").getElementsByTagName("li");
         if ( li && (li.length > 0) ) {
             for ( let l of li ) {
                 if ( l.getAttribute("data-id") == noteId ) {
@@ -2333,7 +2334,14 @@ class NoteList extends PatientData {
             this.li = this.ul.getElementsByTagName('li');
         }
 
-        dropPictureinNote( parent );
+        if ( noteId ) {
+            let el = Array.from(this.li).filter( li => li.getAttribute("data-id")==noteId )[0] ;
+            if ( el ) {
+                el.scrollIntoView();
+            }
+        }
+        
+        dropPictureinNote( parent );        
     }
 
     liLabel( note ) {
@@ -2520,6 +2528,41 @@ function printCard() {
 function hideBigPicture( target ) {
     target.src = "";
     target.style.display = "none";
+}
+
+// for search -- go to a result of search
+function openPageFromId( id ) {
+    if ( id == missionId ) {
+        selectMission();
+        showPage( 'MissionInfo' ) ;
+    } else {
+        db.get( id )
+        .then( doc => {
+            switch (doc.type) {
+                case 'patient':
+                    selectPatient( id );
+                    showPage( 'PatientPhoto' ) ;
+                    break ;
+                case 'operation':
+                    selectPatient( doc.patient_id );
+                    selectOperation( id );
+                    showPage( 'OperationEdit' );
+                    break ;
+                case 'note':
+                    if ( doc.patientId == missionId ) {
+                        selectMission();
+                    } else {
+                        selectPatient( doc.patient_id );
+                    }
+                    selectNote( id );
+                    showPage( 'NoteList' );
+                    break ;
+                default:
+                    showPage( 'MainMenu' );
+                    break ;
+                }
+        });
+    }
 }
 
 function downloadCSV(csv, filename) {
