@@ -2729,6 +2729,13 @@ window.onload = () => {
     // Initial start
     show_screen(true);
 
+    if ( 'serviceWorker' in navigator ) {
+        navigator.serviceWorker
+        .register('/sw.js')
+        .then( ()=> console.log("Serviceworker registered") )
+        .catch( err => console.log(err) );
+    }
+
     try {
         cookies_n_query() ; // look for remoteCouch and other cookies
         
