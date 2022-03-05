@@ -522,8 +522,13 @@ class Image {
         let img = this.parent.querySelector( "img");
         if ( img ) {
             img.addEventListener( 'click', () => this.showBigPicture(img) );
-            img.src = this.src;
-            img.style.display = this.src ? "block":"none";
+            if ( this.src ) {
+                img.src = this.src;
+                img.style.display = "block";
+            } else {
+                img.src = "//:0";
+                img.style.display = "none" ;
+            }
         }
     }
         
@@ -1907,12 +1912,12 @@ class SortTable {
 
     highlight() {
         let Rs = Array.from(this.tbl.rows);
-        Rs.forEach( r => r.classList.remove('choice');
+        Rs.forEach( r => r.classList.remove('choice'));
         let id = this.selectId();
         if ( id ) {
             let sr = Rs.filter( r => r.getAttribute('data-id')==id );
             if ( sr.length > 0 ) {
-                sr.classList.forEach(r=>r.add('choice'));
+                sr.forEach( r => r.classList.add('choice'));
                 sr[0].scrollIntoView();
             }
         }

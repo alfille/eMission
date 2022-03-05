@@ -57,15 +57,16 @@ const Router = ({ base = '', routes = [] } = {}) => ({
 })
 
 const router = Router() ;
-/*
+
+// Check Cache (typically if network down)
 const ifCacheRespond = async (request, context, event) => {
     const response = await caches.match(request);
     if (response) {
         return response
     }
 }
-*/
 
+// Default fetch from network
 const ifNetworkRespond = async (request, context, event) => {
     if(context.onLine){
         let response = await fetch(request);
@@ -75,7 +76,7 @@ const ifNetworkRespond = async (request, context, event) => {
     }
 }
 
-// See if network available, then also update cache
+// fetch from network and possible update cache (if one of the chosen cache items)
 const revalidateCache = async (request, context, event) => {
     if (context.onLine) {
         const networkResponsePromise = fetch(request);
@@ -92,6 +93,7 @@ const revalidateCache = async (request, context, event) => {
     }
 }
 
+// After revalidate, used fetched item -- adds extra check is revalidate not called so could substitute
 const ifNetworkRespondC = async (request, context, event) => {
     if (context.onLine) {
         let response;
@@ -109,6 +111,7 @@ const ifNetworkRespondC = async (request, context, event) => {
     }
 }
 
+// Error response
 const errorRespond = async ( request, context, event ) => {
     const response = new Response();
     return response.error;
@@ -119,7 +122,6 @@ const justShow = async (request, context, event) => {
 }
 */
 // Policies
-//router.get('*', ifNetworkRespond, ifCacheRespond, errorRespond ) ;
 router.get('*', revalidateCache, ifNetworkRespondC, ifCacheRespond, errorRespond ) ;
 router.post('*', ifNetworkRespond, errorRespond ) ;
 router.put('*', ifNetworkRespond, errorRespond ) ;
