@@ -14,7 +14,6 @@ const cachable = [
     "/style/NoPhoto.png",
     "/style/base.css",
     "/js/app.js",
-    "/js/base.js",
     "/js/datepicker.js",
     "/js/time-pick.js",
     "/js/length-pick.js",
