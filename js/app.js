@@ -5,6 +5,7 @@ var objectPatientData;
 var objectNoteList;
 var objectTable = null;
 var objectUserTable = null;
+var objectSearch = null;
 var userId = null; // not cookie backed
 var userPass = {};
 
@@ -467,6 +468,36 @@ function createQueries() {
             },
         },
     }, 
+    {
+        _id: "_design/Doc2Pid" ,
+        version: 2,
+        views: {
+            Doc2Pid: {
+                map: function( doc ) {
+                    if ( doc.type=="patient" || doc.type=="mission" ) {
+                        emit( doc._id,doc._id );
+                    } else {
+                        emit( doc._id,doc.patient_id );
+                    }
+                }.toString(),
+            },
+        },
+    }, 
+    {
+        _id: "_design/Pid2Name" ,
+        version: 2,
+        views: {
+            Pid2Name: {
+                map: function( doc ) {
+                    if ( doc.type=="patient" ) {
+                        emit( doc._id, doc.FirstName+" "+doc.LastName );
+                    } else if ( doc.type=="mission" ) {
+                        emit( doc._id, doc.Mission ) ;
+                    }
+                }.toString(),
+            },
+        },
+    }, 
     ];
     Promise.all( ddoclist.map( (ddoc) => {
         db.get( ddoc._id )
@@ -488,6 +519,92 @@ function createQueries() {
 }
 
 function testScheduleIndex() {
+}
+
+class Search {
+    constructor(type) {
+        this.index={};
+        this.fieldlist={
+            note: ["text","title",],
+            operation: ["Procedure","Complaint","Surgeon","Equipment"],
+            patient: ["Dx","LastName","FirstName","email","address","contact","Allergies","Meds",],
+            mission: ["Mission","Organization","Link","Location","LocalContact",],
+        };
+        this.types = Object.keys(this.fieldlist);
+        this.types.forEach( ty => this.makeIndex(ty) ) ;
+        this.result=[];
+        this.select_id = null ;
+    }
+
+    makeIndex(type) {
+        let fl = this.fieldlist[type] ;
+        this.index[type] = elasticlunr( function() {
+            this.setRef("_id");
+            fl.forEach( f => this.addField(f) ) ;
+        }) ;
+    }
+
+    addDoc( doc ) {
+        if ( doc?.type in this.fieldlist ) {
+            this.index[doc.type].addDoc(
+                this.fieldlist[doc.type]
+                .concat("_id")
+                .reduce( (o,k) => {o[k]=doc[k]??"";return o;}, {})
+                );
+        }
+    }
+
+    removeDocById( doc_id ) {
+        // we don't have full doc. Could figure type from ID, but easier (and more general) to remove from all.
+        this.types.forEach( ty => this.index[ty].removeDocById( doc_id ) );
+    }
+
+    fill() {
+        return getAll()
+        .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
+    }
+
+    search( text="" ) {
+        return [].concat( ... this.types.map(ty => this.index[ty].search(text)) );
+    }
+
+    resetTable () {
+        if ( this.result.length > 0 ) {
+            this.reselect_id = null ;
+            this.result = [];
+            this.setTable();
+        }
+    } 
+
+    select(id) {
+        this.select_id = id;
+    }
+
+    toTable() {
+        let result = [] ;
+        db.allDocs( {
+            include_docs: true,
+            keys: this.search(document.getElementById("searchtext").value).map( s => s.ref ),
+        })
+        .then( docs => {
+            console.log(docs.rows);
+            docs.rows.forEach( (r,i)=> result[i]=({_id:r.id,Type:r.doc.type,Text:r.doc[this.fieldlist[r.doc.type][0]]}) );
+            return db.query("Doc2Pid", { keys: docs.rows.map( r=>r.id), } );
+            })
+        .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} ))
+        .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value ))
+        .then( () => this.result = result.map( r=>({doc:r})))
+//        .then( () => console.log(this.result))
+        .then( ()=>this.setTable())
+        .catch(err=> {
+            console.log(err);
+            this.resetTable();
+            });
+    }
+
+    setTable() {
+        objectTable.fill(this.result);
+    }
 }
 
 class Image {
@@ -1588,6 +1705,11 @@ function showPage( state = "PatientList" ) {
                 })
             .catch( (err) => console.log(err) );
             break;
+
+        case "SearchList":
+            objectTable = new SearchTable( ["Name","Type","Text"] ) ;
+            objectSearch.setTable();
+            break ;
             
         case "OperationList":
             objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
@@ -1825,7 +1947,7 @@ class SortTable {
             });
             row.addEventListener( 'dblclick', () => {
                 this.selectFunc( record._id );
-                showPage( this.editpage );
+                this.editpage();
             });
             collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
@@ -1869,7 +1991,6 @@ class SortTable {
     }
 
     sortGrid(colNum) {
-        unselectPatient();
         let tbody = this.tbl.querySelector('tbody');
         if ( tbody == null ) {
             // empty table
@@ -1907,7 +2028,7 @@ class SortTable {
         rowsArray.sort(compare);
 
         tbody.append(...rowsArray);
-        this.scroll();
+        this.highlight();
     }
 
     highlight() {
@@ -1925,7 +2046,7 @@ class SortTable {
 }
 
 class PatientTable extends SortTable {
-    editpage = "PatientPhoto";
+    editpage = () => showPage("PatientPhoto");
     selectFunc = selectPatient;
     selectId = () => patientId;
     constructor( collist ) {
@@ -1951,7 +2072,7 @@ function makeNewOperation() {
 }
 
 class OperationTable extends SortTable {
-    editpage = "OperationEdit";
+    editpage = () => showPage("OperationEdit");
     selectFunc = selectOperation;
     selectId = () => operationId;
     constructor( collist ) {
@@ -1960,11 +2081,65 @@ class OperationTable extends SortTable {
 }
 
 class UserTable extends SortTable {
-    editpage = "UserEdit";
+    editpage = () => showPage("UserEdit");
     selectFunc = selectUser;
     selectId = () => userId;
     constructor( collist ) {
         super( collist, "UserList");
+    }
+}
+
+class SearchTable extends SortTable {
+    selectId = ()=>objectSearch.select_id;
+    constructor( collist ) {
+        super( collist, "SearchList");
+    }
+
+    selectFunc(id) {
+        objectSearch.select_id = id ;
+        objectTable.highlight();
+    }
+    
+    // for search -- go to a result of search
+    editpage() {
+        let id = objectSearch.select_id;
+        if ( id == null ) {
+            showPage( null );
+        } else if ( id == missionId ) {
+            selectMission();
+            showPage( 'MissionInfo' ) ;
+        } else {
+            db.get( id )
+            .then( doc => {
+                switch (doc.type) {
+                    case 'patient':
+                        selectPatient( id );
+                        showPage( 'PatientPhoto' ) ;
+                        break ;
+                    case 'operation':
+                        selectPatient( doc.patient_id );
+                        selectOperation( id );
+                        showPage( 'OperationEdit' );
+                        break ;
+                    case 'note':
+                        if ( doc.patientId == missionId ) {
+                            selectMission();
+                        } else {
+                            selectPatient( doc.patient_id );
+                        }
+                        selectNote( id );
+                        showPage( 'NoteList' );
+                        break ;
+                    default:
+                        showPage( null );
+                        break ;
+                    }
+            })
+            .catch( err => {
+                console.log(err);
+                showPage(null);
+                });
+        }
     }
 }
 
@@ -2293,6 +2468,13 @@ function deleteUser() {
     return true;
 }    
     
+function getAll() {
+    let doc = {
+        include_docs: true,
+    };
+    return db.allDocs(doc);
+}
+
 function getNotesAll() {
     let doc = {
         startkey: [ RecordFormat.type.note, ""].join(";"),
@@ -2535,40 +2717,6 @@ function hideBigPicture( target ) {
     target.style.display = "none";
 }
 
-// for search -- go to a result of search
-function openPageFromId( id ) {
-    if ( id == missionId ) {
-        selectMission();
-        showPage( 'MissionInfo' ) ;
-    } else {
-        db.get( id )
-        .then( doc => {
-            switch (doc.type) {
-                case 'patient':
-                    selectPatient( id );
-                    showPage( 'PatientPhoto' ) ;
-                    break ;
-                case 'operation':
-                    selectPatient( doc.patient_id );
-                    selectOperation( id );
-                    showPage( 'OperationEdit' );
-                    break ;
-                case 'note':
-                    if ( doc.patientId == missionId ) {
-                        selectMission();
-                    } else {
-                        selectPatient( doc.patient_id );
-                    }
-                    selectNote( id );
-                    showPage( 'NoteList' );
-                    break ;
-                default:
-                    showPage( 'MainMenu' );
-                    break ;
-                }
-        });
-    }
-}
 
 function downloadCSV(csv, filename) {
     let csvFile;
@@ -2788,23 +2936,41 @@ window.onload = () => {
         cookies_n_query() ; // look for remoteCouch and other cookies
         
         db = new PouchDB( remoteCouch.database ); // open local copy
-        console.log(document.getElementById("headerboxlink"));
         document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
-        
-        db.changes({
-            since: 'now',
-            live: true
-        }).on('change', (change) => {
-            switch (objectDisplayState.current()) {
-                case "PatientList":
-                case "OperationList":
-                case "PatientPhoto":
-                    showPage( null );
-                    break;
-                default:
-                    break;
-            }
-        });
+
+        objectSearch = new Search();
+
+        objectSearch.fill()
+        .then ( () =>
+            db.changes({ since: 'now', live: true, include_docs: true, })
+            .on('change', (change) => {
+                // update search index
+                if ( change?.deleted ) {
+                    objectSearch.removeDocById(change.id);
+                } else {
+                    objectSearch.addDoc(change.doc);
+                }
+                // update screen display
+                switch ( change?.doc?.type ) {
+                    case "patient":
+                        if ( objectDisplayState.current() == "PatientList" ) {
+                            showPage(null);
+                        }
+                        break;
+                    case "note":
+                        if ( objectDisplayState.current() == "NoteList" && change.doc?.patient_id==patientId ) {
+                            showPage(null);
+                        }
+                        break;
+                    case "operation":
+                        if ( objectDisplayState.current() == "OperationList" && change.doc?.patient_id==patientId ) {
+                            showPage(null);
+                        }
+                        break;
+                }
+                })
+            )
+        .catch( err => console.log(err) );
 
         // start sync
         foreverSync();

@@ -261,6 +261,15 @@ footer {
   background: #ffffcc;
   color: grey;
 }
+#searchbar {
+    background: "darkblue";
+    width: 100%;
+    display: flex;
+}
+#searchtext {
+    background: "paleblue";
+    flex: 1;
+}
 @media print {  
   @page {
     size: 6in 4in portrait; /* landscape */

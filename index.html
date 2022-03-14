@@ -8,10 +8,8 @@
         <link rel="shortcut icon" type="image/png" href="images/emission_64x64.png"/>
         <link rel="stylesheet" href="style/base.css">
         <link rel="manifest" href="manifest.json" />
-        <script type="module">
-            const reg = await navigator.serviceWorker.register('/sw.js', {
-                type: 'module',
-            });
+        <script>
+            navigator.serviceWorker.register('/sw.js');
         </script>
     </head>
     <body>
@@ -49,6 +47,12 @@
                         <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientNew' )">Add Patient</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientPhoto' )" id="editreviewpatient">Review/Edit Patient</button>
+                    </div>
+                    <!-- top: SearchList -->
+                    <div class="SearchList pageOverlay">
+                        <button type="button" class="divbutton" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Main Menu</button>
+                        <button type="button" class="divbutton" onclick="objectTable.editpage()">Choose this record</button>
                     </div>
                     <!-- top: UserList -->
                     <div class="UserList pageOverlay">
@@ -135,6 +139,7 @@
                 <div id="MainMenuContent" >
                     <button type="button" class="divbutton" onclick="showPage( 'PatientList' )">The Patients</button>
                     <button type="button" class="divbutton" onclick="showPage( 'MissionList' )">The Mission</button>
+                    <button type="button" class="divbutton" onclick="showPage( 'SearchList' )">Search all data</button>
                     <button type="button" class="divbutton" onclick="showPage( 'Settings' )">Advanced Settings</button>
                     <a href="https://www.github.com/alfille/emission" target="_blank">Instructions</a>
                 </div>
@@ -173,6 +178,13 @@
             <div class="PatientList pageOverlay">
                 <div id="PatientListContent" >
                     <table id="PatientList"></table>
+                </div>
+            </div>
+            <!-- body: SearchList -->
+            <div class="SearchList pageOverlay">
+                <div id="searchbar"><input type="search" id="searchtext" autofocus="true" value="" onchange="objectSearch.resetTable()"><button type="button" class="edit_note" onclick="objectSearch.toTable()">Search</button></div>
+                <div id="SearchListContent" >
+                    <table id="SearchList"></table>
                 </div>
             </div>
             <!-- body: UserList -->
