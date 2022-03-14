@@ -8,9 +8,6 @@
         <link rel="shortcut icon" type="image/png" href="images/emission_64x64.png"/>
         <link rel="stylesheet" href="style/base.css">
         <link rel="manifest" href="manifest.json" />
-        <script>
-            navigator.serviceWorker.register('/sw.js');
-        </script>
     </head>
     <body>
         <header class="work_screen">
@@ -20,6 +17,7 @@
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
                     <div class= "Settings SuperUser Download DatabaseInfo SendUser pageOverlay">
@@ -30,6 +28,7 @@
                     <div class= "Admininstration PatientPhoto pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage( 'MainPage' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto pageOverlay">
@@ -47,6 +46,7 @@
                         <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientNew' )">Add Patient</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientPhoto' )" id="editreviewpatient">Review/Edit Patient</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: SearchList -->
                     <div class="SearchList pageOverlay">
@@ -66,6 +66,7 @@
                         <button type="button" class="divbutton" onclick="showPage( 'OperationNew' )">Add Operation</button>
                         <button type="button" class="divbutton" onclick="showPage( 'OperationEdit' )" id="editreviewoperation">Review/Edit Operation</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: PatientNew -->
                     <div class="PatientData PatientNew pageOverlay">
@@ -97,12 +98,14 @@
                         <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
                         <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: PatientDemographics PatientMedical -->
                     <div class="PatientData PatientDemographics PatientMedical pageOverlay">
                         <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
                         <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: OperationEdit -->
                     <div class="PatientData OperationEdit pageOverlay">
@@ -114,12 +117,14 @@
                     <!-- top: InvalidPatient -->
                     <div class="InvalidPatient pageOverlay">
                         <button type="button" class="divbutton return" onclick="showPage( 'PatientList' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: NoteList -->
                     <div class="NoteList pageOverlay">
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton" type="button" onclick="showPage( 'QuickPhoto' )" title="Quick picture">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                     <!-- top: MissionList -->
                     <div class="MissionList pageOverlay">
@@ -127,6 +132,7 @@
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton" type="button" onclick="showPage('QuickPhoto')" title="Quick picture">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
                     </div>
                 </div>
             </div>
@@ -139,7 +145,6 @@
                 <div id="MainMenuContent" >
                     <button type="button" class="divbutton" onclick="showPage( 'PatientList' )">The Patients</button>
                     <button type="button" class="divbutton" onclick="showPage( 'MissionList' )">The Mission</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'SearchList' )">Search all data</button>
                     <button type="button" class="divbutton" onclick="showPage( 'Settings' )">Advanced Settings</button>
                     <a href="https://www.github.com/alfille/emission" target="_blank">Instructions</a>
                 </div>
@@ -182,7 +187,7 @@
             </div>
             <!-- body: SearchList -->
             <div class="SearchList pageOverlay">
-                <div id="searchbar"><input type="search" id="searchtext" autofocus="true" value="" onchange="objectSearch.resetTable()"><button type="button" class="edit_note" onclick="objectSearch.toTable()">Search</button></div>
+                <div id="searchbar"><input type="search" id="searchtext" autofocus="true" value="" onsearch="objectSearch.toTable()"><button type="button" class="edit_note" onclick="objectSearch.toTable()">Search</button></div>
                 <div id="SearchListContent" >
                     <table id="SearchList"></table>
                 </div>

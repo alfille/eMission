@@ -470,7 +470,7 @@ function createQueries() {
     }, 
     {
         _id: "_design/Doc2Pid" ,
-        version: 2,
+        version: 0,
         views: {
             Doc2Pid: {
                 map: function( doc ) {
@@ -490,9 +490,15 @@ function createQueries() {
             Pid2Name: {
                 map: function( doc ) {
                     if ( doc.type=="patient" ) {
-                        emit( doc._id, doc.FirstName+" "+doc.LastName );
+                        emit( doc._id, [
+                            `${doc.FirstName} ${doc.LastName}`,
+                            `<B>${doc.FirstName} ${doc.LastName}</B> DOB: <B>${doc.DOB}</B>`
+                            ]);
                     } else if ( doc.type=="mission" ) {
-                        emit( doc._id, doc.Mission ) ;
+                        emit( doc._id, [
+                            `${doc.Organization} ${doc.Mission}`,
+                            `<B>${doc.Organization} ${doc.Mission}</B> in: <B>${doc.Location}</B>`
+                            ]);
                     }
                 }.toString(),
             },
@@ -582,20 +588,25 @@ class Search {
 
     toTable() {
         let result = [] ;
-        db.allDocs( {
+        let value = document.getElementById("searchtext").value;
+
+        if ( value.length == 0 ) {
+            return this.resetTable();
+        }
+        
+        db.allDocs( { // get docs from search
             include_docs: true,
-            keys: this.search(document.getElementById("searchtext").value).map( s => s.ref ),
+            keys: this.search(value).map( s => s.ref ),
         })
-        .then( docs => {
-            console.log(docs.rows);
+        .then( docs => { // add _id, Text, Type fields to result
             docs.rows.forEach( (r,i)=> result[i]=({_id:r.id,Type:r.doc.type,Text:r.doc[this.fieldlist[r.doc.type][0]]}) );
             return db.query("Doc2Pid", { keys: docs.rows.map( r=>r.id), } );
             })
-        .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} ))
-        .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value ))
-        .then( () => this.result = result.map( r=>({doc:r})))
+        .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} )) // associated patient Id for each
+        .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value[0] )) // associate patient name
+        .then( () => this.result = result.map( r=>({doc:r}))) // encode as list of doc objects
 //        .then( () => console.log(this.result))
-        .then( ()=>this.setTable())
+        .then( ()=>this.setTable()) // fill the table
         .catch(err=> {
             console.log(err);
             this.resetTable();
@@ -1447,14 +1458,15 @@ function selectPatient( pid ) {
         
     setCookie( "patientId", pid );
     // Check patient existence
-    getPatient(false)
+    db.query("Pid2Name",{key:pid})
     .then( (doc) => {
+        console.log(doc);
         // highlight the list row
         if ( objectDisplayState.current() == 'PatientList' ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewpatient").disabled = false;
-        document.getElementById( "titlebox" ).innerHTML = `Name: <B>${doc.LastName}, ${doc.FirstName}</B>  DOB: <B>${doc.DOB}</B>`;
+        document.getElementById( "titlebox" ).innerHTML = `Patient: ${doc.rows[0].value[1]}`;
         })
     .catch( (err) => {
         console.log(err);
@@ -1552,6 +1564,7 @@ class DisplayState {
             "PatientPhoto",
             "NoteList",
             "OperationList",
+            "SearchList",
             "SuperUser",
             "Administration",
             "PatientMedical",
@@ -2934,7 +2947,7 @@ window.onload = () => {
 
     try {
         cookies_n_query() ; // look for remoteCouch and other cookies
-        
+
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
 
