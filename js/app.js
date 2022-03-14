@@ -485,19 +485,19 @@ function createQueries() {
     }, 
     {
         _id: "_design/Pid2Name" ,
-        version: 2,
+        version: 3,
         views: {
             Pid2Name: {
                 map: function( doc ) {
                     if ( doc.type=="patient" ) {
                         emit( doc._id, [
                             `${doc.FirstName} ${doc.LastName}`,
-                            `<B>${doc.FirstName} ${doc.LastName}</B> DOB: <B>${doc.DOB}</B>`
+                            `Patient: <B>${doc.FirstName} ${doc.LastName}</B> DOB: <B>${doc.DOB}</B>`
                             ]);
                     } else if ( doc.type=="mission" ) {
                         emit( doc._id, [
-                            `${doc.Organization} ${doc.Mission}`,
-                            `<B>${doc.Organization} ${doc.Mission}</B> in: <B>${doc.Location}</B>`
+                            `${doc.Organization} ${doc.Name}`,
+                            `Mission: <B>${doc.Organization}: ${doc.Name}</B> to <B>${doc.Location}</B> on <B>${doc.StartDate} - ${doc.EndDate}</B>`
                             ]);
                     }
                 }.toString(),
@@ -1460,13 +1460,12 @@ function selectPatient( pid ) {
     // Check patient existence
     db.query("Pid2Name",{key:pid})
     .then( (doc) => {
-        console.log(doc);
         // highlight the list row
         if ( objectDisplayState.current() == 'PatientList' ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewpatient").disabled = false;
-        document.getElementById( "titlebox" ).innerHTML = `Patient: ${doc.rows[0].value[1]}`;
+        document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
         })
     .catch( (err) => {
         console.log(err);
@@ -1477,8 +1476,8 @@ function selectPatient( pid ) {
 function selectMission() {
     unselectPatient();
     patientId = missionId;
-    db.get(missionId)
-    .then( doc => document.getElementById( "titlebox" ).innerHTML = `Mission: <B>${doc.Organization}: ${doc.Name}</B> to <B>${doc.Location}</B> on <B>${doc.StartDate} - ${doc.EndDate}</B>` )
+    db.query("Pid2Name", {key:missionId,})
+    .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1] )
     .catch( () => document.getElementById( "titlebox" ).innerHTML = "" ) ;
 }
 
