@@ -485,7 +485,7 @@ function createQueries() {
     }, 
     {
         _id: "_design/Pid2Name" ,
-        version: 3,
+        version: 2,
         views: {
             Pid2Name: {
                 map: function( doc ) {
@@ -497,7 +497,7 @@ function createQueries() {
                     } else if ( doc.type=="mission" ) {
                         emit( doc._id, [
                             `${doc.Organization} ${doc.Name}`,
-                            `Mission: <B>${doc.Organization}: ${doc.Name}</B> to <B>${doc.Location}</B> on <B>${doc.StartDate} - ${doc.EndDate}</B>`
+                            `Mission: <B>${doc.Organization??""}: ${doc.Name??""}</B> to <B>${doc.Location??"?"}</B> on <B>${[doc.StartDate,doc.EndDate].join("-")}</B>`
                             ]);
                     }
                 }.toString(),
@@ -517,7 +517,6 @@ function createQueries() {
             })
         .catch( (err) => {
             // assume because this is first time and cannot "get"
-            console.log(err);
             return db.put( ddoc );
             });
         }))
@@ -525,6 +524,12 @@ function createQueries() {
 }
 
 function testScheduleIndex() {
+    getPatientsAll(true)
+    .then( docs => Promise.all(docs.rows.map( r=>{
+        console.log(r.doc);
+        r.doc.patient_id = r.doc._id;
+        return db.put(r.doc);
+        })));
 }
 
 class Search {
@@ -562,7 +567,7 @@ class Search {
 
     removeDocById( doc_id ) {
         // we don't have full doc. Could figure type from ID, but easier (and more general) to remove from all.
-        this.types.forEach( ty => this.index[ty].removeDocById( doc_id ) );
+        this.types.forEach( ty => this.index[ty].removeDocByRef( doc_id ) );
     }
 
     fill() {
@@ -1347,6 +1352,7 @@ class NewPatientData extends PatientData {
             alert("Enter some Date Of Birth");
         } else {
             this.doc[0]._id = makePatientId( this.doc[0] );
+            this.doc[0].patient_id = this.doc[0]._id;
             db.put( this.doc[0] )
             .then( (response) => {
                 selectPatient(response.id);
@@ -1896,7 +1902,7 @@ function setCookie( cname, value ) {
     //console.log(cname,"value",value);
     let date = new Date();
     date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
-    document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; path=/`;
+    document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
 }
 
 function deleteCookie( cname ) {

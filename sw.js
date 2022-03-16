@@ -22,121 +22,31 @@ const cachable = [
     "/js/elasticlunr.min.js",
     ];
 
-
-
-// itty-router source
-const Router = ({ base = '', routes = [] } = {}) => ({
-    __proto__: new Proxy({}, {
-    get: (target, prop, receiver) => (route, ...handlers) =>
-        routes.push([
-            prop.toUpperCase(),
-            RegExp(`^${(base + route)
-            .replace(/(\/?)\*/g, '($1.*)?')
-            .replace(/\/$/, '')
-            .replace(/:(\w+)(\?)?(\.)?/g, '$2(?<$1>[^/]+)$2$3')
-            .replace(/\.(?=[\w(])/, '\\.')
-            .replace(/\)\.\?\(([^\[]+)\[\^/g, '?)\\.?($1(?<=\\.)[^\\.') // RIP all the bytes lost :'(
-            }/*$`),
-            handlers,
-            ]) && receiver
-        }),
-        // eslint-disable-next-line object-shorthand
-        routes,
-        async handle (request, ...args) {
-            let response, match, url = new URL(request.url)
-            request.query = Object.fromEntries(url.searchParams)
-            for (let [method, route, handlers] of routes) {
-                if ((method === request.method || method === 'ALL') && (match = url.pathname.match(route))) {
-                    request.params = match.groups
-                    for (let handler of handlers) {
-                        if ((response = await handler(request.proxy || request, ...args)) !== undefined) return response
-                    }
-                }
-            }
-        }
-})
-
-const router = Router() ;
-
-// Check Cache (typically if network down)
-const ifCacheRespond = async (request, context, event) => {
-    const response = await caches.match(request);
-    if (response) {
-        return response
-    }
-}
-
-// Default fetch from network
-const ifNetworkRespond = async (request, context, event) => {
-    if(context.onLine){
-        let response = await fetch(request);
-        if (response && response.ok) {
-            return response;
-        }
-    }
-}
-
-// fetch from network and possible update cache (if one of the chosen cache items)
-const revalidateCache = async (request, context, event) => {
-    if (context.onLine) {
-        const networkResponsePromise = fetch(request);
-        context.networkResponsePromise = networkResponsePromise;
-
-        const oldresponse = await caches.match(request);
-        if ( oldresponse ) {
-            const cache = await caches.open(cacheName);
-            event.waitUntil(async function () {
-                const networkResponse = await networkResponsePromise;
-                await cache.put(request, networkResponse.clone());
-            }());
-        }
-    }
-}
-
-// After revalidate, used fetched item -- adds extra check is revalidate not called so could substitute
-const ifNetworkRespondC = async (request, context, event) => {
-    if (context.onLine) {
-        let response;
-        if (context.networkResponsePromise) {
-            response = await context.networkResponsePromise
-        } else {
-            response = context.networkResponse || await fetch(request);
-        }
-        if (response) {
-            context.networkResponse = response;
-        }
-        if (response && response.ok) {
-            return response;
-        }
-    }
-}
-
-// Error response
-const errorRespond = async ( request, context, event ) => {
-    const response = new Response();
-    return response.error;
-}
-/*
-const justShow = async (request, context, event) => {
-    console.log( caches, request, context ) ;
-}
-*/
-// Policies
-router.get('*', revalidateCache, ifNetworkRespondC, ifCacheRespond, errorRespond ) ;
-router.post('*', ifNetworkRespond, errorRespond ) ;
-router.put('*', ifNetworkRespond, errorRespond ) ;
-
 // preload cache
-self.addEventListener('install', function (event) {
-    // Cache core assets
-    event.waitUntil(caches.open(cacheName).then( cache => {
-        cachable.forEach( asset => cache.add(new Request(asset)) );
-        return cache;
-    }));
-});
-
-// Link in router
-self.addEventListener('fetch', event =>
+self.addEventListener('install', event => 
     event
-    .respondWith(router.handle(event.request, {onLine: navigator.onLine}, event))
-    );
+    .waitUntil(
+        caches.open(cacheName)
+        .then( (cache) => cache.addAll( cachable ) )
+        .catch( (err) => console.log("Error filling cache",err))
+        )
+);
+
+// Selected Fetch
+self.addEventListener('fetch', event => {
+    if ( event.request.method === 'GET' ) {
+        let url = new URL(event.request.url) ;
+        if ( cachable.includes(url.pathname) ) {
+            //console.log("FETCH",url.pathname,cachable.includes(url.pathname));
+            event.respondWith(
+                fetch(event.request)
+                .then( response => {
+                    let rc = response.clone() ;
+                    caches.open(cacheName).then( cache => cache.put( event.request, rc ) );
+                    return response ;
+                    })
+                .catch( () => caches.match(event.request) )
+            );
+        }
+    }
+});
