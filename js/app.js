@@ -1441,6 +1441,43 @@ class AccessData extends PatientData {
     }
 }
 
+class DateMath {
+    prettyInterval(msec) {
+        let hours = msec / 1000 / 60 / 60;
+        if ( hours < 24 ) {
+            return `${hours.toFixed(1)} hours`;
+        }
+        let days = hours / 24 ;
+        if ( days < 14 ) {
+            return `${days.toFixed(1)} days`;
+        }
+        let weeks = days / 7;
+        if ( weeks < 8 ) {
+            return `${weeks.toFixed(1)} weeks`;
+        }
+        let months = days / 30.5;
+        if ( months < 13 ) {
+            return `${months.toFixed(1)} months`;
+        }
+        let years = days / 365.25;
+        return `${years.toFixed(1)} years`;
+    }
+
+    dob2date( dob ) {
+        return new Date( ...dob.split("-") );
+    }
+
+    age( dob, current=null ) {
+        let birthday = this.dob2date(dob);
+        let ref = Date.now();
+        if ( current ) {
+            ref = this.dob2now(current) ;
+        }
+        return this.prettyInterval( ref - birthday );
+    }
+}
+         
+
 function getUsersAll(attachments) {
     let doc = {
         startkey: "org.couchdb.user:",
@@ -2687,7 +2724,6 @@ function printCard() {
     getPatient( true )
     .then( (doc) => {
         show_screen( false );
-        console.log( "print",doc);
         let img = new Image( card, doc, NoPhoto ) ;
         img.display();
         let link = new URL(window.location.href);
@@ -2695,32 +2731,51 @@ function printCard() {
         new QR(
             card.querySelector(".qrCard"),
             link.href,
-            200,200,
+            195,195,
             4);
-        t[0].rows[0].cells[1].innerText = doc.LastName+"' "+doc.FirstName;
-        t[0].rows[1].cells[1].innerText = doc.Complaint;
-        t[0].rows[2].cells[1].innerText = "";
-        t[0].rows[3].cells[1].innerText = "";
-        t[0].rows[4].cells[1].innerText = "";
-        t[0].rows[5].cells[1].innerText = doc.ASA;
+        // patient parameters
+        t[0].rows[0].cells[1].innerText = ""; // name
+        t[0].rows[1].cells[1].innerText = doc.Complaint??"";
+        t[0].rows[2].cells[1].innerText = ""; // procedure
+        t[0].rows[3].cells[1].innerText = ""; // length
+        t[0].rows[4].cells[1].innerText = ""; // surgeon
+        t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
 
-        t[1].rows[0].cells[1].innerText = doc.Age+"";
-        t[1].rows[1].cells[1].innerText = doc.Sex;
-        t[1].rows[2].cells[1].innerText = doc.Weight+" kg";
-        t[1].rows[3].cells[1].innerText = doc.Allergies;
-        t[1].rows[4].cells[1].innerText = doc.Meds;
-        t[1].rows[5].cells[1].innerText = "";
+        t[1].rows[0].cells[1].innerText = DateMath.prototype.age(doc.DOB); 
+        t[1].rows[1].cells[1].innerText = doc.Sex??""; 
+        t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
+        t[1].rows[3].cells[1].innerText = doc.Allergies??"";
+        t[1].rows[4].cells[1].innerText = doc.Meds??"";
+        t[1].rows[5].cells[1].innerText = ""; // equipment
+        return db.query("Pid2Name",{key:doc._id}) ;
+        }) 
+    .then( (doc) => {
+        t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
         return getOperations(true);
         })
     .then( (docs) => {
         let oleng = docs.rows.length;
-        if ( oleng > 0 ) {
-            t[0].rows[2].cells[1].innerText = docs.rows[oleng-1].doc.Procedure;
-            t[0].rows[3].cells[1].innerText = docs.rows[oleng-1].doc.Duration + " hr";
-            t[0].rows[4].cells[1].innerText = docs.rows[oleng-1].doc.Surgeon;
-            t[1].rows[5].cells[1].innerText = docs.rows[oleng-1].doc.Equipment;
+        switch(oleng) {
+            case 0:
+            case 1:
+                oleng -= 1 ;
+                break;
+            default:
+                oleng -= 2;
+                break;
         }
-        window.print();
+        if ( oleng >= 0 ) {
+            t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
+            t[0].rows[3].cells[1].innerText = docs.rows[oleng].doc.Duration + " hr"??"";
+            t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
+            t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
+        }
+        printJS({
+            printable: 'printCard',
+            type: 'html',
+            css: 'style/print.css',
+            scanStyles: false,
+            });
         show_screen( true );
         showPage( "PatientPhoto" );
         })
@@ -2940,26 +2995,37 @@ function cookies_n_query() {
 
 // Application starting point
 window.onload = () => {
-    // Initial start
+    // Initial splash screen
     show_screen(true);
 
+    // Stuff into history to block browser BACK button
+    console.log(window.history);
+    window.history.pushState({}, '');
+    window.addEventListener('popstate', function() {
+        window.history.pushState({}, '');
+    })
+
+    // Service worker (to manage cache for off-line function)
     if ( 'serviceWorker' in navigator ) {
         navigator.serviceWorker
         .register('/sw.js')
-        .then( ()=> console.log("Serviceworker registered") )
+//        .then( ()=> console.log("Serviceworker registered") )
         .catch( err => console.log(err) );
     }
 
     try {
+        // set state from URL or cookies
         cookies_n_query() ; // look for remoteCouch and other cookies
 
+        // Start pouchdb database
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
 
+        // Set up text search
         objectSearch = new Search();
-
         objectSearch.fill()
         .then ( () =>
+            // now start listening for any changes to the database
             db.changes({ since: 'now', live: true, include_docs: true, })
             .on('change', (change) => {
                 // update search index
@@ -2990,13 +3056,13 @@ window.onload = () => {
             )
         .catch( err => console.log(err) );
 
-        // start sync
+        // start sync with remote database
         foreverSync();
 
         // set link for mission
         setMissionLink();
 
-        // design document creation (assync)
+        // Secondary indexes
         createQueries();
         db.viewCleanup()
         .catch( err => console.log(err) );

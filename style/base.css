@@ -270,60 +270,6 @@ footer {
     background: "paleblue";
     flex: 1;
 }
-@media print {  
-  @page {
-    size: 6in 4in portrait; /* landscape */
-    margin: 0;
-  }
-}
-#printCard {
-  margin: .3in ;
-    position: absolute ;
-    background: lightgrey ;
-    left: 0 ;
-    top: 0 ;
-    border: -2px solid black ;
-    display: flex;
-    flex-flow: row nowrap;
-    width: 100%;
-    height: 100%;
-    align-items: flex-start;
-    page-break-before: avoid;
-    page-break-inside: avoid;
-    page-break-after: avoid;
-}
-.rowCard {
-    display: flex;
-    flex-flow: column nowrap;
-    flex-grow: 1;
-    justify-content: space-between;
-    padding: 1px;
-}
-.rowCard div {
-    width: 100% ;
-}
-.rowCard:first-child {
-    flex-grow: 0;
-    flex-basis: 180px;
-}
-#printCard table {
-    table-layout: auto;
-    border-collapse: collapse;
-    border: 0;
-  }
-#printCard tr {
-    background: white;
-    color: black;
-}
-#printCard td {
-    word-wrap: break-word;
-    width: 70% ;
-  }
-#printCard td:nth-child(1) {
-    width: 30% ;
-    font-weight: bold;
-  }
-}
 #splash_screen {
   display: block ;
   background: #3366CC;
