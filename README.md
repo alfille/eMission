@@ -118,6 +118,8 @@ Add a new photo
 ![Note](images/mdb-NewPhoto.png)
 
 # Schema as implemented
+### <a id="Schema"></a> ###
+
 * Patient record
 
 |key|name|type|note|
