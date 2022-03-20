@@ -1,31 +1,31 @@
-# missiondb
+# eMission
 
 ## Briefly
-Database for medical mission work. Intentionally simple. Multiuser but phone/laptop based and robust in disconnected environments.
+eMission is a database for medical mission work. Intentionally simple. Supports your entire team using their smartphone, ipad or laptop. eMission is robust even when internet connectivity is spotty.
 
 ## Inspiration
 Dr. Gennadiy Fuzaylov, a pediatric anesthesiologist at Massachusetts General Hospital and veteran of over 60 medical missions to the Ukraine, Columbia and found keeping track of patients, procedures and results was increasingly difficult. 
 ![[Doctors Collaborating To Help Children](http://dcthc.org)](images/dctohc.png)
 
-A spreadsheet was not adequate -- poor phone interface, poor support for images, poorly multiuser and problematic security. Hence this project was born.
+A spreadsheet was not adequate -- poor phone interface, poor support for images, poorly multi-user and problematic security. Hence this project was born.
 
 ## Scope
 ### In scope
 - Patient name, problem, image and demographics
-- Medical procedures with description, data, images, taylored checklists
+- Medical procedures with description, data, images, tailored checklists
 - Providers with contact information
 - Followup
 - Workflow support including patient ID cards, handheld data entry
-- Schedule ?
+- Schedule?
 
 ### Out of scope
 - lab values 
 - vital signs
 - drug and supply information
-- Free text fields available for extra information
+- But free text fields are available for extra information
 
 ## Design
-* Written by Paul Alfille MD, at Massachusetts General Hospital in 2021
+* Written by Paul Alfille MD at Massachusetts General Hospital in 2021
 * [Pouchdb](https://pouchdb.com/) is front end for device interaction (Javascript on browsers)
 * [Couchdb](https://couchdb.apache.org/) backend for document dabase
   * Tolerant of poorly connected operation
@@ -69,13 +69,17 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 So there is a light relational database on top of the data
 
 # Usage
-* Initial login.  Choose User Name 
+* Initial login. 
+Choose User Name 
 ![Login screen](images/mdb-Login.png)
-* Main Menu.  Patient List is most common choice 
+* Main Menu. 
+Patient List is most common choice 
 ![Patient list](images/mdb-MainMenu.png)
-* Patient List.  List of known patients 
+* Patient List. 
+List of known patients 
 ![Patient list](images/mdb-PatientList.png)
-* Patient List.  Select a patient 
+* Patient List. 
+Select a patient 
 ![Patient menu](images/mdb-PatientListSelect.png)
 * Patient is selected. Menu for this patient 
 ![Demographics](images/mdb-PatientPhoto.png)
@@ -83,24 +87,34 @@ So there is a light relational database on top of the data
 ![Demographics](images/mdb-PatientDemographics1.png)
 * Demographics for this patient. How to save changes 
 ![Medical](images/mdb-PatientDemographics2.png)
-* Medical Information and Operations  This is the main data entry screen for planning and recording operations
-* Notes List Controls
+* Medical Information and Operations 
+This is the main data entry screen for planning and recording operations
+* Notes List
+Controls
 ![Note](images/mdb-NoteList.png)
-* Notes List Start editting
+* Notes List
+Start editting
 ![Note](images/mdb-NoteList2.png)
-* Notes List Text entry field
+* Notes List
+Text entry field
 ![Note](images/mdb-NoteList3.png)
-* Notes List Edit picture
+* Notes List
+Edit picture
 ![Note](images/mdb-NoteList4.png)
-* Notes List Save or cancel changes
+* Notes List
+Save or cancel changes
 ![Note](images/mdb-NoteList5.png)
-* Notes List Edit the date and time
+* Notes List
+Edit the date and time
 ![Note](images/mdb-NoteList6.png)
-* Notes List How to delete a note
+* Notes List
+How to delete a note
 ![Note](images/mdb-NoteList7.png)
-* Notes List Add a new note
+* Notes List
+Add a new note
 ![Note](images/mdb-NewNote.png)
-* Notes List Add a new photo
+* Notes List
+Add a new photo
 ![Note](images/mdb-NewPhoto.png)
 
 # Schema as implemented
