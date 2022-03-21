@@ -1660,6 +1660,11 @@ class DisplayState {
     forget() {
         this.back();
     }
+
+    link() {
+        window.open( `http://github.com/alfille/eMission#${this.current()}`, '_blank' );
+    } 
+        
 }
 
 function showPage( state = "PatientList" ) {
@@ -3061,6 +3066,36 @@ window.onload = () => {
 
         // set link for mission
         setMissionLink();
+
+        // set Help buttons
+        Array.from(document.getElementsByClassName("Qmark")).forEach( h => {
+            h.title = "Open explanation in another tab" ;
+            h.addEventListener("click",()=>objectDisplayState.link());
+            });
+
+        // set Search buttons
+        Array.from(document.getElementsByClassName("Search")).forEach( s => {
+            s.title = "Search everywhere for a word or phrase" ;
+            s.addEventListener("click",()=>showPage('SearchList'));
+            });
+
+        // set Quick Photo buttons
+        Array.from(document.getElementsByClassName("Qphoto")).forEach( q => {
+            q.title = "Quick photo using camera or from gallery" ;
+            q.addEventListener("click",()=>showPage('QuickPhoto'));
+            });
+
+        // set edit details for PatientData pages
+        Array.from(document.getElementById("buttonheader").getElementsByClassName("edit_note")).forEach( e => {
+            e.title = "Unlock record to allow changes" ;
+            e.addEventListener("click",()=>objectPatientData.clickEdit());
+            });
+
+        // set save details for PatientData pages
+        Array.from(document.getElementsByClassName("savedata")).forEach( s => {
+            s.title = "Save your changes to this record" ;
+            s.addEventListener("click",()=>objectPatientData.savePatientData());
+            });
 
         // Secondary indexes
         createQueries();

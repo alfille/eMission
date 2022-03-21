@@ -17,49 +17,50 @@
                     <!-- top: MainMenu -->
                     <div class="MainMenu pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
                     <div class= "Settings SuperUser Download DatabaseInfo SendUser pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: Administration PatientPhoto -->
                     <div class= "Admininstration PatientPhoto pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage( 'MainPage' )" title="Show main menu">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto pageOverlay">
                         <div id="headerboxlink"><img class="mission_logo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="showPage()">Return</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()" title="Save and use new remove settings">Save Changes</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: PatientList -->
                     <div class="PatientList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
                         <button type="button" class="divbutton" onclick="showPage( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: SearchList -->
                     <div class="SearchList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'back' )">Return</button>
                         <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Main Menu</button>
                         <button type="button" class="divbutton" onclick="objectTable.editpage()" title="Jump to this search result">Choose this record</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: UserList -->
                     <div class="UserList pageOverlay">
@@ -67,91 +68,91 @@
                         <button type="button" class="divbutton" onclick="showPage( 'UserNew' )" title="Add a new database user">Add User</button>
                         <button type="button" class="divbutton" onclick="showPage( 'Access' )" title="Set user\'s access rights">Access Permissions</button>
                         <button type="button" class="divbutton" onclick="showPage( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: OperationList -->
                     <div class="OperationList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
                         <button type="button" class="divbutton" onclick="showPage( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: PatientNew -->
                     <div class="PatientData PatientNew pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()" title="Unlock record for changes">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()" title="Save new patient record">Add Patient</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Add Patient</button>
                         <button type="button" class="divbutton discarddata return" onclick="showPage( 'back' )" title="Abandon this task">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: SuperUser -->
                     <div class="PatientData SuperUser pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()" title="Edit Superuser info">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()" titel="Save changes">Proceed</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Proceed</button>
                         <button type="button" class="divbutton discarddata return" onclick="showPage( 'back' )" title="Discard changes">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: UserNew Access -->
                     <div class="PatientData UserNew Access pageOverlay">
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: UserEdit -->
                     <div class="PatientData UserEdit pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="deleteUser()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: MissionInfo -->
                     <div class="PatientData MissionInfo pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MissionList')">Mission Notes</button>
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: PatientDemographics PatientMedical -->
                     <div class="PatientData PatientDemographics PatientMedical pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: OperationEdit -->
                     <div class="PatientData OperationEdit pageOverlay">
-                        <button type="button" class="divbutton edit_note" onclick="objectPatientData.clickEdit()">Edit</button>
-                        <button type="button" class="divbutton savedata" onclick="objectPatientData.savePatientData()">Save Changes</button>
+                        <button type="button" class="divbutton edit_note">Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="deleteOperation()">Delete Operation</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: InvalidPatient -->
                     <div class="InvalidPatient pageOverlay">
                         <button type="button" class="divbutton return" onclick="showPage( 'PatientList' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: NoteList -->
                     <div class="NoteList pageOverlay">
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage( 'QuickPhoto' )" title="Quick picture">&#128247;</button>
+                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                     <!-- top: MissionList -->
                     <div class="MissionList pageOverlay">
                         <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage('QuickPhoto')" title="Quick picture">&#128247;</button>
+                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'SearchList' )" title="Search everywhere">&#x1F50E;&#xFE0E;</button>
-                        <button type="button" class="divbutton Qmark" title="Jump to instructions"><B>?</B></button>
+                        <button type="button" class="divbutton Search">&#x1F50E;&#xFE0E;</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
                 </div>
             </div>
@@ -241,7 +242,7 @@
                     <div class="PatientProcButtons" id="ProcList">
                         <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Notes</button>
                         <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton" type="button" onclick="showPage( 'QuickPhoto' )" title="Quick picture">&#128247; New Picture</button>
+                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
                     </div>
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="printCard()">Print Card</button>
