@@ -624,6 +624,8 @@ class Search {
 }
 
 class Image {
+    static srcList = [] ;
+    
     constructor( parent, doc, backup ) {
         this.doc = doc;
         this.parent = parent;
@@ -637,15 +639,25 @@ class Image {
             this.src = this.backup ?? null ;
         } else {
             this.src = URL.createObjectURL(data);
+            this.addSrc();
         }
         this.upload=null;
+    }
+
+    addSrc() {
+        Image.srcList.push( this.src ) ;
+    }
+
+    static clearSrc() {
+        Image.srcList.forEach( s => URL.revokeObjectURL( s ) );
+        Image.srcList = [] ;
     }
 
     source() {
         return this.src;
     }
 
-    showBigPicture( target ) {
+    static showBigPicture( target ) {
         let big = document.querySelector( ".FloatPicture" );
         big.src = target.src;
         big.style.display = "block";
@@ -654,7 +666,7 @@ class Image {
     display() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
-            img.addEventListener( 'click', () => this.showBigPicture(img) );
+            img.addEventListener( 'click', () => Image.showBigPicture(img) );
             if ( this.src ) {
                 img.src = this.src;
                 img.style.display = "block";
@@ -701,6 +713,7 @@ class Image {
         const files = this.parent.querySelector('.imageBar') ;
         this.upload = files.files[0];
         this.src = URL.createObjectURL(this.upload);
+        this.addSrc();
         this.display();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{}
@@ -852,7 +865,7 @@ class PatientData {
             ++ this.pairs;
         } 
         
-        this.buttonStatus( true );
+        PatientData.buttonStatus( true );
         [...document.getElementsByClassName("edit_note")].forEach( (e) => {
             e.disabled = false;
         });
@@ -995,7 +1008,7 @@ class PatientData {
                     inp.type = "text";
                     inp.pattern="\d+:[0-5][0-9]";
                     inp.size = 6;
-                    inp.value = this.HMfromMin(preVal??"");
+                    inp.value = PatientData.HMfromMin(preVal??"");
                     inp.title = "Time length in format HH:MM";
                     lab.appendChild(inp);
                     break;
@@ -1018,7 +1031,7 @@ class PatientData {
         let vdate;
         let vtime;
         try {
-            [vdate, vtime] =  [ this.YYYYMMDDfromDate( d ), this.AMfrom24( d.getHours(), d.getMinutes() ) ];
+            [vdate, vtime] =  [ PatientData.YYYYMMDDfromDate( d ), PatientData.AMfrom24( d.getHours(), d.getMinutes() ) ];
             }
         catch( err ) {
             [vdate, vtime] = [ "", "" ];
@@ -1043,10 +1056,10 @@ class PatientData {
     DateTimefromInput( field ) {
         let inp = field.querySelectorAll("input");
         try {
-            var d =  this.YYYYMMDDtoDate( inp[0].value ); // date
+            var d =  PatientData.YYYYMMDDtoDate( inp[0].value ); // date
             
             try {
-                let t = this.AMto24( inp[1].value ); // time
+                let t = PatientData.AMto24( inp[1].value ); // time
                 d.setHours( t.hr );
                 d.setMinutes( t.min );
                 } 
@@ -1059,7 +1072,7 @@ class PatientData {
             }
     }
 
-    HMtoMin ( inp ) {
+    static HMtoMin ( inp ) {
         if ( typeof inp != 'string' ) {
             throw "bad";
         }
@@ -1070,7 +1083,7 @@ class PatientData {
         return parseInt(d[0]) * 60 + parseInt(d[1]);
     }
         
-    HMfromMin ( min ) {
+    static HMfromMin ( min ) {
         if ( typeof min == 'number' ) {
             return (Math.floor(min/60)+100).toString().substr(-2) + ":" + ((min%60)+100).toString().substr(-2);
         } else {
@@ -1078,7 +1091,7 @@ class PatientData {
         }
     }
         
-    AMto24( inp ) {
+    static AMto24( inp ) {
         if ( typeof inp != 'string' ) {
             throw "bad";
         }
@@ -1098,7 +1111,7 @@ class PatientData {
         }
     }
 
-    AMfrom24( hr, min ) {
+    static AMfrom24( hr, min ) {
         if ( hr < 13 ) {
             return (hr+100).toString().substr(-2) + ":" + (min+100).toString().substr(-2) + " AM";
         } else {
@@ -1106,7 +1119,7 @@ class PatientData {
         }
     }
 
-    YYYYMMDDtoDate( inp ) {
+    static YYYYMMDDtoDate( inp ) {
         if ( typeof inp != 'string' ) {
             throw "bad";
         }
@@ -1117,7 +1130,7 @@ class PatientData {
         return new Date( d[0],d[1],d[2] );
     }
 
-    YYYYMMDDfromDate( d ) {
+    static YYYYMMDDfromDate( d ) {
         if ( d instanceof Date ) {
             if ( d.getTime() > 0 ) {
                 return [
@@ -1130,15 +1143,7 @@ class PatientData {
         throw "bad";
     }
 
-    toLocalString( d ) {
-        if ( d instanceof Date ) {
-            return new Date( d.getTime() - d.getTimezoneOffset()*1000 ).toISOString();
-        } else {
-            return "";
-        }
-    }
-
-    buttonStatus( bool ) {
+    static buttonStatus( bool ) {
         [...document.getElementsByClassName('savedata')].forEach( (e) => {
             e.disabled = bool;
         });
@@ -1164,15 +1169,8 @@ class PatientData {
         }
     }
     
-    revertImage( t ) {
-        while ( t && t.nodeName != "LI" ) {
-            t = t.parentNode ;
-        }
-        console.log(t);
-    }                
-
     clickEdit() {
-        this.buttonStatus( false );
+        PatientData.buttonStatus( false );
         for ( let ipair=0; ipair<this.pairs; ++ipair ) {
             let struct = this.struct[ipair];
             let ul     = this.ul[ipair];
@@ -1267,7 +1265,7 @@ class PatientData {
                             .map( i => i.value );
                         break;
                     case "length":
-                        postVal = this.HMtoMin( li.querySelector("input").value );
+                        postVal = PatientData.HMtoMin( li.querySelector("input").value );
                         break;
                     case "textarea":
                         postVal = li.querySelector("textarea").value;
@@ -1600,11 +1598,11 @@ class DisplayState {
 
         const safeIndex = [
             "MainMenu",
-            "Mission",
             "MissionInfo",
             "PatientList",
             "PatientPhoto",
             "NoteList",
+            "MissionList",
             "OperationList",
             "SearchList",
             "SuperUser",
@@ -1677,6 +1675,8 @@ function showPage( state = "PatientList" ) {
     objectNoteList = null;
     objectTable = null;
     objectUserTable = null;
+
+    Image.clearSrc() ;
 
     switch( objectDisplayState.current() ) {           
        case "MainMenu":

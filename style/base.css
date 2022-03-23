@@ -229,7 +229,7 @@ footer {
 .editToolbar span:hover {
     color: yellow;
 }
-.edit_note {
+.edit_note, search {
   display: inline-block;
   background: yellow;
   color: black;
