@@ -1972,6 +1972,123 @@ function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
 
+/*!
+ * swiped-events.js - v@version@
+ * Pure JavaScript swipe events
+ * https://github.com/john-doherty/swiped-events
+ * @inspiration https://stackoverflow.com/questions/16348031/disable-scrolling-when-touch-moving-certain-element
+ * @author John Doherty <www.johndoherty.info>
+ * @license MIT
+ * Modified By Paul Alfille -- class format use only default settings
+ */
+
+class Swipe {
+    constructor() {
+        document.addEventListener('touchstart', () => this.handleTouchStart, false);
+        document.addEventListener('touchmove', () => this.handleTouchMove, false);
+        document.addEventListener('touchend', () => this.handleTouchEnd, false);
+        console.log("SWIPE NEW");
+        this.reset();
+    }
+
+    reset() {
+        console.log("SWIPE RESET");
+        this.xDown = null;
+        this.yDown = null;
+        this.xDiff = null;
+        this.yDiff = null;
+        this.timeDown = null;
+        this.startEl = null;
+    }
+
+    /**
+     * Fires swiped event if swipe detected on touchend
+     * @param {object} e - browser event object
+     * @returns {void}
+     */
+    handleTouchEnd(e) {
+        // if the user released on a different target, cancel!
+        console.log("SWIPE END");
+        if (this.startEl !== e.target) {
+            this.reset() ;
+            return ;
+        }
+
+        let timeDiff = Date.now() - this.timeDown;
+        if ( timeDiff > 500 ) {    // default 500ms
+            this.reset() ;
+            return ;
+        }
+
+        let eventType = '';
+
+        if (Math.abs(this.xDiff) > Math.abs(this.yDiff)) { // most significant
+            if (Math.abs(this.xDiff) > 20) { // default 20px
+                eventType = (this.xDiff > 0)?'swiped-left':'swiped-right';
+            }
+        }
+        else if (Math.abs(this.yDiff) > 20) { // default 20px
+            eventType = (this.yDiff > 0)?'swiped-up':'swiped-down';
+        } else {
+            this.reset() ;
+            return ;
+        }
+
+        let changedTouches = e.changedTouches || e.touches || [];
+        let eventData = {
+            dir: eventType.replace(/swiped-/, ''),
+            touchType: (changedTouches[0] || {}).touchType || 'direct',
+            xStart: parseInt(this.xDown, 10),
+            xEnd: parseInt((changedTouches[0] || {}).clientX || -1, 10),
+            yStart: parseInt(this.yDown, 10),
+            yEnd: parseInt((changedTouches[0] || {}).clientY || -1, 10)
+        };
+
+        // fire `swiped` event event on the element that started the swipe
+        this.startEl.dispatchEvent(new CustomEvent('swiped', { bubbles: true, cancelable: true, detail: eventData }));
+
+        // fire `swiped-dir` event on the element that started the swipe
+        this.startEl.dispatchEvent(new CustomEvent(eventType, { bubbles: true, cancelable: true, detail: eventData }));
+
+        this.reset() ;
+    }
+
+    /**
+     * Records current location on touchstart event
+     * @param {object} e - browser event object
+     * @returns {void}
+     */
+    handleTouchStart(e) {
+        console.log("SWIPE TOUCH START");
+        // if the element has data-swipe-ignore="true" we stop listening for swipe events
+        if (e.target.getAttribute('data-swipe-ignore') === 'true') return;
+
+        this.startEl = e.target;
+
+        this.timeDown = Date.now();
+        this.xDown = e.touches[0].clientX;
+        this.yDown = e.touches[0].clientY;
+        this.xDiff = 0;
+        this.yDiff = 0;
+    }
+
+    /**
+     * Records location diff in px on touchmove event
+     * @param {object} e - browser event object
+     * @returns {void}
+     */
+    handleTouchMove(e) {
+        console.log("SWIPE TOUCH MOVE");
+
+        if (!this.xDown || !this.yDown) return;
+
+        this.xDiff = this.xDown - e.touches[0].clientX;
+        this.yDiff = this.yDown - e.touches[0].clientY;
+    }
+
+}
+var objectSwipe = new Swipe() ;
+
 class SortTable {
     constructor( collist, tableId ) {
         this.tbl = document.getElementById(tableId);
@@ -2006,6 +2123,11 @@ class SortTable {
                 this.selectFunc( record._id );
             });
             row.addEventListener( 'dblclick', () => {
+                this.selectFunc( record._id );
+                this.editpage();
+            });
+            row.addEventListener( 'swipe-right', (e) => {
+                console.log(e);
                 this.selectFunc( record._id );
                 this.editpage();
             });
@@ -3004,7 +3126,6 @@ window.onload = () => {
     show_screen(true);
 
     // Stuff into history to block browser BACK button
-    console.log(window.history);
     window.history.pushState({}, '');
     window.addEventListener('popstate', function() {
         window.history.pushState({}, '');
@@ -3110,3 +3231,4 @@ window.onload = () => {
         showPage("RemoteDatabaseInput"); // forces program reload
         }
 };
+
