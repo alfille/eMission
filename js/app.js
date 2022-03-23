@@ -2717,7 +2717,7 @@ class NoteList extends PatientData {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );
 
-        li.appendChild( document.getElementById("templates").getElementsByClassName("edit_note")[0].cloneNode(true) );
+        li.appendChild( document.getElementById("templates").querySelector(".edit_note").cloneNode(true) );
 
         let cdiv = document.createElement("div");
         cdiv.classList.add("inly");
@@ -3207,7 +3207,8 @@ window.onload = () => {
             });
 
         // set edit details for PatientData pages
-        Array.from(document.getElementById("buttonheader").getElementsByClassName("edit_note")).forEach( e => {
+        document.getElementById("buttonheader").querySelectorAll(".edit_note").forEach( e => {
+            console.log(e);
             e.title = "Unlock record to allow changes" ;
             e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
