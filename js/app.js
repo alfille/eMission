@@ -1984,15 +1984,13 @@ function isAndroid() {
 
 class Swipe {
     constructor() {
-        document.addEventListener('touchstart', () => this.handleTouchStart, false);
-        document.addEventListener('touchmove', () => this.handleTouchMove, false);
-        document.addEventListener('touchend', () => this.handleTouchEnd, false);
-        console.log("SWIPE NEW");
+        document.addEventListener('touchstart', (e) => this.handleTouchStart(e), false);
+        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), false);
+        document.addEventListener('touchend', (e) => this.handleTouchEnd(e), false);
         this.reset();
     }
 
     reset() {
-        console.log("SWIPE RESET");
         this.xDown = null;
         this.yDown = null;
         this.xDiff = null;
@@ -2008,7 +2006,6 @@ class Swipe {
      */
     handleTouchEnd(e) {
         // if the user released on a different target, cancel!
-        console.log("SWIPE END");
         if (this.startEl !== e.target) {
             this.reset() ;
             return ;
@@ -2045,7 +2042,7 @@ class Swipe {
         };
 
         // fire `swiped` event event on the element that started the swipe
-        this.startEl.dispatchEvent(new CustomEvent('swiped', { bubbles: true, cancelable: true, detail: eventData }));
+        //this.startEl.dispatchEvent(new CustomEvent('swiped', { bubbles: true, cancelable: true, detail: eventData }));
 
         // fire `swiped-dir` event on the element that started the swipe
         this.startEl.dispatchEvent(new CustomEvent(eventType, { bubbles: true, cancelable: true, detail: eventData }));
@@ -2059,7 +2056,6 @@ class Swipe {
      * @returns {void}
      */
     handleTouchStart(e) {
-        console.log("SWIPE TOUCH START");
         // if the element has data-swipe-ignore="true" we stop listening for swipe events
         if (e.target.getAttribute('data-swipe-ignore') === 'true') return;
 
@@ -2078,8 +2074,6 @@ class Swipe {
      * @returns {void}
      */
     handleTouchMove(e) {
-        console.log("SWIPE TOUCH MOVE");
-
         if (!this.xDown || !this.yDown) return;
 
         this.xDiff = this.xDown - e.touches[0].clientX;
@@ -2122,15 +2116,12 @@ class SortTable {
             row.addEventListener( 'click', () => {
                 this.selectFunc( record._id );
             });
-            row.addEventListener( 'dblclick', () => {
-                this.selectFunc( record._id );
-                this.editpage();
-            });
-            row.addEventListener( 'swipe-right', (e) => {
-                console.log(e);
-                this.selectFunc( record._id );
-                this.editpage();
-            });
+            ['dblclick','swiped-right'].forEach( (e) =>
+                row.addEventListener( e, () => {
+                    this.selectFunc( record._id );
+                    this.editpage();
+                    })
+                );
             collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
                 if ( colname in record ) {
@@ -2752,9 +2743,10 @@ class NoteList extends PatientData {
             img.edit();
             } ;
         li.addEventListener( 'click', () => selectNote( note.id ) );
-        li.addEventListener( 'dblclick', () => edit_note );
+        ['dblclick','swiped-right'].forEach( ev =>
+            [li, label].forEach( targ => targ.addEventListener( ev, edit_note )));
         label.querySelector(".edit_note").addEventListener( 'click', edit_note );
-        label.addEventListener( 'dblclick', edit_note );
+//        label.addEventListener( 'dblclick', edit_note );
 
         return li;
     }
@@ -3189,32 +3181,31 @@ window.onload = () => {
         setMissionLink();
 
         // set Help buttons
-        Array.from(document.getElementsByClassName("Qmark")).forEach( h => {
+        document.querySelectorAll(".Qmark").forEach( h => {
             h.title = "Open explanation in another tab" ;
             h.addEventListener("click",()=>objectDisplayState.link());
             });
 
         // set Search buttons
-        Array.from(document.getElementsByClassName("Search")).forEach( s => {
+        document.querySelectorAll(".Search").forEach( s => {
             s.title = "Search everywhere for a word or phrase" ;
             s.addEventListener("click",()=>showPage('SearchList'));
             });
 
         // set Quick Photo buttons
-        Array.from(document.getElementsByClassName("Qphoto")).forEach( q => {
+        document.querySelectorAll(".Qphoto").forEach( q => {
             q.title = "Quick photo using camera or from gallery" ;
             q.addEventListener("click",()=>showPage('QuickPhoto'));
             });
 
-        // set edit details for PatientData pages
+        // set edit details for PatientData edit pages -- only for "top" portion
         document.getElementById("buttonheader").querySelectorAll(".edit_note").forEach( e => {
-            console.log(e);
             e.title = "Unlock record to allow changes" ;
             e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
 
-        // set save details for PatientData pages
-        Array.from(document.getElementsByClassName("savedata")).forEach( s => {
+        // set save details for PatientData save pages
+        document.querySelectorAll("savedata").forEach( s => {
             s.title = "Save your changes to this record" ;
             s.addEventListener("click",()=>objectPatientData.savePatientData());
             });
