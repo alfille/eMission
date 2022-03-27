@@ -102,7 +102,7 @@
                     <div class="PatientData UserEdit pageOverlay">
                         <button type="button" class="divbutton edit_note">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton delete" onclick="deleteUser()">Delete User</button>
+                        <button type="button" class="divbutton delete" onclick="User.deleteUser()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
@@ -127,7 +127,7 @@
                     <div class="PatientData OperationEdit pageOverlay">
                         <button type="button" class="divbutton edit_note">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton delete" onclick="deleteOperation()">Delete Operation</button>
+                        <button type="button" class="divbutton delete" onclick="Operation.deleteOperation()">Delete Operation</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
@@ -188,7 +188,6 @@
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton" onclick="showPage( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="forceReplicate()">Force Replicate</button>
-                    <button type="button" class="divbutton" onclick="testScheduleIndex()">Test routines</button>
                 </div>
             </div>
             <!-- body: Download -->
@@ -246,7 +245,7 @@
                     </div>
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="printCard()">Print Card</button>
-                        <button type="button" class="divbutton delete" onclick="deletePatient()">Delete Patient</button>
+                        <button type="button" class="divbutton delete" onclick="Patient.deletePatient()">Delete Patient</button>
                     </div>
                 </div>
             </div>
@@ -284,7 +283,7 @@
         </div>
         <!-- copyable parts -->
         <div id="templates" class="pageOverlay">
-           <button class="edit_note libutton" type="button">Edit</button>
+           <div class="notelabel"><button class="edit_note libutton" type="button">Edit</button> <input type="text" class="flatpickr flatpickr-input" readonly><div class="inly"></div></div>
             <!-- Image display -->
             <div class="imagetemplate">
                 <img class="entryfield_image">
@@ -395,11 +394,9 @@
         <!-- scripts -->
         <!-- pouchdb --> <script src="js/pouchdb-7.2.1.min.js"></script>
         <!-- qr --> <script src="js/qrenc-4.0.0.min.js"></script>
-        <!-- datepicker --> <script src="js/datepicker.js"></script>
-        <!-- timepicker --> <script src="js/time-pick.js"></script>
-        <!-- length --> <script src="js/length-pick.js"></script>
         <!-- load search --> <script src="js/elasticlunr.min.js"></script>
         <!-- print routines --> <script src="js/print.min.js"></script>
+        <!-- new data-time --> <script src="js/flatpickr.min.js"></script>
         <!-- application code --> <script src="js/app.js"></script>
     </body>
 </html>

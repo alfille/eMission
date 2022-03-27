@@ -1,5 +1,7 @@
 "use strict";
 
+/* jshint esversion: 6 */
+
 // globals not cookie backed
 var objectPatientData;
 var objectNoteList;
@@ -37,7 +39,7 @@ const remoteSecurity = {
 
 // For remote replication
 const remoteFields = [ "address", "username", "password", "database" ];
-// used for record keys ( see makePatientId, etc )
+// used for record keys ( see makeId, etc )
 const RecordFormat = {
     type: {
         patient: "p" ,
@@ -523,15 +525,6 @@ function createQueries() {
     .catch( (err) => console.log(err ) );
 }
 
-function testScheduleIndex() {
-    getPatientsAll(true)
-    .then( docs => Promise.all(docs.rows.map( r=>{
-        console.log(r.doc);
-        r.doc.patient_id = r.doc._id;
-        return db.put(r.doc);
-        })));
-}
-
 class Search {
     constructor(type) {
         this.index={};
@@ -777,8 +770,8 @@ class ImageNote extends ImagePlus {
         this.save( this.doc );
         db.put( this.doc )
         .then( resp => {
-            selectNote( resp.id );
-            return getNotesAll(); // to prime list
+            Note.select( resp.id );
+            return Note.getAll(); // to prime list
             })
         .catch( err => console.log(err) )
         .finally( () => this.leave() );
@@ -801,13 +794,13 @@ class ImageNote extends ImagePlus {
     }
 
     buttonsdisabled( bool ) {
-        Array.from(document.getElementsByClassName( "libutton" )).forEach( b => b.disabled=bool );
-        Array.from(document.getElementsByClassName( "divbutton" )).forEach( b => b.disabled=bool );
+        document.querySelectorAll(".libutton" ).forEach( b => b.disabled=bool );
+        document.querySelectorAll(".divbutton").forEach( b => b.disabled=bool );
     }
 
     delete() {
         let pdoc;
-        getPatient( false )
+        Patient.getRecord( false )
         .then( (doc) => {
             pdoc = doc;
             return db.get( noteId );
@@ -820,7 +813,7 @@ class ImageNote extends ImagePlus {
             }           
             })
         .then( (doc) => db.remove(doc) )
-        .then( () => unselectNote() )
+        .then( () => Note.unselect() )
         .catch( (err) => console.log(err) )
         .finally( () => this.leave() );
     }
@@ -869,7 +862,6 @@ class PatientData {
         [...document.getElementsByClassName("edit_note")].forEach( (e) => {
             e.disabled = false;
         });
-        picker.detach();
         this.parent.innerHTML = "";
         
         for ( let ipair = 0; ipair < this.pairs; ++ ipair ) {
@@ -893,6 +885,7 @@ class PatientData {
             li.appendChild(lab);
             let localname = [item.name,idx,ipair].map( x=>x+'').join("_");
             
+            // possibly use an alias instead of database field name
             if ( "alias" in item ) {
                 lab.appendChild( document.createTextNode(`${item.alias}: `) );
             } else {
@@ -900,15 +893,17 @@ class PatientData {
             }
             lab.title = item.hint;
 
+            // get prior choices for fill-in choice
             let choices = Promise.resolve([]) ;
             if ( "choices" in item ) {
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
             } else if ( "userlist" in item ) {
-                choices = getUsersAll(true).then( u=>u.rows.map(r=>r.doc[item.userlist]) ) ;
+                choices = User.getAll(true).then( u=>u.rows.map(r=>r.doc[item.userlist]) ) ;
             }
 
+            // get value and make type-specific input field with filled in value
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
             switch( item.type ) {
@@ -981,12 +976,17 @@ class PatientData {
                     }
                     break;
                 case "datetime":
-                case "datetime-local":
-                    inp = preVal ? new Date(preVal) : null ;
-                    this.DateTimetoInput(inp).forEach( (f) => lab.appendChild(f) );
+                    inp = document.createElement("input");
+                    inp.pattern="\d+-\d+-\d+ \d+:\d\d [AP]M";
+                    inp.type = "text";
+                    inp.value = preVal ? flatpickr.formatDate(new Date(preVal), "Y-m-d h:i K"):"" ;
+                    inp.title = "Date and time in format YYYY-MM-DD HH:MM AM";
+                    inp.readonly = true;
+                    lab.appendChild( inp );                    
                     break;
                 case "date":
                     inp = document.createElement("input");
+                    inp.classList.add("flatpickr","flatpickr-input")
                     inp.type = "text";
                     inp.pattern="\d+-\d+-\d+";
                     inp.size = 10;
@@ -996,6 +996,7 @@ class PatientData {
                     break;
                 case "time":
                     inp = document.createElement("input");
+                    inp.classList.add("flatpickr","flatpickr-input")
                     inp.type = "text";
                     inp.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
                     inp.size = 9;
@@ -1005,6 +1006,7 @@ class PatientData {
                     break;
                 case "length":
                     inp = document.createElement("input");
+                    inp.classList.add("flatpickr","flatpickr-input")
                     inp.type = "text";
                     inp.pattern="\d+:[0-5][0-9]";
                     inp.size = 6;
@@ -1027,51 +1029,6 @@ class PatientData {
         return ul;
     }
 
-    DateTimetoInput( d ) {
-        let vdate;
-        let vtime;
-        try {
-            [vdate, vtime] =  [ PatientData.YYYYMMDDfromDate( d ), PatientData.AMfrom24( d.getHours(), d.getMinutes() ) ];
-            }
-        catch( err ) {
-            [vdate, vtime] = [ "", "" ];
-            }
-            
-        let inpD = document.createElement("input");
-        inpD.type = "text";
-        inpD.size = 10;
-        inpD.pattern="\d+-\d+-\d+";
-        inpD.value = vdate;
-        inpD.title = "Date in format YYYY-MM-DD";
-        
-        let inpT = document.createElement("input");
-        inpT.type = "text";
-        inpT.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
-        inpT.size = 9;
-        inpT.value = vtime;
-        inpT.title = "Time in format HH:MM AM or HH:MM PM";
-        return [ inpD, inpT ];
-    }
-
-    DateTimefromInput( field ) {
-        let inp = field.querySelectorAll("input");
-        try {
-            var d =  PatientData.YYYYMMDDtoDate( inp[0].value ); // date
-            
-            try {
-                let t = PatientData.AMto24( inp[1].value ); // time
-                d.setHours( t.hr );
-                d.setMinutes( t.min );
-                } 
-            catch( err ) {}
-            // convert to local time
-            return d.toISOString();
-            }
-        catch( err ) {
-            return "";
-            }
-    }
-
     static HMtoMin ( inp ) {
         if ( typeof inp != 'string' ) {
             throw "bad";
@@ -1091,63 +1048,11 @@ class PatientData {
         }
     }
         
-    static AMto24( inp ) {
-        if ( typeof inp != 'string' ) {
-            throw "bad";
-        }
-        let d = inp.match( /\d+/g );
-        if ( (d == null) || d.length < 2 ) {
-            throw "bad";
-        } else if ( /PM/i.test(inp) ) {
-            return {
-                hr: parseInt(d[0])+12,
-                min: parseInt(d[1]),
-            };
-        } else {
-            return {
-                hr: parseInt(d[0]),
-                min: parseInt(d[1]),
-            };
-        }
-    }
-
-    static AMfrom24( hr, min ) {
-        if ( hr < 13 ) {
-            return (hr+100).toString().substr(-2) + ":" + (min+100).toString().substr(-2) + " AM";
-        } else {
-            return (hr+100-12).toString().substr(-2) + ":" + (min+100).toString().substr(-2) + " PM";
-        }
-    }
-
-    static YYYYMMDDtoDate( inp ) {
-        if ( typeof inp != 'string' ) {
-            throw "bad";
-        }
-        let d = inp.match( /\d+/g );
-        if ( d.length < 3 ) {
-            throw "bad";
-        }
-        return new Date( d[0],d[1],d[2] );
-    }
-
-    static YYYYMMDDfromDate( d ) {
-        if ( d instanceof Date ) {
-            if ( d.getTime() > 0 ) {
-                return [
-                    d.getFullYear(),
-                    d.getMonth(),
-                    d.getDate(),
-                    ].join("-");
-            }
-        }
-        throw "bad";
-    }
-
     static buttonStatus( bool ) {
-        [...document.getElementsByClassName('savedata')].forEach( (e) => {
+        document.querySelectorAll('.savedata').forEach( (e) => {
             e.disabled = bool;
         });
-        [...document.getElementsByClassName('discarddata')].forEach( (e) => {
+        document.querySelectorAll('.discarddata').forEach( (e) => {
             e.disabled = bool;
         });
     }
@@ -1191,29 +1096,42 @@ class PatientData {
                         document.getElementsByName(localname).forEach( (i) => i.disabled = false );
                         break;
                     case "date":
-                        picker.attach({
-                            element: li.querySelector("input"),
-                        });
+                        flatpickr( li.querySelector("input"),
+                            {
+                                enableTime: false,
+                                noCalendar: false,
+                                dateFormat: "Y-m-d",
+                                defaultDate: Date.now(),
+                            });
                         break;
                     case "time":
-                        tp.attach({
-                            element: li.querySelector("input"),
-                        });
+                        flatpickr( li.querySelector("input"),
+                            {
+                                enableTime: true,
+                                noCalendar: true,
+                                dateFormat: "h:i K",
+                                defaultDate: "9:00",
+                            });
                         break;
                     case "length":
-                        lp.attach({
-                            element: li.querySelector("input"),
-                        });
+                        flatpickr( li.querySelector("input"),
+                            {
+                                time_24hr: true,
+                                enableTime: true,
+                                noCalendar: true,
+                                dateFormat: "h:i",
+                                defaultDate: "9:00",
+                            });
                         break;
                     case "datetime":
-                    case "datetime-local":
-                        const i = li.querySelectorAll("input");
-                        picker.attach({
-                            element: i[0],
-                        });
-                        tp.attach({
-                            element: i[1],
-                        });
+                        flatpickr( li.querySelector("input"),
+                            {
+                                time_24hr: false,
+                                enableTime: true,
+                                noCalendar: false,
+                                dateFormat: "Y-m-d h:i K",
+                                defaultDate: Date.now(),
+                            });
                         break;
                     case "textarea":
                         li.querySelector("textarea").readOnly = false;
@@ -1256,8 +1174,7 @@ class PatientData {
                             .map(i=>i.value)[0];
                         break;
                     case "datetime":
-                    case "datetime-local":
-                        postVal = this.DateTimefromInput( li );
+                        postVal = new Date(flatpickr.parseDate(li.querySelector("input").value, "Y-m-d h:i K")).toISOString();
                         break;
                     case "checkbox":
                         postVal = [...document.getElementsByName(localname)]
@@ -1293,6 +1210,7 @@ class PatientData {
     
     saveChanged ( state ) {
         let changed = this.loadDocData();
+        console.log(changed);
         Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
             .catch( (err) => console.log(err) )
             .finally( () => showPage( state ) )
@@ -1314,6 +1232,7 @@ class MissionData extends PatientData {
 class OperationData extends PatientData {
     savePatientData() {
         this.saveChanged( "OperationList" );
+        console.log("New op");
     }
 }
 
@@ -1349,11 +1268,12 @@ class NewPatientData extends PatientData {
         } else if ( this.doc[0].DOB == "" ) {
             alert("Enter some Date Of Birth");
         } else {
-            this.doc[0]._id = makePatientId( this.doc[0] );
+            // create new patient record
+            this.doc[0]._id = Patient.makeId( this.doc[0] );
             this.doc[0].patient_id = this.doc[0]._id;
             db.put( this.doc[0] )
             .then( (response) => {
-                selectPatient(response.id);
+                Patient.select(response.id);
                 showPage( "PatientPhoto" );
                 })
             .catch( (err) => console.log(err) );
@@ -1396,7 +1316,7 @@ class NewUserData extends NewPatientData {
         userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
         user_db.put( this.doc[0] )
         .then( response => {
-            selectUser( response.id );
+            User.select( response.id );
             showPage( "SendUser" );
             })
         .catch( err => {
@@ -1474,117 +1394,492 @@ class DateMath {
         return this.prettyInterval( ref - birthday );
     }
 }
-         
 
-function getUsersAll(attachments) {
-    let doc = {
-        startkey: "org.couchdb.user:",
-        endkey: "org.couchdb.user:\\fff0",
-    } ;
-    if (attachments) {
-        doc.include_docs = true;
-        doc.binary = true;
-        doc.attachments = true;
-    } else {
-        doc.limit = 0;
+class Patient { // convenience class
+    static deletePatient() {
+        if ( Patient.isSelected() ) {        
+            let pdoc;
+            let ndocs;
+            let odocs;
+            Patient.getRecord( true )
+                // get patient
+            .then( (doc) => {
+                pdoc = doc;
+                return Note.getRecords(true);
+                })
+            .then( (docs) => {
+                // get notes
+                ndocs = docs.rows;
+                return Operation.getRecords(true);
+                })
+            .then( (docs) => {
+                // get operations
+                odocs = docs.rows;
+                // Confirm question
+                let c = `Delete patient \n   ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}\n    `;
+                if (ndocs.length == 0 ) {
+                    c += "(no associated notes on this patient) \n   ";
+                } else {
+                    c += `also delete ${ndocs.length} associated notes\n   `;
+                }
+                if (odocs.length == 0 ) {
+                    c += "(no associated operations on this patient) \n   ";
+                } else {
+                    c += `also delete ${odocs.length} associated operations\n   `;
+                }
+                c += "Are you sure?";
+                if ( confirm(c) ) {
+                    return true;
+                } else {
+                    throw "No delete";
+                }           
+                })
+            .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( () => db.remove(pdoc) )
+            .then( () => Patient.unselect() )
+            .catch( (err) => console.log(err) ) 
+            .finally( () => showPage( "PatientList" ) );
+        }
     }
-    return user_db.allDocs(doc);
+
+    static getRecord(attachments) {
+        return db.get( patientId, { attachments: attachments, binary: attachments } );
+    }
+
+    static getAll(attachments) {
+        let doc = {
+            startkey: [ RecordFormat.type.patient, ""].join(";"),
+            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+        };
+        if (attachments) {
+            doc.include_docs = true;
+            doc.binary = true;
+            doc.attachments = true;
+        }
+
+        return db.allDocs(doc);
+    }
+
+    static select( pid = patientId ) {
+        if ( patientId != pid ) {
+            // change patient -- notes dont apply
+            Note.unselect();
+        }
+
+        if ( pid == missionId ) {
+            Mission.select() ;
+        } else {
+            setCookie( "patientId", pid );
+            // Check patient existence
+            db.query("Pid2Name",{key:pid})
+            .then( (doc) => {
+                // highlight the list row
+                if ( objectDisplayState.current() == 'PatientList' ) {
+                    objectTable.highlight();
+                }
+                document.getElementById("editreviewpatient").disabled = false;
+                document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
+                })
+            .catch( (err) => {
+                console.log("PatientId not in name list",err);
+                Patient.unselect();
+                });
+        }
+    }
+
+    static makeId( doc ) {
+        return [ 
+            RecordFormat.type.patient,
+            RecordFormat.version,
+            doc.LastName,
+            doc.FirstName,
+            doc.DOB, 
+            ].join(";");
+    }
+
+    static splitId( pid = patientId ) {
+        if ( pid ) {
+            let spl = pid.split(";");
+            if ( spl.length !== 5 ) {
+                console.log("Bad PatientId",pid);
+                return null;
+            }
+            return {
+                type: spl[0],
+                version: spl[1],
+                last: spl[2],
+                first: spl[3],
+                dob: spl[4],
+            };
+        }
+        return null;
+    }
+
+    static isSelected() {
+        return ( patientId != null ) && ( patientId != missionId ) ;
+    }
+
+    static unselect() {
+        patientId = null;
+        deleteCookie ( "patientId" );
+        Note.unselect();
+        Operation.unselect();
+        if ( objectDisplayState.test("PatientList") ) {
+            let pt = document.getElementById("PatientTable");
+            if ( pt ) {
+                let rows = pt.rows;
+                for ( let i = 0; i < rows.length; ++i ) {
+                    rows[i].classList.remove('choice');
+                }
+            }
+        }
+        document.getElementById("editreviewpatient").disabled = true;
+        document.getElementById( "titlebox" ).innerHTML = "";
+    }
+
 }
 
-function selectPatient( pid ) {
-    if ( patientId != pid ) {
-        // change patient -- notes dont apply
-        unselectNote();
+class Note { // convenience class
+    static getAll() {
+        let doc = {
+            startkey: [ RecordFormat.type.note, ""].join(";"),
+            endkey:   [ RecordFormat.type.note, "\\fff0"].join(";"),
+            include_docs: true,
+            binary: false,
+            attachments: false,
+        };
+        return db.allDocs(doc);
     }
-        
-    setCookie( "patientId", pid );
-    // Check patient existence
-    db.query("Pid2Name",{key:pid})
-    .then( (doc) => {
+
+    static getRecords(attachments) {
+        let doc = {
+            key: patientId,
+        };
+        if (attachments) {
+            doc.include_docs = true;
+            doc.binary = true;
+            doc.attachments = true;
+        }
+        return db.query( "Patient2Note", doc) ;
+    }
+
+    static makeId() {
+        const spl = Patient.splitId();
+            return [ 
+            RecordFormat.type.note,
+            RecordFormat.version,
+            spl.last,
+            spl.first,
+            spl.dob,
+            new Date().toISOString() , 
+            ].join(";");
+    }
+
+    static splitId( nid=noteId ) {
+        if ( nid ) {
+            let spl = nid.split(";");
+            if ( spl.length !== 6 ) {
+                return null;
+            }
+            return {
+                type: spl[0],
+                version: spl[1],
+                last: spl[2],
+                first: spl[3],
+                dob: spl[4],
+                key: spl[5],
+            };
+        }
+        return null;
+    }
+
+    static select( cid=noteId ) {
+        setCookie( "noteId", cid );
+        if ( objectDisplayState.test("NoteList") ) {
+            // highlight the list row
+            let li = document.getElementById("NoteList").getElementsByTagName("li");
+            if ( li && (li.length > 0) ) {
+                for ( let l of li ) {
+                    if ( l.getAttribute("data-id") == noteId ) {
+                        l.classList.add('choice');
+                    } else {
+                        l.classList.remove('choice');
+                    }
+                }
+            }
+        }
+    }
+
+    static unselect() {
+        deleteCookie ( "noteId" );
+        if ( objectDisplayState.test("NoteList") ) {
+            let li = document.getElementById("NoteList").li;
+            if ( li && (li.length > 0) ) {
+                for ( let l of li ) {
+                    l.classList.remove('choice');
+                }
+            }
+        }
+    }
+
+    static new() {
+        let d = document.getElementById("NoteNewContent");
+        cloneClass ( ".newnotetemplate_edit", d );
+        let doc = templateNote();
+        let img = new ImageNote( d, doc );
+        img.edit();
+    }
+
+}
+
+class Operation { // convenience class
+    static select( oid=operationId ) {
+        if ( operationId != oid ) {
+            // change patient -- notes dont apply
+            Operation.unselect();
+        }
+            
+        setCookie ( "operationId", oid  );
+        // Check patient existence
         // highlight the list row
-        if ( objectDisplayState.current() == 'PatientList' ) {
+        if ( objectDisplayState.current() == 'OperationList' ) {
             objectTable.highlight();
         }
-        document.getElementById("editreviewpatient").disabled = false;
-        document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
-        })
-    .catch( (err) => {
-        console.log(err);
-        unselectPatient();
-        });
-}
-
-function selectMission() {
-    unselectPatient();
-    patientId = missionId;
-    db.query("Pid2Name", {key:missionId,})
-    .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1] )
-    .catch( () => document.getElementById( "titlebox" ).innerHTML = "" ) ;
-}
-
-function selectOperation( oid ) {
-    if ( operationId != oid ) {
-        // change patient -- notes dont apply
-        unselectOperation();
+        document.getElementById("editreviewoperation").disabled = false;
     }
+
+    static unselect() {
+        operationId = null;
+        deleteCookie( "operationId" );
+        if ( objectDisplayState.test("OperationList") ) {
+            let ot = document.getElementById("OperationsList");
+            if ( ot ) {
+                let rows = ot.rows;
+                for ( let i = 0; i < rows.length; ++i ) {
+                    rows[i].classList.remove('choice');
+                }
+            }
+        }
+        document.getElementById("editreviewoperation").disabled = true;
+    }
+
+    static makeId() {
+        const spl = Patient.splitId();    
+        return [ 
+            RecordFormat.type.operation,
+            RecordFormat.version,
+            spl.last,
+            spl.first,
+            spl.dob,
+            new Date().toISOString() , 
+            ].join(";");
+    }
+
+    static new() {
+        let doc = {
+            _id: Operation.makeId(),
+            author: remoteCouch.username,
+            type: "operation",
+            Procedure: "Enter new procedure",
+            Surgeon: "",
+            "Date-Time": "",
+            Duration: "",
+            Laterality: "?",
+            Status: "none",
+            Equipment: "",
+            patient_id: patientId,
+        };
+        return db.put( doc );
+    }
+
+    static deleteOperation() {
+        if ( operationId ) {
+            let pdoc;
+            Patient.getRecord( false )
+            .then( (doc) => { 
+                pdoc = doc;
+                return db.get( operationId );
+                })
+            .then( (doc) => {
+                if ( confirm(`Delete operation \<${doc.Procedure}\>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
+                    return doc;
+                } else {
+                    throw "No delete";
+                }           
+                })
+            .then( (doc) =>db.remove(doc) )
+            .then( () => Operation.unselect() )
+            .catch( (err) => console.log(err) )
+            .finally( () => showPage( "OperationList" ) );
+        }
+        return true;
+    }    
         
-    setCookie ( "operationId", oid  );
-    // Check patient existence
-    // highlight the list row
-    if ( objectDisplayState.current() == 'OperationList' ) {
-        objectTable.highlight();
+    static getAll() {
+        let doc = {
+            startkey: [ RecordFormat.type.operation, ""].join(";"),
+            endkey:   [ RecordFormat.type.operation, "\\fff0"].join(";"),
+            include_docs: true,
+            binary: true,
+            attachments: true,
+        };
+        return db.allDocs(doc);
     }
-    document.getElementById("editreviewoperation").disabled = false;
-}
 
-function selectUser( uid ) {
-    userId = uid;
-    if ( objectUserTable ) {
-        objectUserTable.highlight();
-    }
-    document.getElementById("editreviewuser").disabled = false;
-}    
+    static getRecords(attachments) {
+        let doc = {
+            key: patientId,
+        };
+        if (attachments) {
+            doc.include_docs = true;
+            doc.binary = true;
+            doc.attachments = true;
 
-function patientSelected() {
-    return ( patientId != null ) && ( patientId != missionId ) ;
-}
-
-function unselectPatient() {
-    patientId = null;
-    deleteCookie ( "patientId" );
-    unselectNote();
-    unselectOperation();
-    if ( objectDisplayState.test("PatientList") ) {
-        let pt = document.getElementById("PatientTable");
-        if ( pt ) {
-            let rows = pt.rows;
-            for ( let i = 0; i < rows.length; ++i ) {
-                rows[i].classList.remove('choice');
-            }
+            // Adds a single "blank"
+            // also purges excess "blanks"
+            return db.query( "Patient2Operation", doc)
+            .then( (doclist) => {
+                let newlist = doclist.rows
+                    .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
+                    .map( row => row.doc );
+                console.log(doclist.rows,newlist);
+                switch ( newlist.length ) {
+                    case 0 :
+                        throw null;
+                    case 1 :
+                        return Promise.resolve( doclist );
+                    default:
+                        throw newlist.slice(1);
+                    }
+                })
+            .catch( (dlist) => {
+                if ( dlist == null ) {
+                    // needs an empty
+                    throw null;
+                }
+                // too many empties
+                //console.log("Remove", dlist.length,"entries");
+                return Promise.all(dlist.map( (doc) => db.remove(doc) ))
+                    .then( ()=> Operation.getRecords( attachments )
+                    );
+                })
+            .catch( () => {
+                console.log("Add a record");
+                return Operation.new().then( () => db.query( "Patient2Operation", doc ) );
+                });
+        } else {
+            return db.allDocs(doc);
         }
     }
-    document.getElementById("editreviewpatient").disabled = true;
-    document.getElementById( "titlebox" ).innerHTML = "";
+
 }
 
-function unselectOperation() {
-    operationId = null;
-    deleteCookie( "operationId" );
-    if ( objectDisplayState.test("OperationList") ) {
-        let ot = document.getElementById("OperationsList");
-        if ( ot ) {
-            let rows = ot.rows;
-            for ( let i = 0; i < rows.length; ++i ) {
-                rows[i].classList.remove('choice');
-            }
+class User { // convenience class
+    static deleteUser() {
+        if ( userId ) {
+            user_db.get( userId )
+            .then( (doc) => {
+                if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
+                    return user_db.remove(doc) ;
+                } else {
+                    throw "No delete";
+                }
+                })              
+            .then( () => User.unselect() )
+            .catch( (err) => console.log(err) )
+            .finally( () => showPage( "UserList" ) );
         }
+        return true;
+    }    
+    
+    static select( uid ) {
+        userId = uid;
+        if ( objectUserTable ) {
+            objectUserTable.highlight();
+        }
+        document.getElementById("editreviewuser").disabled = false;
+    }    
+
+    static unselect() {
+        userId = null;
+        document.getElementById("editreviewuser").disabled = true;
     }
-    document.getElementById("editreviewoperation").disabled = true;
+
+    static getAll(attachments) {
+        let doc = {
+            startkey: "org.couchdb.user:",
+            endkey: "org.couchdb.user:\\fff0",
+        } ;
+        if (attachments) {
+            doc.include_docs = true;
+            doc.binary = true;
+            doc.attachments = true;
+        } else {
+            doc.limit = 0;
+        }
+        return user_db.allDocs(doc);
+    }
+
+    static send( doc ) {
+        document.getElementById("SendUserMail").href = "";
+        let url = new URL( window.location.href );
+        url.searchParams.append( "address", remoteCouch.address );
+        url.searchParams.append( "database", remoteCouch.database );
+        url.searchParams.append( "password", userPass[userId] );
+        url.searchParams.append( "username", doc.name );
+        new QR(
+            document.getElementById("SendUserQR"),
+            url.href,
+            200,200,
+            4);
+        document.getElementById("SendUserEmail").value = doc.email;
+        document.getElementById("SendUserLink").value = url.href;
+
+        let mail_url = new URL( "mailto:" + doc.email );
+        mail_url.searchParams.append( "subject", "Welcome to eMission" );
+        mail_url.searchParams.append( "body",
+`Welcome, ${doc.name}, to eMission:
+  software for managing medical missions in resource-poor environments.
+
+You have an account:\n'
+  web address: ${remoteCouch.address}
+     username: ${doc.name}
+     password: ${userPass[userId]}
+     database: ${remoteCouch.database}
+
+Full link (paste into your browser address bar):
+  ${url.href}
+
+We\'re looking forward to your participation.
+`
+        ) ;
+        document.getElementById("SendUserMail").href = mail_url.href;
+    }
+
 }
 
-function unselectUser() {
-    userId = null;
-    document.getElementById("editreviewuser").disabled = true;
+class Mission { // convenience class
+    static select() {
+        Patient.unselect();
+        patientId = missionId;
+        db.query("Pid2Name", {key:missionId,})
+        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1] )
+        .catch( () => document.getElementById( "titlebox" ).innerHTML = "" ) ;
+    }
+
+    static link() {
+        db.get( missionId, { attachments: true, binary: true } )
+        .then( doc => {
+            let src = new Image( null,doc).source();
+            Array.from( document.getElementsByClassName("mission_logo") )
+            .forEach( logo => {
+                logo.src=src;
+                logo.addEventListener( 'click', () => window.open(doc.Link) );
+                });
+            })
+        .catch( err => console.log(err) ) ;
+    }
 }
 
 class DisplayState {
@@ -1639,7 +1934,7 @@ class DisplayState {
 
     next( page = null ) {
         if ( page == "back" ) {
-            this.back()
+            this.back();
         } else if ( page == null ) {
             return ;
         } else if ( this.path.indexOf( page ) < 0 ) {
@@ -1696,16 +1991,16 @@ function showPage( state = "PatientList" ) {
             
         case "UserList":
             objectUserTable = new UserTable( ["name", "role", "email", "type", ] );
-            getUsersAll(true)
+            User.getAll(true)
             .then( docs => objectUserTable.fill(docs.rows ) )
             .catch( (err) => {
                 console.log(err) ;
-                showPage ( "SuperUser" )
+                showPage ( "SuperUser" );
                 });
             break;
 
         case "UserNew":
-            unselectUser();
+            User.unselect();
             objectPatientData = new NewUserData( {}, structNewUser );
             break;
 
@@ -1731,7 +2026,7 @@ function showPage( state = "PatientList" ) {
                     })
                 .catch( err => {
                     console.log( err );
-                    unselectUser();
+                    User.unselect();
                     showPage( "UserList" );
                     });
             }
@@ -1744,7 +2039,7 @@ function showPage( state = "PatientList" ) {
                 showPage( "UserList" );
             } else {
                 user_db.get( userId )
-                .then( doc => sendUser( doc ) )
+                .then( doc => User.send( doc ) )
                 .catch( err => {
                     console.log( err );
                     showPage( "UserList" );
@@ -1754,13 +2049,13 @@ function showPage( state = "PatientList" ) {
             
         case "PatientList":
             objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
-            getPatientsAll(true)
+            Patient.getAll(true)
             .then( (docs) => {
                 objectTable.fill(docs.rows );
-                if ( patientSelected() ) {
-                    selectPatient( patientId );
+                if ( Patient.isSelected() ) {
+                    Patient.select( patientId );
                 } else {
-                    unselectPatient();
+                    Patient.unselect();
                 }
                 })
             .catch( (err) => console.log(err) );
@@ -1772,19 +2067,27 @@ function showPage( state = "PatientList" ) {
             break ;
             
         case "OperationList":
-            objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
-            getOperations(true)
-            .then( (docs) => objectTable.fill(docs.rows ) )
-            .catch( (err) => console.log(err) );
+            if ( Patient.isSelected() ) {
+                objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
+                Operation.getRecords(true)
+                .then( (docs) => objectTable.fill(docs.rows ) )
+                .catch( (err) => console.log(err) );
+            } else {
+                showPage( "PatientList" ) ;
+            }
             break;
             
         case "OperationNew":
-            unselectOperation();
-            showPage( "OperationEdit" );
+            if ( Patient.isSelected() ) {
+                Operation.unselect();
+                showPage( "OperationEdit" );
+            } else {
+                showPage( "PatientList" ) ;
+            }
             break;
         
         case "OperationEdit":
-            if ( patientSelected() ) {
+            if ( Patient.isSelected() ) {
                 if ( operationId ) {
                     db.get( operationId )
                     .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
@@ -1795,7 +2098,8 @@ function showPage( state = "PatientList" ) {
                 } else {
                     objectPatientData = new OperationData(
                     {
-                        _id: makeOperationId(),
+                        _id: Operation.makeId(),
+                        type: "operation",
                         patient_id: patientId,
                         author: remoteCouch.username,
                     } , structOperation );
@@ -1806,14 +2110,18 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientNew":
-            unselectPatient();
-            objectPatientData = new NewPatientData( { author: remoteCouch.username, type:"patient" }, structNewPatient );
+            Patient.unselect();
+            objectPatientData = new NewPatientData(
+                {
+                    author: remoteCouch.username,
+                    type:"patient"
+                }, structNewPatient );
             break;
             
         case "PatientPhoto":
-            if ( patientSelected() ) {
-                selectPatient( patientId );
-                getPatient( true )
+            if ( Patient.isSelected() ) {
+                Patient.select( patientId );
+                Patient.getRecord( true )
                 .then( (doc) => patientPhoto( doc ) )
                 .catch( (err) => {
                     console.log(err);
@@ -1825,23 +2133,24 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "MissionInfo":
-            selectMission();
-            getPatient( true )
+            Mission.select();
+            Patient.getRecord( true )
             .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
             .catch( () => {
                 let doc = {
                     _id: missionId,
                     author: remoteCouch.username,
+                    patient_id: missionId,
                     type: "mission",
                 };
                 objectPatientData = new MissionData( doc, structMission ) ;
                 })
-            .finally( () => setMissionLink() );
+            .finally( () => Mission.link() );
             break;
             
         case "PatientDemographics":
-            if ( patientSelected() ) {
-                getPatient( true )
+            if ( Patient.isSelected() ) {
+                Patient.getRecord( true )
                 .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
                 .catch( (err) => {
                     console.log(err);
@@ -1853,15 +2162,15 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "PatientMedical":
-            if ( patientSelected() ) {
+            if ( Patient.isSelected() ) {
                 let args;
                 db.query("bySurgeon",{group:true,reduce:true})
                 .then( s => {
-                    return getPatient( false ) ;
+                    return Patient.getRecord( false ) ;
                     })
                 .then( (doc) => {
                     args = [doc,structMedical];
-                    return getOperations(true);
+                    return Operation.getRecords(true);
                     })
                 .then( ( olist ) => {
                     olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
@@ -1886,21 +2195,21 @@ function showPage( state = "PatientList" ) {
             break;
 
         case "InvalidPatient":
-            unselectPatient();
+            Patient.unselect();
             break;
 
         case "MissionList":
-            selectMission() ;
+            Mission.select() ;
             db.get( missionId )
-            .then( () => getNotes(true ) )
+            .then( () => Note.getRecords(true ) )
             .then( notelist => objectNoteList = new NoteList(notelist) )
             .catch( err=> showPage( "MissionInfo" ) ) ;
             break;
             
         case "NoteList":
-            if ( patientSelected() ) {
-                getPatient( false )
-                .then( () => getNotes(true) )
+            if ( Patient.isSelected() ) {
+                Patient.getRecord( false )
+                .then( () => Note.getRecords(true) )
                 .then( notelist => objectNoteList = new NoteList(notelist) )
                 .catch( (err) => {
                     console.log(err);
@@ -1912,10 +2221,10 @@ function showPage( state = "PatientList" ) {
             break;
             
          case "NoteNew":
-            if ( patientSelected() ) {
+            if ( Patient.isSelected() ) {
                 // New note only
-                unselectNote();
-                noteNew();
+                Note.unselect();
+                Note.new();
             } else if ( patientId == missionId ) {
                 showPage( 'MissionList' ) ;
             } else {
@@ -2116,7 +2425,7 @@ class SortTable {
             row.addEventListener( 'click', () => {
                 this.selectFunc( record._id );
             });
-            ['dblclick','swiped-right'].forEach( (e) =>
+            ['dblclick','swiped-right','swiped-left'].forEach( (e) =>
                 row.addEventListener( e, () => {
                     this.selectFunc( record._id );
                     this.editpage();
@@ -2219,53 +2528,66 @@ class SortTable {
 }
 
 class PatientTable extends SortTable {
-    editpage = () => showPage("PatientPhoto");
-    selectFunc = selectPatient;
-    selectId = () => patientId;
     constructor( collist ) {
         super( collist, "PatientList" );
     }
-}
 
-function makeNewOperation() {
-    let doc = {
-        _id: makeOperationId(),
-        author: remoteCouch.username,
-        type: "operation",
-        Procedure: "Enter new procedure",
-        Surgeon: "",
-        "Date-Time": "",
-        Duration: "",
-        Laterality: "?",
-        Status: "none",
-        Equipment: "",
-        patient_id: patientId,
-    };
-    return db.put( doc );
+    selectId() {
+        return patientId;
+    }
+
+    selectFunc(id) {
+        Patient.select(id) ;
+    }
+
+    editpage() {
+        showPage("PatientPhoto");
+    }
 }
 
 class OperationTable extends SortTable {
-    editpage = () => showPage("OperationEdit");
-    selectFunc = selectOperation;
-    selectId = () => operationId;
     constructor( collist ) {
         super( collist, "OperationsList");
+    }
+
+    selectId() {
+        return operationId;
+    }
+
+    selectFunc(id) {
+        Operation.select(id) ;
+    }
+
+    editpage() {
+        showPage("OperationEdit");
     }
 }
 
 class UserTable extends SortTable {
-    editpage = () => showPage("UserEdit");
-    selectFunc = selectUser;
-    selectId = () => userId;
     constructor( collist ) {
         super( collist, "UserList");
+    }
+
+    selectId() {
+        return userId;
+    }
+
+    selectFunc(id) {
+        User.select(id) ;
+    }
+
+    editpage() {
+        showPage("UserEdit");
     }
 }
 
 class SearchTable extends SortTable {
-    selectId = ()=>objectSearch.select_id;
     constructor( collist ) {
         super( collist, "SearchList");
+    }
+
+    selectId() {
+        return objectSearch.select_id;
     }
 
     selectFunc(id) {
@@ -2279,28 +2601,28 @@ class SearchTable extends SortTable {
         if ( id == null ) {
             showPage( null );
         } else if ( id == missionId ) {
-            selectMission();
+            Mission.select();
             showPage( 'MissionInfo' ) ;
         } else {
             db.get( id )
             .then( doc => {
                 switch (doc.type) {
                     case 'patient':
-                        selectPatient( id );
+                        Patient.select( id );
                         showPage( 'PatientPhoto' ) ;
                         break ;
                     case 'operation':
-                        selectPatient( doc.patient_id );
-                        selectOperation( id );
+                        Patient.select( doc.patient_id );
+                        Operation.select( id );
                         showPage( 'OperationEdit' );
                         break ;
                     case 'note':
                         if ( doc.patientId == missionId ) {
-                            selectMission();
+                            Mission.select();
                         } else {
-                            selectPatient( doc.patient_id );
+                            Patient.select( doc.patient_id );
                         }
-                        selectNote( id );
+                        Note.select( id );
                         showPage( 'NoteList' );
                         break ;
                     default:
@@ -2313,122 +2635,6 @@ class SearchTable extends SortTable {
                 showPage(null);
                 });
         }
-    }
-}
-
-function makePatientId( doc ) {
-    return [ 
-        RecordFormat.type.patient,
-        RecordFormat.version,
-        doc.LastName,
-        doc.FirstName,
-        doc.DOB, 
-        ].join(";");
-}
-
-function splitPatientId( pid = patientId ) {
-    if ( pid ) {
-        let spl = pid.split(";");
-        if ( spl.length !== 5 ) {
-            return null;
-        }
-        return {
-            type: spl[0],
-            version: spl[1],
-            last : spl[2],
-            first: spl[3],
-            dob: spl[4],
-        };
-    }
-    return null;
-}
-
-function makeNoteId() {
-    const spl = splitPatientId();
-        return [ 
-        RecordFormat.type.note,
-        RecordFormat.version,
-        spl.last,
-        spl.first,
-        spl.dob,
-        new Date().toISOString() , 
-        ].join(";");
-}
-
-function makeOperationId() {
-    const spl = splitPatientId();    
-    return [ 
-        RecordFormat.type.operation,
-        RecordFormat.version,
-        spl.last,
-        spl.first,
-        spl.dob,
-        new Date().toISOString() , 
-        ].join(";");
-}
-
-function splitNoteId( nid=noteId ) {
-    if ( nid ) {
-        let spl = nid.split(";");
-        if ( spl.length !== 6 ) {
-            return null;
-        }
-        return {
-            type: spl[0],
-            version: spl[1],
-            last: spl[2],
-            first: spl[3],
-            dob: spl[4],
-            key: spl[5],
-        };
-    }1
-    return null;
-}
-
-function deletePatient() {
-    if ( patientSelected() ) {        
-        let pdoc;
-        let ndocs;
-        let odocs;
-        getPatient( true )
-            // get patient
-        .then( (doc) => {
-            pdoc = doc;
-            return getNotes(true);
-            })
-        .then( (docs) => {
-            // get notes
-            ndocs = docs.rows;
-            return getOperations(true);
-            })
-        .then( (docs) => {
-            // get operations
-            odocs = docs.rows;
-            // Confirm question
-            let c = `Delete patient \n   ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}\n    `;
-            if (ndocs.length == 0 ) {
-                c += "(no associated notes on this patient) \n   ";
-            } else {
-                c += `also delete ${ndocs.length} associated notes\n   `;
-            }
-            if (odocs.length == 0 ) {
-                c += "(no associated operations on this patient) \n   ";
-            } else {
-                c += `also delete ${odocs.length} associated operations\n   `;
-            }
-            c += "Are you sure?";
-            if ( confirm(c) ) {
-                return true;
-            } else {
-                throw "No delete";
-            }           
-            })
-        .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-        .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-        .then( () => db.remove(pdoc) )
-        .then( () => unselectPatient() )
-        .catch( (err) => console.log(err) ) 
-        .finally( () => showPage( "PatientList" ) );
     }
 }
 
@@ -2446,201 +2652,6 @@ function patientPhoto( doc ) {
     inp.display();
 }
    
-function deleteOperation() {
-    if ( operationId ) {
-        let pdoc;
-        getPatient( false )
-        .then( (doc) => { 
-            pdoc = doc;
-            return db.get( operationId );
-            })
-        .then( (doc) => {
-            if ( confirm(`Delete operation \<${doc.Procedure}\>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
-                return doc;
-            } else {
-                throw "No delete";
-            }           
-            })
-        .then( (doc) =>db.remove(doc) )
-        .then( () => unselectOperation() )
-        .catch( (err) => console.log(err) )
-        .finally( () => showPage( "OperationList" ) );
-    }
-    return true;
-}    
-    
-function selectNote( cid ) {
-    setCookie( "noteId", cid );
-    if ( objectDisplayState.test("NoteList") ) {
-        // highlight the list row
-        let li = document.getElementById("NoteList").getElementsByTagName("li");
-        if ( li && (li.length > 0) ) {
-            for ( let l of li ) {
-                if ( l.getAttribute("data-id") == noteId ) {
-                    l.classList.add('choice');
-                } else {
-                    l.classList.remove('choice');
-                }
-            }
-        }
-    }
-}
-
-function unselectNote() {
-    deleteCookie ( "noteId" );
-    if ( objectDisplayState.test("NoteList") ) {
-        let li = document.getElementById("NoteList").li;
-        if ( li && (li.length > 0) ) {
-            for ( let l of li ) {
-                l.classList.remove('choice');
-            }
-        }
-    }
-}
-
-function noteTitle( doc ) {
-    let date = new Date().toISOString();
-    let author = remoteCouch.username;
-    if ( doc  && doc.id ) {
-        date = splitNoteId(doc.id).key;
-        //console.log( "from key", date );
-        if ( doc.doc && doc.doc.author ) {
-            author = doc.doc.author;
-        }
-        if ( doc.doc && doc.doc.date ) {
-            date = doc.doc.date;
-            //console.log( "from doc", date );
-        }
-    }
-    return [author, new Date(date)];
-}
-
-function getPatient(attachments) {
-    return db.get( patientId, { attachments: attachments, binary: attachments } );
-}
-
-function getPatientsAll(attachments) {
-    let doc = {
-        startkey: [ RecordFormat.type.patient, ""].join(";"),
-        endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
-    };
-    if (attachments) {
-        doc.include_docs = true;
-        doc.binary = true;
-        doc.attachments = true;
-    }
-
-    return db.allDocs(doc);
-}
-
-function getOperationsAll() {
-    let doc = {
-        startkey: [ RecordFormat.type.operation, ""].join(";"),
-        endkey:   [ RecordFormat.type.operation, "\\fff0"].join(";"),
-        include_docs: true,
-        binary: true,
-        attachments: true,
-    };
-    return db.allDocs(doc);
-}
-
-function getOperations(attachments) {
-    let doc = {
-        key: patientId,
-    };
-    if (attachments) {
-        doc.include_docs = true;
-        doc.binary = true;
-        doc.attachments = true;
-
-        // Adds a single "blank"
-        // also purges excess "blanks"
-        return db.query( "Patient2Operation", doc)
-        .then( (doclist) => {
-            let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
-                .map( row => row.doc );
-            switch ( newlist.length ) {
-                case 0 :
-                    throw null;
-                case 1 :
-                    return Promise.resolve( doclist );
-                default:
-                    throw newlist.slice(1);
-                }
-            })
-        .catch( (dlist) => {
-            if ( dlist == null ) {
-                // needs an empty
-                throw null;
-            }
-            // too many empties
-            //console.log("Remove", dlist.length,"entries");
-            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-                .then( ()=> getOperations( attachments )
-                );
-            })
-        .catch( () => {
-            //console.log("Add a record");
-            return makeNewOperation().then( () => getOperations( attachments ) );
-            });
-    } else {
-        return db.allDocs(doc);
-    }
-}
-
-function sendUser( doc ) {
-    document.getElementById("SendUserMail").href = "";
-    let url = new URL( window.location.href );
-    url.searchParams.append( "address", remoteCouch.address );
-    url.searchParams.append( "database", remoteCouch.database );
-    url.searchParams.append( "password", userPass[userId] );
-    url.searchParams.append( "username", doc.name );
-    new QR(
-        document.getElementById("SendUserQR"),
-        url.href,
-        200,200,
-        4);
-    document.getElementById("SendUserEmail").value = doc.email;
-    document.getElementById("SendUserLink").value = url.href;
-
-    let mail_url = new URL( "mailto:" + doc.email );
-    mail_url.searchParams.append( "subject", "Welcome to eMission" );
-    mail_url.searchParams.append( "body",
-        'Welcome, '+doc.name+', to eMission: \n'
-        +'  software for managing medical missions in resource-poor environments.\n'
-        +'\n'
-        +'You have an account:\n'
-        +'  web address: '+remoteCouch.address+'\n'
-        +'  username: '+doc.name+'\n'
-        +'  password: '+userPass[userId]+'\n'
-        +'  database name: '+remoteCouch.database+'\n'
-        +'\n'
-        +'Full link (paste into your browser address bar):\n'
-        +'  '+url.href+'\n'
-        +'\n'
-        +'We\'re looking forward to your participation.'
-        ) ;
-    document.getElementById("SendUserMail").href = mail_url.href;
-}
-
-function deleteUser() {
-    if ( userId ) {
-        user_db.get( userId )
-        .then( (doc) => {
-            if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
-                return user_db.remove(doc) ;
-            } else {
-                throw "No delete";
-            }
-            })              
-        .then( () => unselectUser() )
-        .catch( (err) => console.log(err) )
-        .finally( () => showPage( "UserList" ) );
-    }
-    return true;
-}    
-    
 function getAll() {
     let doc = {
         include_docs: true,
@@ -2648,32 +2659,8 @@ function getAll() {
     return db.allDocs(doc);
 }
 
-function getNotesAll() {
-    let doc = {
-        startkey: [ RecordFormat.type.note, ""].join(";"),
-        endkey:   [ RecordFormat.type.note, "\\fff0"].join(";"),
-        include_docs: true,
-        binary: false,
-        attachments: false,
-    };
-    return db.allDocs(doc);
-}
-
-function getNotes(attachments) {
-    let doc = {
-        key: patientId,
-    };
-    if (attachments) {
-        doc.include_docs = true;
-        doc.binary = true;
-        doc.attachments = true;
-    }
-    return db.query( "Patient2Note", doc) ;
-}
-
-class NoteList extends PatientData {
+class NoteList {
     constructor( notelist ) {
-        super();
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
@@ -2708,15 +2695,11 @@ class NoteList extends PatientData {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );
 
-        li.appendChild( document.getElementById("templates").querySelector(".edit_note").cloneNode(true) );
+        li.appendChild( document.getElementById("templates").querySelector(".notelabel").cloneNode(true) );
 
-        let cdiv = document.createElement("div");
-        cdiv.classList.add("inly");
-        let nt = noteTitle( note );
-        this.DateTimetoInput(nt[1]).forEach( (i) => cdiv.appendChild(i) );
-        cdiv.appendChild( document.createTextNode( " by "+nt[0]) );
-        li.appendChild(cdiv);
-        li.addEventListener( 'click', () => selectNote( note.id ) );
+        li.querySelector(".inly").appendChild( document.createTextNode( ` by ${this.noteAuthor(note)}` ));
+        li.querySelector(".flatpickr").value = flatpickr.formatDate(this.noteDate(note),"Y-m-d h:i K");
+        li.addEventListener( 'click', () => Note.select( note.id ) );
 
         return li;
     }
@@ -2735,21 +2718,48 @@ class NoteList extends PatientData {
         }    
         
         let edit_note = () => {
-            var i = label.querySelectorAll("input");
-            picker.attach({ element: i[0] });
-            tp.attach({ element: i[1] });
-            selectNote( note.id );
+            flatpickr( label.querySelector(".flatpickr"),
+                {
+                    time_24hr: false,
+                    enableTime: true,
+                    noCalendar: false,
+                    dateFormat: "Y-m-d h:i K",
+                    onChange: (d) => note.doc.date=d[0].toISOString(),
+                });
+            Note.select( note.id );
             cloneClass( ".notetemplate_edit", li );
             img.edit();
             } ;
-        li.addEventListener( 'click', () => selectNote( note.id ) );
-        ['dblclick','swiped-right'].forEach( ev =>
+        li.addEventListener( 'click', () => Note.select( note.id ) );
+        ['dblclick','swiped-right','swiped-left'].forEach( ev =>
             [li, label].forEach( targ => targ.addEventListener( ev, edit_note )));
         label.querySelector(".edit_note").addEventListener( 'click', edit_note );
 //        label.addEventListener( 'dblclick', edit_note );
 
         return li;
     }
+
+    noteAuthor( doc ) {
+        let author = remoteCouch.username;
+        if ( doc  && doc.id ) {
+            if ( doc.doc && doc.doc.author ) {
+                author = doc.doc.author;
+            }
+        }
+        return author;
+    }
+
+    noteDate( doc ) {
+        let date = new Date().toISOString();
+        if ( doc  && doc.id ) {
+            date = Note.splitId(doc.id).key;
+            if ( doc.doc && doc.doc.date ) {
+                date = doc.doc.date;
+            }
+        }
+        return new Date(date);
+    }
+
 }
 
 function dropPictureinNote( target ) {
@@ -2780,18 +2790,10 @@ function dropPictureinNote( target ) {
                         });
                 reader.readAsDataURL(file); // start reading the file data.
                 }))
-                .then( () => getNotes(false) ) // refresh the list
+                .then( () => Note.getRecords(false) ) // refresh the list
                 .catch( err => console.log(err) )
                 .finally( () => showPage( "NoteList" ) );
         });
-}
-
-function noteNew() {
-    let d = document.getElementById("NoteNewContent");
-    cloneClass ( ".newnotetemplate_edit", d );
-    let doc = templateNote();
-    let img = new ImageNote( d, doc );
-    img.edit();
 }
 
 function quickPhoto() {
@@ -2801,20 +2803,20 @@ function quickPhoto() {
     let img = new ImageQuick( inp, doc );
     function handle() {
         img.handle();
-        img.save(doc)
+        img.save(doc);
         db.put(doc)
-        .then( () => getNotes( false ) ) // to try to prime the list
+        .then( () => Note.getRecords( false ) ) // to try to prime the list
         .catch( err => console.log(err) )
         .finally( showPage( null ) );
     }
     img.display();
     img.addListen(handle);
-    img.getImage()
+    img.getImage();
 }
 
 function templateNote( ) {
     return {
-        _id: makeNoteId(),
+        _id: Note.makeId(),
         text: "",
         title: "",
         author: remoteCouch.username,
@@ -2840,7 +2842,7 @@ function printCard() {
     }
     let card = document.getElementById("printCard");
     let t = card.getElementsByTagName("table");
-    getPatient( true )
+    Patient.getRecord( true )
     .then( (doc) => {
         show_screen( false );
         let img = new Image( card, doc, NoPhoto ) ;
@@ -2870,7 +2872,7 @@ function printCard() {
         }) 
     .then( (doc) => {
         t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
-        return getOperations(true);
+        return Operation.getRecords(true);
         })
     .then( (docs) => {
         let oleng = docs.rows.length;
@@ -2928,7 +2930,7 @@ function downloadCSV(csv, filename) {
 function downloadPatients() {
     const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
     let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
-    getPatientsAll(true)
+    Patient.getAll(true)
     .then( doclist => {
         csv += doclist.rows
             .map( row => fields
@@ -2951,17 +2953,17 @@ function downloadAll() {
     let plist;
     let olist = {};
     let nlist = {};
-    getPatientsAll(true)
+    Patient.getAll(true)
     .then( doclist => {
         plist = doclist.rows;
         plist.forEach( p => nlist[p.id] = 0 );
-        return getOperationsAll();
+        return Operation.getAll();
         })
     .then ( doclist => {
         doclist.rows
         .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
         .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
-        return getNotesAll();
+        return Note.getAll();
         })
     .then( doclist => {
         doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
@@ -2983,19 +2985,6 @@ function downloadAll() {
             .join( '\n' );
         downloadCSV( csv, `${remoteCouch.database}AllData.csv` );
         });
-}
-
-function setMissionLink() {
-    db.get( missionId, { attachments: true, binary: true } )
-    .then( doc => {
-        let src = new Image( null,doc).source();
-        Array.from( document.getElementsByClassName("mission_logo") )
-        .forEach( logo => {
-            logo.src=src;
-            logo.addEventListener( 'click', () => window.open(doc.Link) );
-            });
-        })
-    .catch( err => console.log(err) ) ;
 }
 
 function parseQuery() {
@@ -3107,7 +3096,7 @@ function cookies_n_query() {
 
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
-        selectPatient( qline.patientId );
+        Patient.select( qline.patientId );
         objectDisplayState.next("PatientPhoto");
     }
 }
@@ -3119,9 +3108,7 @@ window.onload = () => {
 
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
-    window.addEventListener('popstate', function() {
-        window.history.pushState({}, '');
-    })
+    window.addEventListener('popstate', ()=>window.history.pushState({}, '') );
 
     // Service worker (to manage cache for off-line function)
     if ( 'serviceWorker' in navigator ) {
@@ -3178,7 +3165,7 @@ window.onload = () => {
         foreverSync();
 
         // set link for mission
-        setMissionLink();
+        Mission.link();
 
         // set Help buttons
         document.querySelectorAll(".Qmark").forEach( h => {
@@ -3205,7 +3192,7 @@ window.onload = () => {
             });
 
         // set save details for PatientData save pages
-        document.querySelectorAll("savedata").forEach( s => {
+        document.querySelectorAll(".savedata").forEach( s => {
             s.title = "Save your changes to this record" ;
             s.addEventListener("click",()=>objectPatientData.savePatientData());
             });
@@ -3214,13 +3201,24 @@ window.onload = () => {
         createQueries();
         db.viewCleanup()
         .catch( err => console.log(err) );
-        
+
         // now jump to proper page
         showPage( null ) ;
+
+        // Set patient, operation and note -- need page shown first
+        if ( Patient.isSelected() ) { // mission too
+            Patient.select() ;
         }
+        if ( operationId ) {
+            Operation.select() ;
+        }
+        if ( noteId ) {
+            Note.select() ;
+        }
+    }
+        
     catch (err) {
         console.log(err);
         showPage("RemoteDatabaseInput"); // forces program reload
-        }
+    }
 };
-
