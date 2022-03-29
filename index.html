@@ -102,7 +102,7 @@
                     <div class="PatientData UserEdit pageOverlay">
                         <button type="button" class="divbutton edit_note">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton delete" onclick="User.deleteUser()">Delete User</button>
+                        <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
@@ -127,7 +127,7 @@
                     <div class="PatientData OperationEdit pageOverlay">
                         <button type="button" class="divbutton edit_note">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton delete" onclick="Operation.deleteOperation()">Delete Operation</button>
+                        <button type="button" class="divbutton delete" onclick="Operation.del()">Delete Operation</button>
                         <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                     </div>
@@ -186,8 +186,9 @@
                 <div id="AdministrationContent" >
                     <button type="button" class="divbutton" onclick="showPage( 'SuperUser' )">User Management</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
+                    <button type="button" class="divbutton" onClick="Remote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
                     <button type="button" class="divbutton" onclick="showPage( 'DatabaseInfo' )">Database Information</button>
-                    <button type="button" class="divbutton" onclick="forceReplicate()">Force Replicate</button>
+                    <button type="button" class="divbutton" onclick="Remote.forceReplicate()">Force Replicate</button>
                 </div>
             </div>
             <!-- body: Download -->
@@ -245,7 +246,7 @@
                     </div>
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="printCard()">Print Card</button>
-                        <button type="button" class="divbutton delete" onclick="Patient.deletePatient()">Delete Patient</button>
+                        <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
                     </div>
                 </div>
             </div>

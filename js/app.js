@@ -2,14 +2,11 @@
 
 /* jshint esversion: 6 */
 
-// globals not cookie backed
+// singleton class instances
 var objectPatientData;
 var objectNoteList;
 var objectTable = null;
-var objectUserTable = null;
 var objectSearch = null;
-var userId = null; // not cookie backed
-var userPass = {};
 
 // globals cookie backed
 var objectDisplayState ;
@@ -22,7 +19,6 @@ var DCTOHClogo = "style/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
-var user_db = null;
 var security_db = null ;
 const remoteUser = {
     database: "_users" ,
@@ -525,7 +521,7 @@ function createQueries() {
     .catch( (err) => console.log(err ) );
 }
 
-class Search {
+class Search { // singleton class
     constructor(type) {
         this.index={};
         this.fieldlist={
@@ -837,7 +833,7 @@ class ImageDrop extends Image { // can only save(doc)
 
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
-class PatientData {
+class PatientData { // singleton class
     constructor(...args) {
         this.parent = document.getElementById("PatientDataContent");
         let fieldset = document.getElementById("templates").querySelector("fieldset");
@@ -1243,7 +1239,7 @@ class DatabaseInfoData extends PatientData {
 class DatabaseData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-            setCookie ( "remoteCouch", Object.assign({},this.doc[0]) );
+            Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
             showPage( "MainMenu" );
         } else {
             showPage( "MainMenu" );
@@ -1285,19 +1281,19 @@ class SuperUserData extends NewPatientData {
     savePatientData() {
         this.loadDocData();
 
-        closeRemoteDB()
+        Remote.closeRemoteDB()
         .then( () => {
             // remote User database
             remoteUser.username = this.doc[0].username;
             remoteUser.password = this.doc[0].password;
-            user_db = openRemoteDB( remoteUser );
+            User.db = Remote.openRemoteDB( remoteUser );
 
             // admin access to this database
             remoteSecurity.username = remoteUser.username;
             remoteSecurity.password = remoteUser.password;
             remoteSecurity.address  = remoteCouch.address;
             remoteSecurity.database = remoteCouch.database;        
-            security_db = openRemoteDB( remoteSecurity );
+            security_db = Remote.openRemoteDB( remoteSecurity );
 
             showPage( "UserList" ); })
         .catch( err => {
@@ -1313,8 +1309,8 @@ class NewUserData extends NewPatientData {
         this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
         this.doc[0].type = "user";
         this.doc[0].roles = [ this.doc[0].roles ];
-        userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
-        user_db.put( this.doc[0] )
+        User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
+        User.db.put( this.doc[0] )
         .then( response => {
             User.select( response.id );
             showPage( "SendUser" );
@@ -1330,18 +1326,18 @@ class EditUserData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             this.doc[0].roles = [ this.doc[0].roles ];
-            userPass[this.doc[0]._id] = this.doc[0].password; // for informing user
-            user_db.put( this.doc[0] )
+            User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
+            User.db.put( this.doc[0] )
             .then( () => showPage( "SendUser" ) )
             .catch( err => {
                 console.log(err);
                 showPage( "UserList" );
                 });
-        } else if ( userId in userPass ) {
+        } else if ( User.id in User.password ) {
             showPage( "SendUser" );
         } else {
             // no password to send
-            console.log("No password", userPass) ;
+            console.log("No password", User.password) ;
             showPage( "UserList" );
         }
     }
@@ -1359,8 +1355,8 @@ class AccessData extends PatientData {
     }
 }
 
-class DateMath {
-    prettyInterval(msec) {
+class DateMath { // convenience class
+    static prettyInterval(msec) {
         let hours = msec / 1000 / 60 / 60;
         if ( hours < 24 ) {
             return `${hours.toFixed(1)} hours`;
@@ -1381,22 +1377,18 @@ class DateMath {
         return `${years.toFixed(1)} years`;
     }
 
-    dob2date( dob ) {
-        return new Date( ...dob.split("-") );
-    }
-
-    age( dob, current=null ) {
-        let birthday = this.dob2date(dob);
+    static age( dob, current=null ) {
+        let birthday = flatpickr.parseDate( dob, "Y-m-d") ;
         let ref = Date.now();
         if ( current ) {
-            ref = this.dob2now(current) ;
+            ref = flatpickr.parseDate( current, "Y-m-d") ;
         }
-        return this.prettyInterval( ref - birthday );
+        return DateMath.prettyInterval( ref - birthday );
     }
 }
 
 class Patient { // convenience class
-    static deletePatient() {
+    static del() {
         if ( Patient.isSelected() ) {        
             let pdoc;
             let ndocs;
@@ -1470,7 +1462,7 @@ class Patient { // convenience class
         if ( pid == missionId ) {
             Mission.select() ;
         } else {
-            setCookie( "patientId", pid );
+            Cookie.set( "patientId", pid );
             // Check patient existence
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
@@ -1522,7 +1514,7 @@ class Patient { // convenience class
 
     static unselect() {
         patientId = null;
-        deleteCookie ( "patientId" );
+        Cookie.del ( "patientId" );
         Note.unselect();
         Operation.unselect();
         if ( objectDisplayState.test("PatientList") ) {
@@ -1595,7 +1587,7 @@ class Note { // convenience class
     }
 
     static select( cid=noteId ) {
-        setCookie( "noteId", cid );
+        Cookie.set( "noteId", cid );
         if ( objectDisplayState.test("NoteList") ) {
             // highlight the list row
             let li = document.getElementById("NoteList").getElementsByTagName("li");
@@ -1612,7 +1604,7 @@ class Note { // convenience class
     }
 
     static unselect() {
-        deleteCookie ( "noteId" );
+        Cookie.del ( "noteId" );
         if ( objectDisplayState.test("NoteList") ) {
             let li = document.getElementById("NoteList").li;
             if ( li && (li.length > 0) ) {
@@ -1640,7 +1632,7 @@ class Operation { // convenience class
             Operation.unselect();
         }
             
-        setCookie ( "operationId", oid  );
+        Cookie.set ( "operationId", oid  );
         // Check patient existence
         // highlight the list row
         if ( objectDisplayState.current() == 'OperationList' ) {
@@ -1651,7 +1643,7 @@ class Operation { // convenience class
 
     static unselect() {
         operationId = null;
-        deleteCookie( "operationId" );
+        Cookie.del( "operationId" );
         if ( objectDisplayState.test("OperationList") ) {
             let ot = document.getElementById("OperationsList");
             if ( ot ) {
@@ -1693,7 +1685,7 @@ class Operation { // convenience class
         return db.put( doc );
     }
 
-    static deleteOperation() {
+    static del() {
         if ( operationId ) {
             let pdoc;
             Patient.getRecord( false )
@@ -1776,12 +1768,15 @@ class Operation { // convenience class
 }
 
 class User { // convenience class
-    static deleteUser() {
-        if ( userId ) {
-            user_db.get( userId )
+    static db = null ; // the special user couchdb database for access control
+    static id = null; // not cookie backed
+    static password = {}; // userid/password pairs from this session since you can't get them back from the database (encrypted)
+    static del() {
+        if ( User.id ) {
+            User.db.get( User.id )
             .then( (doc) => {
                 if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
-                    return user_db.remove(doc) ;
+                    return User.db.remove(doc) ;
                 } else {
                     throw "No delete";
                 }
@@ -1794,15 +1789,15 @@ class User { // convenience class
     }    
     
     static select( uid ) {
-        userId = uid;
-        if ( objectUserTable ) {
-            objectUserTable.highlight();
+        User.id = uid;
+        if ( objectDisplayState.current() == "UserList" ) {
+            objectTable.highlight();
         }
         document.getElementById("editreviewuser").disabled = false;
     }    
 
     static unselect() {
-        userId = null;
+        User.id = null;
         document.getElementById("editreviewuser").disabled = true;
     }
 
@@ -1818,7 +1813,7 @@ class User { // convenience class
         } else {
             doc.limit = 0;
         }
-        return user_db.allDocs(doc);
+        return User.db.allDocs(doc);
     }
 
     static send( doc ) {
@@ -1826,7 +1821,7 @@ class User { // convenience class
         let url = new URL( window.location.href );
         url.searchParams.append( "address", remoteCouch.address );
         url.searchParams.append( "database", remoteCouch.database );
-        url.searchParams.append( "password", userPass[userId] );
+        url.searchParams.append( "password", User.password[User.id] );
         url.searchParams.append( "username", doc.name );
         new QR(
             document.getElementById("SendUserQR"),
@@ -1845,7 +1840,7 @@ class User { // convenience class
 You have an account:\n'
   web address: ${remoteCouch.address}
      username: ${doc.name}
-     password: ${userPass[userId]}
+     password: ${User.password[User.id]}
      database: ${remoteCouch.database}
 
 Full link (paste into your browser address bar):
@@ -1882,9 +1877,113 @@ class Mission { // convenience class
     }
 }
 
-class DisplayState {
+class Remote { // convenience class
+    static syncHandler = null;
+
+    // Initialise a sync process with the remote server
+    static foreverSync() {
+        Remote.remoteDB = Remote.openRemoteDB( remoteCouch ); // null initially
+        document.getElementById( "userstatus" ).value = remoteCouch.username;
+        if ( Remote.remoteDB ) {
+            const synctext = document.getElementById("syncstatus");
+            synctext.value = "syncing...";
+                
+            Remote.syncHandler = db.sync( Remote.remoteDB ,
+                {
+                    live: true,
+                    retry: true,
+                    filter: (doc) => doc._id.indexOf('_design') !== 0,
+                } )
+                .on('change', ()       => synctext.value = "changed" )
+                .on('paused', ()       => synctext.value = "resting" )
+                .on('active', ()       => synctext.value = "active" )
+                .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
+                .on('complete', ()     => synctext.value = "stopped" )
+                .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
+        }
+    }
+    
+    static forceReplicate(id=null) {
+        if (Remote.syncHandler) {
+            Remote.syncHandler.cancel();
+            Remote.syncHandler = null;
+        }
+        if (Remote.remoteDB) {
+            db.replicate.to( Remote.remoteDB,
+                {
+                    filter: (doc) => id ?
+                        doc._id == id :
+                        doc._id.indexOf('_design') !== 0,
+                } )
+            .catch( err => id ? console.log( id,err ) : console.log(err) )
+            .finally( () => Remote.foreverSync() );
+        }
+    }
+
+    static remoteDB;
+    static openRemoteDB( DBstruct ) {
+        if ( DBstruct && remoteFields.every( k => k in DBstruct )  ) {
+            return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
+                "skip_setup": "true",
+                "auth": {
+                    "username": DBstruct.username,
+                    "password": DBstruct.password,
+                    },
+                });
+        } else {
+            console.log("Bad DB");
+            return null;
+        }
+    }
+            
+    static closeRemoteDB() {
+        return Promise.all( [
+            User.db ? User.db.close() : Promise.resolve(true),
+            security_db ? security_db.close() : Promise.resolve(true),
+            ]);
+    }
+
+    static link() {
+        window.open( `${remoteCouch.address}/_utils`, '_blank' );
+    }
+}
+
+class Cookie { //convenience class
+    static set( cname, value ) {
+      // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
+        window[cname] = value;
+        //console.log(cname,"value",value);
+        let date = new Date();
+        date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
+        document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
+    }
+
+    static del( cname ) {
+        window[cname] = null;
+        document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    }
+
+    static get( cname ) {
+        const name = `${cname}=`;
+        let ret = null;
+        decodeURIComponent(document.cookie).split('; ').filter( val => val.indexOf(name) === 0 ).forEach( val => {
+            try {
+                ret = JSON.parse( val.substring(name.length) );
+                }
+            catch(err) {
+                ret =  val.substring(name.length);
+                }
+        });
+        window[cname] = ret;
+        //console.log("getcookie",cname,ret);
+        return ret;
+    }
+
+}
+
+class DisplayState { // singleton class
     constructor() {
-        const path = getCookie( "displayState" );
+        const path = Cookie.get( "displayState" );
         if ( !Array.isArray(path) ) {
             this.path = [];
         } else {
@@ -1911,7 +2010,7 @@ class DisplayState {
         
         if ( safeIndex == 1000 ) {
             this.path = [] ;
-            setCookie ( "displayState", this.path ) ;
+            Cookie.set ( "displayState", this.path ) ;
         } else {
             this.next( this.path[safeIndex] );
         }
@@ -1922,7 +2021,7 @@ class DisplayState {
         if ( this.path.length == 0 ) {
             this.path = [ "MainMenu" ];
         }
-        setCookie ( "displayState", this.path ) ;
+        Cookie.set ( "displayState", this.path ) ;
     }
 
     current() {
@@ -1939,10 +2038,10 @@ class DisplayState {
             return ;
         } else if ( this.path.indexOf( page ) < 0 ) {
             this.path.unshift( page ) ;
-            setCookie ( "displayState", this.path ) ;
+            Cookie.set ( "displayState", this.path ) ;
         } else {
             this.path = this.path.slice( this.path.indexOf(page) ) ;
-            setCookie ( "displayState", this.path ) ;
+            Cookie.set ( "displayState", this.path ) ;
         }
     }
 
@@ -1969,7 +2068,6 @@ function showPage( state = "PatientList" ) {
     objectPatientData = null;
     objectNoteList = null;
     objectTable = null;
-    objectUserTable = null;
 
     Image.clearSrc() ;
 
@@ -1990,11 +2088,11 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "UserList":
-            objectUserTable = new UserTable( ["name", "role", "email", "type", ] );
+            objectTable = new UserTable( ["name", "role", "email", "type", ] );
             User.getAll(true)
-            .then( docs => objectUserTable.fill(docs.rows ) )
+            .then( docs => objectTable.fill(docs.rows ) )
             .catch( (err) => {
-                console.log(err) ;
+                console.log(err.message) ;
                 showPage ( "SuperUser" );
                 });
             break;
@@ -2014,12 +2112,12 @@ function showPage( state = "PatientList" ) {
             break ;
             
         case "UserEdit":
-            if ( user_db == null ) {
+            if ( User.db == null ) {
                 showPage( "SuperUser" );
-            } else if ( userId == null ) {
+            } else if ( User.id == null ) {
                 showPage( "UserList" );
             } else {
-                user_db.get( userId )
+                User.db.get( User.id )
                 .then( doc => {
                     doc.roles = doc.roles[0]; // unarray
                     objectPatientData = new EditUserData( doc, structEditUser );
@@ -2033,12 +2131,12 @@ function showPage( state = "PatientList" ) {
             break;
             
         case "SendUser":
-            if ( user_db == null ) {
+            if ( User.db == null ) {
                 showPage( "SuperUser" );
-            } else if ( userId == null || !(userId in userPass) ) {
+            } else if ( User.id == null || !(User.id in User.password) ) {
                 showPage( "UserList" );
             } else {
-                user_db.get( userId )
+                User.db.get( User.id )
                 .then( doc => User.send( doc ) )
                 .catch( err => {
                     console.log( err );
@@ -2245,36 +2343,6 @@ function showPage( state = "PatientList" ) {
             showPage( "PatientList" );
             break;
     }
-}
-
-function setCookie( cname, value ) {
-  // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
-    window[cname] = value;
-    //console.log(cname,"value",value);
-    let date = new Date();
-    date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
-    document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
-}
-
-function deleteCookie( cname ) {
-    window[cname] = null;
-    document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-}
-
-function getCookie( cname ) {
-    const name = `${cname}=`;
-    let ret = null;
-    decodeURIComponent(document.cookie).split('; ').filter( val => val.indexOf(name) === 0 ).forEach( val => {
-        try {
-            ret = JSON.parse( val.substring(name.length) );
-            }
-        catch(err) {
-            ret =  val.substring(name.length);
-            }
-    });
-    window[cname] = ret;
-    //console.log("getcookie",cname,ret);
-    return ret;
 }
 
 function isAndroid() {
@@ -2569,7 +2637,7 @@ class UserTable extends SortTable {
     }
 
     selectId() {
-        return userId;
+        return User.id;
     }
 
     selectFunc(id) {
@@ -2862,7 +2930,7 @@ function printCard() {
         t[0].rows[4].cells[1].innerText = ""; // surgeon
         t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
 
-        t[1].rows[0].cells[1].innerText = DateMath.prototype.age(doc.DOB); 
+        t[1].rows[0].cells[1].innerText = DateMath.age(doc.DOB); 
         t[1].rows[1].cells[1].innerText = doc.Sex??""; 
         t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
         t[1].rows[3].cells[1].innerText = doc.Allergies??"";
@@ -2998,77 +3066,13 @@ function parseQuery() {
     return r;
 }
 
-var remoteDB;
-function openRemoteDB( DBstruct ) {
-    if ( DBstruct && remoteFields.every( k => k in DBstruct )  ) {
-        return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
-            "skip_setup": "true",
-            "auth": {
-                "username": DBstruct.username,
-                "password": DBstruct.password,
-                },
-            });
-    } else {
-        console.log("Bad DB");
-        return null;
-    }
-}
-        
-function closeRemoteDB() {
-    return Promise.all( [
-        user_db ? user_db.close() : Promise.resolve(true),
-        security_db ? security_db.close() : Promise.resolve(true),
-        ]);
-}
-    
-// Initialise a sync process with the remote server
-var SyncHandler = null;
-function foreverSync() {
-    remoteDB = openRemoteDB( remoteCouch ); // null initially
-    document.getElementById( "userstatus" ).value = remoteCouch.username;
-    if ( remoteDB ) {
-        const synctext = document.getElementById("syncstatus");
-        synctext.value = "syncing...";
-            
-        SyncHandler = db.sync( remoteDB ,
-            {
-                live: true,
-                retry: true,
-                filter: (doc) => doc._id.indexOf('_design') !== 0,
-            } )
-            .on('change', ()       => synctext.value = "changed" )
-            .on('paused', ()       => synctext.value = "resting" )
-            .on('active', ()       => synctext.value = "active" )
-            .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
-            .on('complete', ()     => synctext.value = "stopped" )
-            .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
-    }
-}
-
-function forceReplicate(id=null) {
-    if (SyncHandler) {
-        SyncHandler.cancel();
-        SyncHandler = null;
-    }
-    if (remoteDB) {
-        db.replicate.to( remoteDB,
-            {
-                filter: (doc) => id ?
-                    doc._id == id :
-                    doc._id.indexOf('_design') !== 0,
-            } )
-        .catch( err => id ? console.log( id,err ) : console.log(err) )
-        .finally( () => foreverSync() );
-    }
-}
-
 function clearLocal() {
     const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
     if ( remove ) {
-        deleteCookie( "patientId" );
-        deleteCookie("remoteCouch");
-        deleteCookie("operationId");
-        deleteCookie( "commentId" );
+        Cookie.del( "patientId" );
+        Cookie.del("remoteCouch");
+        Cookie.del("operationId");
+        Cookie.del( "commentId" );
         db.destroy()
         .finally( () => location.reload() );
     }
@@ -3076,10 +3080,10 @@ function clearLocal() {
 }
 
 function cookies_n_query() {
-    getCookie ( "patientId" );
-    getCookie ( "commentId" );
+    Cookie.get ( "patientId" );
+    Cookie.get ( "commentId" );
     objectDisplayState = new DisplayState();
-    getCookie ( "operationId" );
+    Cookie.get ( "operationId" );
 
     // need to establish remote db and credentials
     // first try the search field
@@ -3089,8 +3093,8 @@ function cookies_n_query() {
     if ( remoteFields.every( k => k in qline ) ) {
         remoteCouch = {};
         remoteFields.forEach( f => remoteCouch[f] = qline[f] );
-        setCookie( "remoteCouch", remoteCouch );
-    } else if ( getCookie( "remoteCouch" ) == null ) {
+        Cookie.set( "remoteCouch", remoteCouch );
+    } else if ( Cookie.get( "remoteCouch" ) == null ) {
         throw "Need manual database entry" ;
     }    
 
@@ -3162,7 +3166,7 @@ window.onload = () => {
         .catch( err => console.log(err) );
 
         // start sync with remote database
-        foreverSync();
+        Remote.foreverSync();
 
         // set link for mission
         Mission.link();
