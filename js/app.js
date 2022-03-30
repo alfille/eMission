@@ -560,7 +560,7 @@ class Search { // singleton class
     }
 
     fill() {
-        return getAll()
+        return db.allDocs( { include_docs: true, } )
         .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
     }
 
@@ -652,6 +652,11 @@ class Image {
         big.style.display = "block";
     }
     
+    static hideBigPicture( target ) {
+        target.src = "";
+        target.style.display = "none";
+    }
+
     display() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
@@ -992,7 +997,7 @@ class PatientData { // singleton class
                     break;
                 case "time":
                     inp = document.createElement("input");
-                    inp.classList.add("flatpickr","flatpickr-input")
+                    inp.classList.add("flatpickr","flatpickr-input");
                     inp.type = "text";
                     inp.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
                     inp.size = 9;
@@ -1002,7 +1007,7 @@ class PatientData { // singleton class
                     break;
                 case "length":
                     inp = document.createElement("input");
-                    inp.classList.add("flatpickr","flatpickr-input")
+                    inp.classList.add("flatpickr","flatpickr-input");
                     inp.type = "text";
                     inp.pattern="\d+:[0-5][0-9]";
                     inp.size = 6;
@@ -1467,7 +1472,7 @@ class Patient { // convenience class
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
                 // highlight the list row
-                if ( objectDisplayState.current() == 'PatientList' ) {
+                if ( objectDisplayState.test('PatientList') ) {
                     objectTable.highlight();
                 }
                 document.getElementById("editreviewpatient").disabled = false;
@@ -1530,6 +1535,14 @@ class Patient { // convenience class
         document.getElementById( "titlebox" ).innerHTML = "";
     }
 
+    static menu( doc ) {
+        let d = document.getElementById("PatientPhotoContent2");
+        let inp = new Image( d, doc, NoPhoto );
+
+        cloneClass( ".imagetemplate", d );
+        inp.display();
+    }
+   
 }
 
 class Note { // convenience class
@@ -1618,9 +1631,73 @@ class Note { // convenience class
     static new() {
         let d = document.getElementById("NoteNewContent");
         cloneClass ( ".newnotetemplate_edit", d );
-        let doc = templateNote();
+        let doc = Note.template();
         let img = new ImageNote( d, doc );
         img.edit();
+    }
+
+    static dropPictureinNote( target ) {
+            // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
+        target.addEventListener('dragover', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            });
+
+        // Get file data on drop
+        target.addEventListener('drop', e => {
+            e.stopPropagation();
+            e.preventDefault();
+            // Array of files
+            Promise.all(
+                Array.from(e.dataTransfer.files)
+                .filter( file => file.type.match(/image.*/) )
+                .map( file => {
+                    let reader = new FileReader();
+                    reader.onload = e2 =>
+                        fetch(e2.target.result)
+                        .then( b64 => b64.blob() )
+                        .then( blb => {
+                            let doc = Note.template();
+                            new ImageDrop(blb).save(doc);
+                            return db.put(doc);
+                            });
+                    reader.readAsDataURL(file); // start reading the file data.
+                    }))
+                    .then( () => Note.getRecords(false) ) // refresh the list
+                    .catch( err => console.log(err) )
+                    .finally( () => showPage( "NoteList" ) );
+            });
+    }
+
+    static template( ) {
+        return {
+            _id: Note.makeId(),
+            text: "",
+            title: "",
+            author: remoteCouch.username,
+            type: "note",
+            patient_id: patientId,
+            date: new Date().toISOString(),
+        };
+    }
+
+    static quickPhoto() {
+        let inp = document.getElementById("QuickPhotoContent");
+        cloneClass( ".imagetemplate_quick", inp );
+        let doc = Note.template();
+        let img = new ImageQuick( inp, doc );
+        function handle() {
+            img.handle();
+            img.save(doc);
+            db.put(doc)
+            .then( () => Note.getRecords( false ) ) // to try to prime the list
+            .catch( err => console.log(err) )
+            .finally( showPage( null ) );
+        }
+        img.display();
+        img.addListen(handle);
+        img.getImage();
     }
 
 }
@@ -1635,7 +1712,7 @@ class Operation { // convenience class
         Cookie.set ( "operationId", oid  );
         // Check patient existence
         // highlight the list row
-        if ( objectDisplayState.current() == 'OperationList' ) {
+        if ( objectDisplayState.test('OperationList') ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewoperation").disabled = false;
@@ -1790,7 +1867,7 @@ class User { // convenience class
     
     static select( uid ) {
         User.id = uid;
-        if ( objectDisplayState.current() == "UserList" ) {
+        if ( objectDisplayState.test("UserList") ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewuser").disabled = false;
@@ -1981,6 +2058,84 @@ class Cookie { //convenience class
 
 }
 
+class CSV { // convenience class
+    static downloadCSV(csv, filename) {
+        let csvFile;
+        let downloadLink;
+       
+        //define the file type to text/csv
+        csvFile = new Blob([csv], {type: 'text/csv'});
+        downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+    }
+
+    static downloadPatients() {
+        const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
+        let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
+        Patient.getAll(true)
+        .then( doclist => {
+            csv += doclist.rows
+                .map( row => fields
+                    .map( f => row.doc[f] || "" )
+                    .map( v => typeof(v) == "number" ? v : `"${v}"` )
+                    .join(',')
+                    )
+                .join( '\n' );
+            CSV.downloadCSV( csv, `${remoteCouch.database}Patient.csv` );
+            });
+    }
+
+    static downloadAll() {
+        const pfields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
+        const ofields = [ "Complaint", "Procedure", "Surgeon", "Equipment", "Status", "Date-Time", "Duration", "Lateratility" ]; 
+        let csv = pfields
+                    .concat(ofields,["Notes"])
+                    .map( f => `"${f}"` )
+                    .join(',')+'\n';
+        let plist;
+        let olist = {};
+        let nlist = {};
+        Patient.getAll(true)
+        .then( doclist => {
+            plist = doclist.rows;
+            plist.forEach( p => nlist[p.id] = 0 );
+            return Operation.getAll();
+            })
+        .then ( doclist => {
+            doclist.rows
+            .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
+            .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
+            return Note.getAll();
+            })
+        .then( doclist => {
+            doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
+            csv += plist
+                .map( row =>
+                    pfields
+                    .map( f => row.doc[f] ?? "" )
+                    .map( v => typeof(v) == "number" ? v : `"${v}"` )
+                    .concat(
+                        (row.id in olist) ? ofields
+                                            .map( ff => olist[row.id][ff] ?? "" )
+                                            .map( v => typeof(v) == "number" ? v : `"${v}"` )
+                                            :
+                                            ofields.map( ff => "" ) ,
+                        [nlist[row.id]]
+                        )
+                    .join(',')
+                    )
+                .join( '\n' );
+            CSV.downloadCSV( csv, `${remoteCouch.database}AllData.csv` );
+            });
+    }
+
+}
+
 class DisplayState { // singleton class
     constructor() {
         const path = Cookie.get( "displayState" );
@@ -2070,6 +2225,11 @@ function showPage( state = "PatientList" ) {
     objectTable = null;
 
     Image.clearSrc() ;
+
+    if ( db == null ) {
+        // can't bypass this!
+        objectDisplayState.next("RemoteDatabaseInput");
+    }
 
     switch( objectDisplayState.current() ) {           
        case "MainMenu":
@@ -2220,7 +2380,7 @@ function showPage( state = "PatientList" ) {
             if ( Patient.isSelected() ) {
                 Patient.select( patientId );
                 Patient.getRecord( true )
-                .then( (doc) => patientPhoto( doc ) )
+                .then( (doc) => Patient.menu( doc ) )
                 .catch( (err) => {
                     console.log(err);
                     showPage( "InvalidPatient" );
@@ -2333,7 +2493,7 @@ function showPage( state = "PatientList" ) {
        case "QuickPhoto":
             objectDisplayState.forget(); // don't return here!
             if ( patientId ) { // patient or Mission!
-                quickPhoto();
+                Note.quickPhoto();
             } else {
                 showPage( "PatientList" );
             }
@@ -2712,21 +2872,6 @@ function cloneClass( fromClass, target ) {
     c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
 }    
 
-function patientPhoto( doc ) {
-    let d = document.getElementById("PatientPhotoContent2");
-    let inp = new Image( d, doc, NoPhoto );
-
-    cloneClass( ".imagetemplate", d );
-    inp.display();
-}
-   
-function getAll() {
-    let doc = {
-        include_docs: true,
-    };
-    return db.allDocs(doc);
-}
-
 class NoteList {
     constructor( notelist ) {
         let parent = document.getElementById("NoteListContent") ;
@@ -2756,7 +2901,7 @@ class NoteList {
             }
         }
         
-        dropPictureinNote( parent );        
+        Image.dropPictureinNote( parent );        
     }
 
     liLabel( note ) {
@@ -2827,70 +2972,6 @@ class NoteList {
         return new Date(date);
     }
 
-}
-
-function dropPictureinNote( target ) {
-        // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
-    target.addEventListener('dragover', e => {
-        e.stopPropagation();
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        });
-
-    // Get file data on drop
-    target.addEventListener('drop', e => {
-        e.stopPropagation();
-        e.preventDefault();
-        // Array of files
-        Promise.all(
-            Array.from(e.dataTransfer.files)
-            .filter( file => file.type.match(/image.*/) )
-            .map( file => {
-                let reader = new FileReader();
-                reader.onload = e2 =>
-                    fetch(e2.target.result)
-                    .then( b64 => b64.blob() )
-                    .then( blb => {
-                        let doc = templateNote();
-                        new ImageDrop(blb).save(doc);
-                        return db.put(doc);
-                        });
-                reader.readAsDataURL(file); // start reading the file data.
-                }))
-                .then( () => Note.getRecords(false) ) // refresh the list
-                .catch( err => console.log(err) )
-                .finally( () => showPage( "NoteList" ) );
-        });
-}
-
-function quickPhoto() {
-    let inp = document.getElementById("QuickPhotoContent");
-    cloneClass( ".imagetemplate_quick", inp );
-    let doc = templateNote();
-    let img = new ImageQuick( inp, doc );
-    function handle() {
-        img.handle();
-        img.save(doc);
-        db.put(doc)
-        .then( () => Note.getRecords( false ) ) // to try to prime the list
-        .catch( err => console.log(err) )
-        .finally( showPage( null ) );
-    }
-    img.display();
-    img.addListen(handle);
-    img.getImage();
-}
-
-function templateNote( ) {
-    return {
-        _id: Note.makeId(),
-        text: "",
-        title: "",
-        author: remoteCouch.username,
-        type: "note",
-        patient_id: patientId,
-        date: new Date().toISOString(),
-    };
 }
 
 function show_screen( bool ) {
@@ -2973,87 +3054,6 @@ function printCard() {
         });
 }
 
-function hideBigPicture( target ) {
-    target.src = "";
-    target.style.display = "none";
-}
-
-
-function downloadCSV(csv, filename) {
-    let csvFile;
-    let downloadLink;
-   
-    //define the file type to text/csv
-    csvFile = new Blob([csv], {type: 'text/csv'});
-    downloadLink = document.createElement("a");
-    downloadLink.download = filename;
-    downloadLink.href = window.URL.createObjectURL(csvFile);
-    downloadLink.style.display = "none";
-
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-}
-
-function downloadPatients() {
-    const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
-    let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
-    Patient.getAll(true)
-    .then( doclist => {
-        csv += doclist.rows
-            .map( row => fields
-                .map( f => row.doc[f] || "" )
-                .map( v => typeof(v) == "number" ? v : `"${v}"` )
-                .join(',')
-                )
-            .join( '\n' );
-        downloadCSV( csv, `${remoteCouch.database}Patient.csv` );
-        });
-}
-
-function downloadAll() {
-    const pfields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
-    const ofields = [ "Complaint", "Procedure", "Surgeon", "Equipment", "Status", "Date-Time", "Duration", "Lateratility" ]; 
-    let csv = pfields
-                .concat(ofields,["Notes"])
-                .map( f => `"${f}"` )
-                .join(',')+'\n';
-    let plist;
-    let olist = {};
-    let nlist = {};
-    Patient.getAll(true)
-    .then( doclist => {
-        plist = doclist.rows;
-        plist.forEach( p => nlist[p.id] = 0 );
-        return Operation.getAll();
-        })
-    .then ( doclist => {
-        doclist.rows
-        .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
-        .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
-        return Note.getAll();
-        })
-    .then( doclist => {
-        doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
-        csv += plist
-            .map( row =>
-                pfields
-                .map( f => row.doc[f] ?? "" )
-                .map( v => typeof(v) == "number" ? v : `"${v}"` )
-                .concat(
-                    (row.id in olist) ? ofields
-                                        .map( ff => olist[row.id][ff] ?? "" )
-                                        .map( v => typeof(v) == "number" ? v : `"${v}"` )
-                                        :
-                                        ofields.map( ff => "" ) ,
-                    [nlist[row.id]]
-                    )
-                .join(',')
-                )
-            .join( '\n' );
-        downloadCSV( csv, `${remoteCouch.database}AllData.csv` );
-        });
-}
-
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -3094,7 +3094,12 @@ function cookies_n_query() {
         remoteFields.forEach( f => remoteCouch[f] = qline[f] );
         Cookie.set( "remoteCouch", remoteCouch );
     } else if ( Cookie.get( "remoteCouch" ) == null ) {
-        throw "Need manual database entry" ;
+        remoteCouch = {
+            database: "", // must be set to continue
+            username: "",
+            password: "",
+            address: "",
+            };
     }    
 
     // first try the search field
@@ -3121,11 +3126,12 @@ window.onload = () => {
         .catch( err => console.log(err) );
     }
 
-    try {
-        // set state from URL or cookies
-        cookies_n_query() ; // look for remoteCouch and other cookies
+    // set state from URL or cookies
+    cookies_n_query() ; // look for remoteCouch and other cookies
 
-        // Start pouchdb database
+    // Start pouchdb database
+        
+    if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
 
@@ -3145,17 +3151,17 @@ window.onload = () => {
                 // update screen display
                 switch ( change?.doc?.type ) {
                     case "patient":
-                        if ( objectDisplayState.current() == "PatientList" ) {
+                        if ( objectDisplayState.test("PatientList") ) {
                             showPage(null);
                         }
                         break;
                     case "note":
-                        if ( objectDisplayState.current() == "NoteList" && change.doc?.patient_id==patientId ) {
+                        if ( objectDisplayState.test("NoteList") && change.doc?.patient_id==patientId ) {
                             showPage(null);
                         }
                         break;
                     case "operation":
-                        if ( objectDisplayState.current() == "OperationList" && change.doc?.patient_id==patientId ) {
+                        if ( objectDisplayState.test("OperationList") && change.doc?.patient_id==patientId ) {
                             showPage(null);
                         }
                         break;
@@ -3164,64 +3170,62 @@ window.onload = () => {
             )
         .catch( err => console.log(err) );
 
-        // start sync with remote database
-        Remote.foreverSync();
+            // start sync with remote database
+            Remote.foreverSync();
 
-        // set link for mission
-        Mission.link();
+            // set link for mission
+            Mission.link();
 
-        // set Help buttons
-        document.querySelectorAll(".Qmark").forEach( h => {
-            h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>objectDisplayState.link());
-            });
+            // Secondary indexes
+            createQueries();
+            db.viewCleanup()
+            .catch( err => console.log(err) );
 
-        // set Search buttons
-        document.querySelectorAll(".Search").forEach( s => {
-            s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>showPage('SearchList'));
-            });
-
-        // set Quick Photo buttons
-        document.querySelectorAll(".Qphoto").forEach( q => {
-            q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>showPage('QuickPhoto'));
-            });
-
-        // set edit details for PatientData edit pages -- only for "top" portion
-        document.querySelectorAll(".edit_data").forEach( e => {
-            e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>objectPatientData.clickEdit());
-            });
-
-        // set save details for PatientData save pages
-        document.querySelectorAll(".savedata").forEach( s => {
-            s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>objectPatientData.savePatientData());
-            });
-
-        // Secondary indexes
-        createQueries();
-        db.viewCleanup()
-        .catch( err => console.log(err) );
-
-        // now jump to proper page
-        showPage( null ) ;
-
-        // Set patient, operation and note -- need page shown first
-        if ( Patient.isSelected() ) { // mission too
-            Patient.select() ;
-        }
-        if ( operationId ) {
-            Operation.select() ;
-        }
-        if ( noteId ) {
-            Note.select() ;
-        }
+    } else {
+        db = null;
     }
-        
-    catch (err) {
-        console.log(err);
-        showPage("RemoteDatabaseInput"); // forces program reload
+
+    // set Help buttons
+    document.querySelectorAll(".Qmark").forEach( h => {
+        h.title = "Open explanation in another tab" ;
+        h.addEventListener("click",()=>objectDisplayState.link());
+        });
+
+    // set Search buttons
+    document.querySelectorAll(".Search").forEach( s => {
+        s.title = "Search everywhere for a word or phrase" ;
+        s.addEventListener("click",()=>showPage('SearchList'));
+        });
+
+    // set Quick Photo buttons
+    document.querySelectorAll(".Qphoto").forEach( q => {
+        q.title = "Quick photo using camera or from gallery" ;
+        q.addEventListener("click",()=>showPage('QuickPhoto'));
+        });
+
+    // set edit details for PatientData edit pages -- only for "top" portion
+    document.querySelectorAll(".edit_data").forEach( e => {
+        e.title = "Unlock record to allow changes" ;
+        e.addEventListener("click",()=>objectPatientData.clickEdit());
+        });
+
+    // set save details for PatientData save pages
+    document.querySelectorAll(".savedata").forEach( s => {
+        s.title = "Save your changes to this record" ;
+        s.addEventListener("click",()=>objectPatientData.savePatientData());
+        });
+
+    // now jump to proper page
+    showPage( null ) ;
+
+    // Set patient, operation and note -- need page shown first
+    if ( Patient.isSelected() ) { // mission too
+        Patient.select() ;
+    }
+    if ( operationId ) {
+        Operation.select() ;
+    }
+    if ( noteId ) {
+        Note.select() ;
     }
 };

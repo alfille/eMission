@@ -195,8 +195,8 @@
             <div class="Download pageOverlay">
                 <div id="DownloadContent" >
                     <h3>Download Spreadsheet file</h3>
-                    <button type="button" class="divbutton" onclick="downloadPatients()">Patient List</button>
-                    <button type="button" class="divbutton" onclick="downloadAll()">All data</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
                 </div>
             </div>
             <!-- body: PatientList -->
@@ -280,7 +280,7 @@
                 <div id="QuickPhotoContent"></div>
             </div>
             <!-- body: FloatPicture -->
-            <img class="FloatPicture pageOverlay" onclick="hideBigPicture(this)">
+            <img class="FloatPicture pageOverlay" onclick="Image.hideBigPicture(this)">
         </div>
         <!-- copyable parts -->
         <div id="templates" class="pageOverlay">
