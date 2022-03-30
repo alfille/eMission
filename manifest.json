@@ -16,6 +16,11 @@
       "src": "images/emission_64x64.png",
       "type": "image/png",
       "sizes": "64x64"
+    },
+    {
+      "src": "images/emission_512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "shortcuts": []

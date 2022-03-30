@@ -1867,13 +1867,13 @@ class Mission { // convenience class
         db.get( missionId, { attachments: true, binary: true } )
         .then( doc => {
             let src = new Image( null,doc).source();
-            Array.from( document.getElementsByClassName("mission_logo") )
+            document.querySelectorAll(".mission_logo")
             .forEach( logo => {
                 logo.src=src;
                 logo.addEventListener( 'click', () => window.open(doc.Link) );
                 });
             })
-        .catch( err => console.log(err) ) ;
+        .catch( err => console.log(err.message) ) ;
     }
 }
 
@@ -2062,7 +2062,7 @@ class DisplayState { // singleton class
 function showPage( state = "PatientList" ) {
     objectDisplayState.next(state) ;
 
-    Array.from(document.getElementsByClassName("pageOverlay"))
+    document.querySelectorAll(".pageOverlay")
         .forEach( (v) => v.style.display = v.classList.contains(objectDisplayState.current()) ? "block" : "none" );
 
     objectPatientData = null;
@@ -2896,10 +2896,10 @@ function templateNote( ) {
 
 function show_screen( bool ) {
     document.getElementById("splash_screen").style.display = "none";
-    Array.from(document.getElementsByClassName("work_screen")).forEach( (v)=> {
+    document.querySelectorAll(".work_screen").forEach( (v)=> {
         v.style.display = bool ? "block" : "none";
     });
-    Array.from(document.getElementsByClassName("print_screen")).forEach( (v)=> {
+    document.querySekectorAll(".print_screen").forEach( (v)=> {
         v.style.display = bool ? "none" : "block";
     });
 }    
