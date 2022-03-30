@@ -229,7 +229,7 @@ footer {
 .editToolbar span:hover {
     color: yellow;
 }
-.edit_note, search {
+.edit_data, .edit_note, .search {
   display: inline-block;
   background: yellow;
   color: black;
@@ -239,7 +239,7 @@ footer {
 .inly {
   display : inline-block;
 }
-.edit_note:disabled {
+.edit_data:disabled, .edit_note:disabled {
   background: #ffffcc;
   color: grey;
 }

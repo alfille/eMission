@@ -855,7 +855,7 @@ class PatientData { // singleton class
         } 
         
         PatientData.buttonStatus( true );
-        [...document.getElementsByClassName("edit_note")].forEach( (e) => {
+        [...document.getElementsByClassName("edit_data")].forEach( (e) => {
             e.disabled = false;
         });
         this.parent.innerHTML = "";
@@ -1142,7 +1142,7 @@ class PatientData { // singleton class
                 }
             });
         }
-        [...document.getElementsByClassName("edit_note")].forEach( (e) => {
+        document.querySelectorAll(".edit_data").forEach( (e) => {
             e.disabled = true;
         });
     }
@@ -2802,7 +2802,6 @@ class NoteList {
         ['dblclick','swiped-right','swiped-left'].forEach( ev =>
             [li, label].forEach( targ => targ.addEventListener( ev, edit_note )));
         label.querySelector(".edit_note").addEventListener( 'click', edit_note );
-//        label.addEventListener( 'dblclick', edit_note );
 
         return li;
     }
@@ -3190,7 +3189,7 @@ window.onload = () => {
             });
 
         // set edit details for PatientData edit pages -- only for "top" portion
-        document.getElementById("buttonheader").querySelectorAll(".edit_note").forEach( e => {
+        document.querySelectorAll(".edit_data").forEach( e => {
             e.title = "Unlock record to allow changes" ;
             e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
