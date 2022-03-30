@@ -2899,7 +2899,7 @@ function show_screen( bool ) {
     document.querySelectorAll(".work_screen").forEach( (v)=> {
         v.style.display = bool ? "block" : "none";
     });
-    document.querySekectorAll(".print_screen").forEach( (v)=> {
+    document.querySelectorAll(".print_screen").forEach( (v)=> {
         v.style.display = bool ? "none" : "block";
     });
 }    
