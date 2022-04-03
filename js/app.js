@@ -1221,6 +1221,14 @@ class PatientData { // singleton class
     }
 }
 
+class PatientDataEditMode extends PatientData {
+    // starts withg "EDIT" clicked
+    constructor(...args) {
+        super(...args);
+        this.clickEdit();
+    }
+}
+
 class MissionData extends PatientData {
     savePatientData() {
         this.saveChanged( "MainMenu" );
@@ -1239,7 +1247,7 @@ class DatabaseInfoData extends PatientData {
     savePatientData() {}
 }
 
-class DatabaseData extends PatientData {
+class DatabaseData extends PatientDataEditMode {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
@@ -1251,12 +1259,7 @@ class DatabaseData extends PatientData {
     }
 }
 
-class NewPatientData extends PatientData {
-    constructor(...args) {
-        super(...args);
-        this.clickEdit();
-    }
-    
+class NewPatientData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
         // make sure the fields needed for a patient ID are present
@@ -1280,7 +1283,7 @@ class NewPatientData extends PatientData {
     }
 }
 
-class SuperUserData extends NewPatientData {
+class SuperUserData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
 
@@ -1306,7 +1309,7 @@ class SuperUserData extends NewPatientData {
     }
 }
 
-class NewUserData extends NewPatientData {
+class NewUserData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
         this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
