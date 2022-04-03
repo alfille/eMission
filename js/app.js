@@ -1211,11 +1211,9 @@ class PatientData { // singleton class
     
     saveChanged ( state ) {
         let changed = this.loadDocData();
-        console.log(changed);
         Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
-            .catch( (err) => console.log(err) )
-            .finally( () => showPage( state ) )
-        ;
+            .catch( (err) => console.log(err.message) )
+            .finally( () => showPage( state ) );
     }
     
     savePatientData() {
@@ -3126,12 +3124,43 @@ window.onload = () => {
         .catch( err => console.log(err) );
     }
 
+    // set Help buttons
+    document.querySelectorAll(".Qmark").forEach( h => {
+        h.title = "Open explanation in another tab" ;
+        h.addEventListener("click",()=>objectDisplayState.link());
+        });
+
+    // set Search buttons
+    document.querySelectorAll(".Search").forEach( s => {
+        s.title = "Search everywhere for a word or phrase" ;
+        s.addEventListener("click",()=>showPage('SearchList'));
+        });
+
+    // set Quick Photo buttons
+    document.querySelectorAll(".Qphoto").forEach( q => {
+        q.title = "Quick photo using camera or from gallery" ;
+        q.addEventListener("click",()=>showPage('QuickPhoto'));
+        });
+
+    // set edit details for PatientData edit pages -- only for "top" portion
+    document.querySelectorAll(".edit_data").forEach( e => {
+        e.title = "Unlock record to allow changes" ;
+        e.addEventListener("click",()=>objectPatientData.clickEdit());
+        });
+
+    // set save details for PatientData save pages
+    document.querySelectorAll(".savedata").forEach( s => {
+        s.title = "Save your changes to this record" ;
+        s.addEventListener("click",()=>objectPatientData.savePatientData());
+        });
+
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
 
     // Start pouchdb database
         
     if ( remoteCouch.database !== "" ) {
+        console.log("Bad Pouch",PouchDB(""));
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
 
@@ -3184,36 +3213,6 @@ window.onload = () => {
     } else {
         db = null;
     }
-
-    // set Help buttons
-    document.querySelectorAll(".Qmark").forEach( h => {
-        h.title = "Open explanation in another tab" ;
-        h.addEventListener("click",()=>objectDisplayState.link());
-        });
-
-    // set Search buttons
-    document.querySelectorAll(".Search").forEach( s => {
-        s.title = "Search everywhere for a word or phrase" ;
-        s.addEventListener("click",()=>showPage('SearchList'));
-        });
-
-    // set Quick Photo buttons
-    document.querySelectorAll(".Qphoto").forEach( q => {
-        q.title = "Quick photo using camera or from gallery" ;
-        q.addEventListener("click",()=>showPage('QuickPhoto'));
-        });
-
-    // set edit details for PatientData edit pages -- only for "top" portion
-    document.querySelectorAll(".edit_data").forEach( e => {
-        e.title = "Unlock record to allow changes" ;
-        e.addEventListener("click",()=>objectPatientData.clickEdit());
-        });
-
-    // set save details for PatientData save pages
-    document.querySelectorAll(".savedata").forEach( s => {
-        s.title = "Save your changes to this record" ;
-        s.addEventListener("click",()=>objectPatientData.savePatientData());
-        });
 
     // now jump to proper page
     showPage( null ) ;

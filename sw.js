@@ -41,7 +41,6 @@ self.addEventListener('fetch', event => {
     if ( event.request.method === 'GET' ) {
         let url = new URL(event.request.url) ;
         if ( cacheList.includes(url.pathname) ) {
-            //console.log("FETCH",url.pathname);
             event.respondWith(
                 fetch(event.request)
                 .then( response => {
@@ -49,7 +48,9 @@ self.addEventListener('fetch', event => {
                         throw 404;
                     }
                     let rc = response.clone() ;
+                    let rc2 = rc.clone() ;
                     caches.open(cacheName).then( cache => cache.put( event.request, rc ) );
+                    console.log("rc2",rc2.headers);
                     return response ;
                     })
                 .catch( () => caches.match(event.request) )
