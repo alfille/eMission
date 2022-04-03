@@ -48,9 +48,7 @@ self.addEventListener('fetch', event => {
                         throw 404;
                     }
                     let rc = response.clone() ;
-                    let rc2 = rc.clone() ;
                     caches.open(cacheName).then( cache => cache.put( event.request, rc ) );
-                    console.log("rc2",rc2.headers);
                     return response ;
                     })
                 .catch( () => caches.match(event.request) )
