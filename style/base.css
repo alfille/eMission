@@ -103,6 +103,10 @@ ul {
   color: grey;
   background: #9eb6ff ;
 }
+.missionButtonImage {
+	height: 15px;
+	width: auto;
+}
  
 #deleteedit {
   background: red;

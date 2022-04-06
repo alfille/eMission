@@ -1945,11 +1945,18 @@ class Mission { // convenience class
         db.get( missionId, { attachments: true, binary: true } )
         .then( doc => {
             let src = new Image( null,doc).source();
-            document.querySelectorAll(".mission_logo")
+            document.querySelectorAll(".missionLogo")
             .forEach( logo => {
                 logo.src=src;
                 logo.addEventListener( 'click', () => window.open(doc.Link) );
                 });
+            document.querySelectorAll(".missionButton")
+            .forEach( logo => {
+				logo.addEventListener( 'click', () => window.open(doc.Link));
+				logo.title = `Open ${doc.Mission} website`;
+				});
+            document.querySelectorAll(".missionButtonImage")
+            .forEach( logo => logo.src=src );
             })
         .catch( err => console.log(err.message) ) ;
     }
