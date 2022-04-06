@@ -3126,6 +3126,10 @@ window.onload = () => {
 //        .then( ()=> console.log("Serviceworker registered") )
         .catch( err => console.log(err) );
     }
+    
+    // Add Extra buttons
+    document.querySelector("#moreTop").querySelectorAll("button")
+    .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
 
     // set Help buttons
     document.querySelectorAll(".Qmark").forEach( h => {
