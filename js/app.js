@@ -9,7 +9,7 @@ var objectTable = null;
 var objectSearch = null;
 
 // globals cookie backed
-var objectDisplayState ;
+var objectPage ;
 var patientId;
 var noteId;
 var operationId;
@@ -764,7 +764,7 @@ class ImageNote extends ImagePlus {
     
     leave() {
         this.buttonsdisabled( false );
-        showPage( (noteId == missionId) ? 'MissionList' : 'NoteList' );
+        objectPage.show( (noteId == missionId) ? 'MissionList' : 'NoteList' );
     }
 
     store() {
@@ -822,7 +822,7 @@ class ImageNote extends ImagePlus {
 
 class ImageQuick extends Image {
     addListen(hfunc) {
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => showPage('QuickPhoto') ); }
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => objectPage.show('QuickPhoto') ); }
             catch {}
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', (e) => hfunc() ); }
             catch {}
@@ -1213,7 +1213,7 @@ class PatientData { // singleton class
         let changed = this.loadDocData();
         Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
             .catch( (err) => console.log(err.message) )
-            .finally( () => showPage( state ) );
+            .finally( () => objectPage.show( state ) );
     }
     
     savePatientData() {
@@ -1251,9 +1251,9 @@ class DatabaseData extends PatientDataEditMode {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
-            showPage( "MainMenu" );
+            objectPage.show( "MainMenu" );
         } else {
-            showPage( "MainMenu" );
+            objectPage.show( "MainMenu" );
         }
         location.reload(); // force reload
     }
@@ -1276,7 +1276,7 @@ class NewPatientData extends PatientDataEditMode {
             db.put( this.doc[0] )
             .then( (response) => {
                 Patient.select(response.id);
-                showPage( "PatientPhoto" );
+                objectPage.show( "PatientPhoto" );
                 })
             .catch( (err) => console.log(err) );
         }
@@ -1301,10 +1301,10 @@ class SuperUserData extends PatientDataEditMode {
             remoteSecurity.database = remoteCouch.database;        
             security_db = Remote.openRemoteDB( remoteSecurity );
 
-            showPage( "UserList" ); })
+            objectPage.show( "UserList" ); })
         .catch( err => {
             alert( err );
-            showPage( "SuperUser" );
+            objectPage.show( "SuperUser" );
             });
     }
 }
@@ -1319,11 +1319,11 @@ class NewUserData extends PatientDataEditMode {
         User.db.put( this.doc[0] )
         .then( response => {
             User.select( response.id );
-            showPage( "SendUser" );
+            objectPage.show( "SendUser" );
             })
         .catch( err => {
             console.log(err);
-            showPage( "UserList" );
+            objectPage.show( "UserList" );
             });
     }
 }
@@ -1334,17 +1334,17 @@ class EditUserData extends PatientData {
             this.doc[0].roles = [ this.doc[0].roles ];
             User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
             User.db.put( this.doc[0] )
-            .then( () => showPage( "SendUser" ) )
+            .then( () => objectPage.show( "SendUser" ) )
             .catch( err => {
                 console.log(err);
-                showPage( "UserList" );
+                objectPage.show( "UserList" );
                 });
         } else if ( User.id in User.password ) {
-            showPage( "SendUser" );
+            objectPage.show( "SendUser" );
         } else {
             // no password to send
             console.log("No password", User.password) ;
-            showPage( "UserList" );
+            objectPage.show( "UserList" );
         }
     }
 }
@@ -1354,9 +1354,9 @@ class AccessData extends PatientData {
         if ( this.loadDocData()[0] ) {
             security_db.put( this.doc[0] )
                 .catch( err => console.log(err) )
-                .finally( () => showPage( "UserList" ) );
+                .finally( () => objectPage.show( "UserList" ) );
         } else {
-            showPage( "UserList" ) ;
+            objectPage.show( "UserList" ) ;
         }
     }
 }
@@ -1437,7 +1437,7 @@ class Patient { // convenience class
             .then( () => db.remove(pdoc) )
             .then( () => Patient.unselect() )
             .catch( (err) => console.log(err) ) 
-            .finally( () => showPage( "PatientList" ) );
+            .finally( () => objectPage.show( "PatientList" ) );
         }
     }
 
@@ -1473,7 +1473,7 @@ class Patient { // convenience class
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
                 // highlight the list row
-                if ( objectDisplayState.test('PatientList') ) {
+                if ( objectPage.test('PatientList') ) {
                     objectTable.highlight();
                 }
                 document.getElementById("editreviewpatient").disabled = false;
@@ -1523,7 +1523,7 @@ class Patient { // convenience class
         Cookie.del ( "patientId" );
         Note.unselect();
         Operation.unselect();
-        if ( objectDisplayState.test("PatientList") ) {
+        if ( objectPage.test("PatientList") ) {
             let pt = document.getElementById("PatientTable");
             if ( pt ) {
                 let rows = pt.rows;
@@ -1602,7 +1602,7 @@ class Note { // convenience class
 
     static select( cid=noteId ) {
         Cookie.set( "noteId", cid );
-        if ( objectDisplayState.test("NoteList") ) {
+        if ( objectPage.test("NoteList") ) {
             // highlight the list row
             let li = document.getElementById("NoteList").getElementsByTagName("li");
             if ( li && (li.length > 0) ) {
@@ -1619,7 +1619,7 @@ class Note { // convenience class
 
     static unselect() {
         Cookie.del ( "noteId" );
-        if ( objectDisplayState.test("NoteList") ) {
+        if ( objectPage.test("NoteList") ) {
             let li = document.getElementById("NoteList").li;
             if ( li && (li.length > 0) ) {
                 for ( let l of li ) {
@@ -1667,7 +1667,7 @@ class Note { // convenience class
                     }))
                     .then( () => Note.getRecords(false) ) // refresh the list
                     .catch( err => console.log(err) )
-                    .finally( () => showPage( "NoteList" ) );
+                    .finally( () => objectPage.show( "NoteList" ) );
             });
     }
 
@@ -1694,7 +1694,7 @@ class Note { // convenience class
             db.put(doc)
             .then( () => Note.getRecords( false ) ) // to try to prime the list
             .catch( err => console.log(err) )
-            .finally( showPage( null ) );
+            .finally( objectPage.show( null ) );
         }
         img.display();
         img.addListen(handle);
@@ -1713,7 +1713,7 @@ class Operation { // convenience class
         Cookie.set ( "operationId", oid  );
         // Check patient existence
         // highlight the list row
-        if ( objectDisplayState.test('OperationList') ) {
+        if ( objectPage.test('OperationList') ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewoperation").disabled = false;
@@ -1722,7 +1722,7 @@ class Operation { // convenience class
     static unselect() {
         operationId = null;
         Cookie.del( "operationId" );
-        if ( objectDisplayState.test("OperationList") ) {
+        if ( objectPage.test("OperationList") ) {
             let ot = document.getElementById("OperationsList");
             if ( ot ) {
                 let rows = ot.rows;
@@ -1781,7 +1781,7 @@ class Operation { // convenience class
             .then( (doc) =>db.remove(doc) )
             .then( () => Operation.unselect() )
             .catch( (err) => console.log(err) )
-            .finally( () => showPage( "OperationList" ) );
+            .finally( () => objectPage.show( "OperationList" ) );
         }
         return true;
     }    
@@ -1861,14 +1861,14 @@ class User { // convenience class
                 })              
             .then( () => User.unselect() )
             .catch( (err) => console.log(err) )
-            .finally( () => showPage( "UserList" ) );
+            .finally( () => objectPage.show( "UserList" ) );
         }
         return true;
     }    
     
     static select( uid ) {
         User.id = uid;
-        if ( objectDisplayState.test("UserList") ) {
+        if ( objectPage.test("UserList") ) {
             objectTable.highlight();
         }
         document.getElementById("editreviewuser").disabled = false;
@@ -2144,7 +2144,7 @@ class CSV { // convenience class
 
 }
 
-class DisplayState { // singleton class
+class Page { // singleton class
     constructor() {
         const path = Cookie.get( "displayState" );
         if ( !Array.isArray(path) ) {
@@ -2220,296 +2220,345 @@ class DisplayState { // singleton class
         window.open( `http://github.com/alfille/eMission#${this.current()}`, '_blank' );
     } 
         
-}
+    show( state = "PatientList" ) { // main routine for displaying different "pages" by hiding different elements
+        this.next(state) ;
 
-function showPage( state = "PatientList" ) {
-    objectDisplayState.next(state) ;
+        document.querySelectorAll(".pageOverlay")
+            .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
 
-    document.querySelectorAll(".pageOverlay")
-        .forEach( (v) => v.style.display = v.classList.contains(objectDisplayState.current()) ? "block" : "none" );
+        objectPatientData = null;
+        objectNoteList = null;
+        objectTable = null;
 
-    objectPatientData = null;
-    objectNoteList = null;
-    objectTable = null;
+        Image.clearSrc() ;
 
-    Image.clearSrc() ;
+        if ( db == null ) {
+            // can't bypass this!
+            this.next("RemoteDatabaseInput");
+        }
 
-    if ( db == null ) {
-        // can't bypass this!
-        objectDisplayState.next("RemoteDatabaseInput");
-    }
+        switch( objectPage.current() ) {           
+           case "MainMenu":
+           case "Administration":
+           case "Download":
+           case "Settings":
+                break;
+                
+            case "RemoteDatabaseInput":
+                objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
+                break;
+                
+            case "SuperUser":
+                remoteUser.address = remoteCouch.address;
+                objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
+                break;
+                
+            case "UserList":
+                objectTable = new UserTable( ["name", "role", "email", "type", ] );
+                User.getAll(true)
+                .then( docs => objectTable.fill(docs.rows ) )
+                .catch( (err) => {
+                    console.log(err.message) ;
+                    this.show ( "SuperUser" );
+                    });
+                break;
 
-    switch( objectDisplayState.current() ) {           
-       case "MainMenu":
-       case "Administration":
-       case "Download":
-       case "Settings":
-            break;
-            
-        case "RemoteDatabaseInput":
-            objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
-            break;
-            
-        case "SuperUser":
-            remoteUser.address = remoteCouch.address;
-            objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
-            break;
-            
-        case "UserList":
-            objectTable = new UserTable( ["name", "role", "email", "type", ] );
-            User.getAll(true)
-            .then( docs => objectTable.fill(docs.rows ) )
-            .catch( (err) => {
-                console.log(err.message) ;
-                showPage ( "SuperUser" );
-                });
-            break;
+            case "UserNew":
+                User.unselect();
+                objectPatientData = new NewUserData( {}, structNewUser );
+                break;
 
-        case "UserNew":
-            User.unselect();
-            objectPatientData = new NewUserData( {}, structNewUser );
-            break;
-
-        case "Access":
-            security_db.get("_security")
-            .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
-            .catch ( err => {
-                console.log(err);
-                showPage( "SuperUser" ) ;
-                });
-            break ;
-            
-        case "UserEdit":
-            if ( User.db == null ) {
-                showPage( "SuperUser" );
-            } else if ( User.id == null ) {
-                showPage( "UserList" );
-            } else {
-                User.db.get( User.id )
-                .then( doc => {
-                    doc.roles = doc.roles[0]; // unarray
-                    objectPatientData = new EditUserData( doc, structEditUser );
+            case "Access":
+                security_db.get("_security")
+                .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
+                .catch ( err => {
+                    console.log(err);
+                    this.show( "SuperUser" ) ;
+                    });
+                break ;
+                
+            case "UserEdit":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else if ( User.id == null ) {
+                    this.show( "UserList" );
+                } else {
+                    User.db.get( User.id )
+                    .then( doc => {
+                        doc.roles = doc.roles[0]; // unarray
+                        objectPatientData = new EditUserData( doc, structEditUser );
+                        })
+                    .catch( err => {
+                        console.log( err );
+                        User.unselect();
+                        this.show( "UserList" );
+                        });
+                }
+                break;
+                
+            case "SendUser":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else if ( User.id == null || !(User.id in User.password) ) {
+                    this.show( "UserList" );
+                } else {
+                    User.db.get( User.id )
+                    .then( doc => User.send( doc ) )
+                    .catch( err => {
+                        console.log( err );
+                        this.show( "UserList" );
+                        });
+                }
+                break;
+                
+            case "PatientList":
+                objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
+                Patient.getAll(true)
+                .then( (docs) => {
+                    objectTable.fill(docs.rows );
+                    if ( Patient.isSelected() ) {
+                        Patient.select( patientId );
+                    } else {
+                        Patient.unselect();
+                    }
                     })
-                .catch( err => {
-                    console.log( err );
-                    User.unselect();
-                    showPage( "UserList" );
-                    });
-            }
-            break;
+                .catch( (err) => console.log(err) );
+                break;
+
+            case "SearchList":
+                objectTable = new SearchTable( ["Name","Type","Text"] ) ;
+                objectSearch.setTable();
+                break ;
+                
+            case "OperationList":
+                if ( Patient.isSelected() ) {
+                    objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
+                    Operation.getRecords(true)
+                    .then( (docs) => objectTable.fill(docs.rows ) )
+                    .catch( (err) => console.log(err) );
+                } else {
+                    this.show( "PatientList" ) ;
+                }
+                break;
+                
+            case "OperationNew":
+                if ( Patient.isSelected() ) {
+                    Operation.unselect();
+                    this.show( "OperationEdit" );
+                } else {
+                    this.show( "PatientList" ) ;
+                }
+                break;
             
-        case "SendUser":
-            if ( User.db == null ) {
-                showPage( "SuperUser" );
-            } else if ( User.id == null || !(User.id in User.password) ) {
-                showPage( "UserList" );
-            } else {
-                User.db.get( User.id )
-                .then( doc => User.send( doc ) )
-                .catch( err => {
-                    console.log( err );
-                    showPage( "UserList" );
-                    });
-            }
-            break;
-            
-        case "PatientList":
-            objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
-            Patient.getAll(true)
-            .then( (docs) => {
-                objectTable.fill(docs.rows );
+            case "OperationEdit":
+                if ( Patient.isSelected() ) {
+                    if ( operationId ) {
+                        db.get( operationId )
+                        .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
+                        .catch( (err) => {
+                            console.log(err);
+                            this.show( "InvalidPatient" );
+                            });
+                    } else {
+                        objectPatientData = new OperationData(
+                        {
+                            _id: Operation.makeId(),
+                            type: "operation",
+                            patient_id: patientId,
+                            author: remoteCouch.username,
+                        } , structOperation );
+                    }
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+            case "PatientNew":
+                Patient.unselect();
+                objectPatientData = new NewPatientData(
+                    {
+                        author: remoteCouch.username,
+                        type:"patient"
+                    }, structNewPatient );
+                break;
+                
+            case "PatientPhoto":
                 if ( Patient.isSelected() ) {
                     Patient.select( patientId );
-                } else {
-                    Patient.unselect();
-                }
-                })
-            .catch( (err) => console.log(err) );
-            break;
-
-        case "SearchList":
-            objectTable = new SearchTable( ["Name","Type","Text"] ) ;
-            objectSearch.setTable();
-            break ;
-            
-        case "OperationList":
-            if ( Patient.isSelected() ) {
-                objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Schedule", "Duration", "Equipment" ]  );
-                Operation.getRecords(true)
-                .then( (docs) => objectTable.fill(docs.rows ) )
-                .catch( (err) => console.log(err) );
-            } else {
-                showPage( "PatientList" ) ;
-            }
-            break;
-            
-        case "OperationNew":
-            if ( Patient.isSelected() ) {
-                Operation.unselect();
-                showPage( "OperationEdit" );
-            } else {
-                showPage( "PatientList" ) ;
-            }
-            break;
-        
-        case "OperationEdit":
-            if ( Patient.isSelected() ) {
-                if ( operationId ) {
-                    db.get( operationId )
-                    .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
+                    Patient.getRecord( true )
+                    .then( (doc) => Patient.menu( doc ) )
                     .catch( (err) => {
                         console.log(err);
-                        showPage( "InvalidPatient" );
+                        this.show( "InvalidPatient" );
                         });
                 } else {
-                    objectPatientData = new OperationData(
-                    {
-                        _id: Operation.makeId(),
-                        type: "operation",
-                        patient_id: patientId,
-                        author: remoteCouch.username,
-                    } , structOperation );
+                    this.show( "PatientList" );
                 }
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-        case "PatientNew":
-            Patient.unselect();
-            objectPatientData = new NewPatientData(
-                {
-                    author: remoteCouch.username,
-                    type:"patient"
-                }, structNewPatient );
-            break;
-            
-        case "PatientPhoto":
-            if ( Patient.isSelected() ) {
-                Patient.select( patientId );
+                break;
+                
+            case "MissionInfo":
+                Mission.select();
                 Patient.getRecord( true )
-                .then( (doc) => Patient.menu( doc ) )
-                .catch( (err) => {
-                    console.log(err);
-                    showPage( "InvalidPatient" );
-                    });
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-        case "MissionInfo":
-            Mission.select();
-            Patient.getRecord( true )
-            .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
-            .catch( () => {
-                let doc = {
-                    _id: missionId,
-                    author: remoteCouch.username,
-                    patient_id: missionId,
-                    type: "mission",
-                };
-                objectPatientData = new MissionData( doc, structMission ) ;
-                })
-            .finally( () => Mission.link() );
-            break;
-            
-        case "PatientDemographics":
-            if ( Patient.isSelected() ) {
-                Patient.getRecord( true )
-                .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
-                .catch( (err) => {
-                    console.log(err);
-                    showPage( "InvalidPatient" );
-                    });
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-        case "PatientMedical":
-            if ( Patient.isSelected() ) {
-                let args;
-                db.query("bySurgeon",{group:true,reduce:true})
-                .then( s => {
-                    return Patient.getRecord( false ) ;
+                .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
+                .catch( () => {
+                    let doc = {
+                        _id: missionId,
+                        author: remoteCouch.username,
+                        patient_id: missionId,
+                        type: "mission",
+                    };
+                    objectPatientData = new MissionData( doc, structMission ) ;
                     })
-                .then( (doc) => {
-                    args = [doc,structMedical];
-                    return Operation.getRecords(true);
+                .finally( () => Mission.link() );
+                break;
+                
+            case "PatientDemographics":
+                if ( Patient.isSelected() ) {
+                    Patient.getRecord( true )
+                    .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
+                    .catch( (err) => {
+                        console.log(err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+            case "PatientMedical":
+                if ( Patient.isSelected() ) {
+                    let args;
+                    db.query("bySurgeon",{group:true,reduce:true})
+                    .then( s => {
+                        return Patient.getRecord( false ) ;
+                        })
+                    .then( (doc) => {
+                        args = [doc,structMedical];
+                        return Operation.getRecords(true);
+                        })
+                    .then( ( olist ) => {
+                        olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
+                        //objectPatientData = new PatientData( doc, structMedical );
+                        objectPatientData = new PatientData( ...args );
+                        })
+                    .catch( (err) => {
+                        console.log(err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+            case "DatabaseInfo":
+                db.info()
+                .then( doc => {
+                    objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
                     })
-                .then( ( olist ) => {
-                    olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-                    //objectPatientData = new PatientData( doc, structMedical );
-                    objectPatientData = new PatientData( ...args );
-                    })
-                .catch( (err) => {
-                    console.log(err);
-                    showPage( "InvalidPatient" );
-                    });
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-        case "DatabaseInfo":
-            db.info()
-            .then( doc => {
-                objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
-                })
-            .catch( err => console.log(err) );
-            break;
+                .catch( err => console.log(err) );
+                break;
 
-        case "InvalidPatient":
-            Patient.unselect();
-            break;
+            case "InvalidPatient":
+                Patient.unselect();
+                break;
 
-        case "MissionList":
-            Mission.select() ;
-            db.get( missionId )
-            .then( () => Note.getRecords(true ) )
-            .then( notelist => objectNoteList = new NoteList(notelist) )
-            .catch( err=> showPage( "MissionInfo" ) ) ;
-            break;
-            
-        case "NoteList":
-            if ( Patient.isSelected() ) {
-                Patient.getRecord( false )
-                .then( () => Note.getRecords(true) )
+            case "MissionList":
+                Mission.select() ;
+                db.get( missionId )
+                .then( () => Note.getRecords(true ) )
                 .then( notelist => objectNoteList = new NoteList(notelist) )
-                .catch( (err) => {
-                    console.log(err);
-                    showPage( "InvalidPatient" );
-                    });
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-         case "NoteNew":
-            if ( Patient.isSelected() ) {
-                // New note only
-                Note.unselect();
-                Note.new();
-            } else if ( patientId == missionId ) {
-                showPage( 'MissionList' ) ;
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-       case "QuickPhoto":
-            objectDisplayState.forget(); // don't return here!
-            if ( patientId ) { // patient or Mission!
-                Note.quickPhoto();
-            } else {
-                showPage( "PatientList" );
-            }
-            break;
-            
-        default:
-            showPage( "PatientList" );
-            break;
+                .catch( err=> objectPage.show( "MissionInfo" ) ) ;
+                break;
+                
+            case "NoteList":
+                if ( Patient.isSelected() ) {
+                    Patient.getRecord( false )
+                    .then( () => Note.getRecords(true) )
+                    .then( notelist => objectNoteList = new NoteList(notelist) )
+                    .catch( (err) => {
+                        console.log(err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+             case "NoteNew":
+                if ( Patient.isSelected() ) {
+                    // New note only
+                    Note.unselect();
+                    Note.new();
+                } else if ( patientId == missionId ) {
+                    this.show( 'MissionList' ) ;
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+           case "QuickPhoto":
+                this.forget(); // don't return here!
+                if ( patientId ) { // patient or Mission!
+                    Note.quickPhoto();
+                } else {
+                    this.show( "PatientList" );
+                }
+                break;
+                
+            default:
+                this.show( "PatientList" );
+                break;
+        }
+    }
+
+    static show_screen( bool ) { // switch between screen and print
+        document.getElementById("splash_screen").style.display = "none";
+        document.querySelectorAll(".work_screen").forEach( (v)=> {
+            v.style.display = bool ? "block" : "none";
+        });
+        document.querySelectorAll(".print_screen").forEach( (v)=> {
+            v.style.display = bool ? "none" : "block";
+        });
+    }    
+
+    static setButtons() {
+        // Add Extra buttons
+        document.querySelector("#moreTop").querySelectorAll("button")
+        .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
+
+        // set Help buttons
+        document.querySelectorAll(".Qmark").forEach( h => {
+            h.title = "Open explanation in another tab" ;
+            h.addEventListener("click",()=>objectPage.link());
+            });
+
+        // set Search buttons
+        document.querySelectorAll(".Search").forEach( s => {
+            s.title = "Search everywhere for a word or phrase" ;
+            s.addEventListener("click",()=>objectPage.show('SearchList'));
+            });
+
+        // set Quick Photo buttons
+        document.querySelectorAll(".Qphoto").forEach( q => {
+            q.title = "Quick photo using camera or from gallery" ;
+            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
+            });
+
+        // set edit details for PatientData edit pages -- only for "top" portion
+        document.querySelectorAll(".edit_data").forEach( e => {
+            e.title = "Unlock record to allow changes" ;
+            e.addEventListener("click",()=>objectPatientData.clickEdit());
+            });
+
+        // set save details for PatientData save pages
+        document.querySelectorAll(".savedata").forEach( s => {
+            s.title = "Save your changes to this record" ;
+            s.addEventListener("click",()=>objectPatientData.savePatientData());
+            });
+        // remove redundant mission buttons
+        [...document.querySelectorAll(".topButtons")]
+        .filter(d => d.querySelector(".missionLogo"))
+        .forEach( d => d.removeChild(d.querySelector(".missionButton")));
     }
 }
 
@@ -2777,7 +2826,7 @@ class PatientTable extends SortTable {
     }
 
     editpage() {
-        showPage("PatientPhoto");
+        objectPage.show("PatientPhoto");
     }
 }
 
@@ -2795,7 +2844,7 @@ class OperationTable extends SortTable {
     }
 
     editpage() {
-        showPage("OperationEdit");
+        objectPage.show("OperationEdit");
     }
 }
 
@@ -2813,7 +2862,7 @@ class UserTable extends SortTable {
     }
 
     editpage() {
-        showPage("UserEdit");
+        objectPage.show("UserEdit");
     }
 }
 
@@ -2835,22 +2884,22 @@ class SearchTable extends SortTable {
     editpage() {
         let id = objectSearch.select_id;
         if ( id == null ) {
-            showPage( null );
+            objectPage.show( null );
         } else if ( id == missionId ) {
             Mission.select();
-            showPage( 'MissionInfo' ) ;
+            objectPage.show( 'MissionInfo' ) ;
         } else {
             db.get( id )
             .then( doc => {
                 switch (doc.type) {
                     case 'patient':
                         Patient.select( id );
-                        showPage( 'PatientPhoto' ) ;
+                        objectPage.show( 'PatientPhoto' ) ;
                         break ;
                     case 'operation':
                         Patient.select( doc.patient_id );
                         Operation.select( id );
-                        showPage( 'OperationEdit' );
+                        objectPage.show( 'OperationEdit' );
                         break ;
                     case 'note':
                         if ( doc.patientId == missionId ) {
@@ -2859,16 +2908,16 @@ class SearchTable extends SortTable {
                             Patient.select( doc.patient_id );
                         }
                         Note.select( id );
-                        showPage( 'NoteList' );
+                        objectPage.show( 'NoteList' );
                         break ;
                     default:
-                        showPage( null );
+                        objectPage.show( null );
                         break ;
                     }
             })
             .catch( err => {
                 console.log(err);
-                showPage(null);
+                objectPage.show(null);
                 });
         }
     }
@@ -2909,7 +2958,7 @@ class NoteList {
             }
         }
         
-        Image.dropPictureinNote( parent );        
+        Note.dropPictureinNote( parent );        
     }
 
     liLabel( note ) {
@@ -2982,25 +3031,15 @@ class NoteList {
 
 }
 
-function show_screen( bool ) {
-    document.getElementById("splash_screen").style.display = "none";
-    document.querySelectorAll(".work_screen").forEach( (v)=> {
-        v.style.display = bool ? "block" : "none";
-    });
-    document.querySelectorAll(".print_screen").forEach( (v)=> {
-        v.style.display = bool ? "none" : "block";
-    });
-}    
-
 function printCard() {
     if ( patientId == null ) {
-        return showPage( "InvalidPatient" );
+        return objectPage.show( "InvalidPatient" );
     }
     let card = document.getElementById("printCard");
     let t = card.getElementsByTagName("table");
     Patient.getRecord( true )
     .then( (doc) => {
-        show_screen( false );
+        Page.show_screen( false );
         let img = new Image( card, doc, NoPhoto ) ;
         img.display();
         let link = new URL(window.location.href);
@@ -3053,12 +3092,12 @@ function printCard() {
             css: 'style/print.css',
             scanStyles: false,
             });
-        show_screen( true );
-        showPage( "PatientPhoto" );
+        Page.show_screen( true );
+        objectPage.show( "PatientPhoto" );
         })
     .catch( (err) => {
         console.log(err);
-        showPage( "InvalidPatient" );
+        objectPage.show( "InvalidPatient" );
         });
 }
 
@@ -3083,13 +3122,13 @@ function clearLocal() {
         db.destroy()
         .finally( () => location.reload() );
     }
-    showPage( "MainMenu" );
+    objectPage.show( "MainMenu" );
 }
 
 function cookies_n_query() {
     Cookie.get ( "patientId" );
     Cookie.get ( "commentId" );
-    objectDisplayState = new DisplayState();
+    objectPage = new Page();
     Cookie.get ( "operationId" );
 
     // need to establish remote db and credentials
@@ -3113,14 +3152,14 @@ function cookies_n_query() {
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
         Patient.select( qline.patientId );
-        objectDisplayState.next("PatientPhoto");
+        objectPage.next("PatientPhoto");
     }
 }
 
 // Application starting point
 window.onload = () => {
     // Initial splash screen
-    show_screen(true);
+    Page.show_screen(true);
 
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
@@ -3134,39 +3173,7 @@ window.onload = () => {
         .catch( err => console.log(err) );
     }
     
-    // Add Extra buttons
-    document.querySelector("#moreTop").querySelectorAll("button")
-    .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
-
-    // set Help buttons
-    document.querySelectorAll(".Qmark").forEach( h => {
-        h.title = "Open explanation in another tab" ;
-        h.addEventListener("click",()=>objectDisplayState.link());
-        });
-
-    // set Search buttons
-    document.querySelectorAll(".Search").forEach( s => {
-        s.title = "Search everywhere for a word or phrase" ;
-        s.addEventListener("click",()=>showPage('SearchList'));
-        });
-
-    // set Quick Photo buttons
-    document.querySelectorAll(".Qphoto").forEach( q => {
-        q.title = "Quick photo using camera or from gallery" ;
-        q.addEventListener("click",()=>showPage('QuickPhoto'));
-        });
-
-    // set edit details for PatientData edit pages -- only for "top" portion
-    document.querySelectorAll(".edit_data").forEach( e => {
-        e.title = "Unlock record to allow changes" ;
-        e.addEventListener("click",()=>objectPatientData.clickEdit());
-        });
-
-    // set save details for PatientData save pages
-    document.querySelectorAll(".savedata").forEach( s => {
-        s.title = "Save your changes to this record" ;
-        s.addEventListener("click",()=>objectPatientData.savePatientData());
-        });
+    Page.setButtons() ;
 
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
@@ -3176,7 +3183,7 @@ window.onload = () => {
     if ( remoteCouch.database !== "" ) {
         console.log("Bad Pouch",PouchDB(""));
         db = new PouchDB( remoteCouch.database ); // open local copy
-        document.getElementById("headerboxlink").addEventListener("click",()=>showPage("MainMenu"));
+        document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
 
         // Set up text search
         objectSearch = new Search();
@@ -3194,18 +3201,18 @@ window.onload = () => {
                 // update screen display
                 switch ( change?.doc?.type ) {
                     case "patient":
-                        if ( objectDisplayState.test("PatientList") ) {
-                            showPage(null);
+                        if ( objectPage.test("PatientList") ) {
+                            objectPage.show(null);
                         }
                         break;
                     case "note":
-                        if ( objectDisplayState.test("NoteList") && change.doc?.patient_id==patientId ) {
-                            showPage(null);
+                        if ( objectPage.test("NoteList") && change.doc?.patient_id==patientId ) {
+                            objectPage.show(null);
                         }
                         break;
                     case "operation":
-                        if ( objectDisplayState.test("OperationList") && change.doc?.patient_id==patientId ) {
-                            showPage(null);
+                        if ( objectPage.test("OperationList") && change.doc?.patient_id==patientId ) {
+                            objectPage.show(null);
                         }
                         break;
                 }
@@ -3229,7 +3236,7 @@ window.onload = () => {
     }
 
     // now jump to proper page
-    showPage( null ) ;
+    objectPage.show( null ) ;
 
     // Set patient, operation and note -- need page shown first
     if ( Patient.isSelected() ) { // mission too

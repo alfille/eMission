@@ -21,109 +21,109 @@
                     <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
                     <div class= "Settings SuperUser Download DatabaseInfo SendUser topButtons pageOverlay">
                         <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: Administration PatientPhoto -->
                     <div class= "Admininstration PatientPhoto topButtons pageOverlay">
                         <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="showPage( 'MainPage' )" title="Show main menu">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'MainPage' )" title="Show main menu">Return</button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto topButtons pageOverlay">
                         <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="showPage()">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show()">Return</button>
                     </div>
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: PatientList -->
                     <div class="PatientList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'MainMenu' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
                     </div>
                     <!-- top: SearchList -->
                     <div class="SearchList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'MainMenu' )">Main Menu</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'MainMenu' )">Main Menu</button>
                         <button type="button" class="divbutton" onclick="objectTable.editpage()" title="Jump to this search result">Choose this record</button>
                     </div>
                     <!-- top: UserList -->
                     <div class="UserList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'UserNew' )" title="Add a new database user">Add User</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'Access' )" title="Set user\'s access rights">Access Permissions</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'Access' )" title="Set user\'s access rights">Access Permissions</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
                     </div>
                     <!-- top: OperationList -->
                     <div class="OperationList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: PatientNew -->
                     <div class="PatientData PatientNew topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Add Patient</button>
-                        <button type="button" class="divbutton discarddata return" onclick="showPage( 'back' )" title="Abandon this task">Cancel</button>
+                        <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Abandon this task">Cancel</button>
                     </div>
                     <!-- top: SuperUser -->
                     <div class="PatientData SuperUser topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Proceed</button>
-                        <button type="button" class="divbutton discarddata return" onclick="showPage( 'back' )" title="Discard changes">Cancel</button>
+                        <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Discard changes">Cancel</button>
                     </div>
                     <!-- top: UserNew Access -->
                     <div class="PatientData UserNew Access topButtons pageOverlay">
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: UserEdit -->
                     <div class="PatientData UserEdit topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: MissionInfo -->
                     <div class="PatientData MissionInfo topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'MissionList')">Mission Notes</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList')">Mission Notes</button>
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: PatientDemographics PatientMedical -->
                     <div class="PatientData PatientDemographics PatientMedical topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: OperationEdit -->
                     <div class="PatientData OperationEdit topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="Operation.del()">Delete Operation</button>
-                        <button type="button" class="divbutton return" onclick="showPage( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: InvalidPatient -->
                     <div class="InvalidPatient topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="showPage( 'PatientList' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'PatientList' )">Return</button>
                     </div>
                     <!-- top: NoteList -->
                     <div class="NoteList topButtons pageOverlay">
-                        <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
+                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
-                        <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
+                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: MissionList -->
                     <div class="MissionList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="showPage( 'MissionInfo')">Mission Info</button>
-                        <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo')">Mission Info</button>
+                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
-                        <button class="returnfromnote libutton divbutton return" type="button" onclick="showPage( 'back' )">Return</button>
+                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                 </div>
             </div>
@@ -134,20 +134,20 @@
             <!-- body: MainMenu -->
             <div class="MainMenu pageOverlay">
                 <div id="MainMenuContent" >
-                    <button type="button" class="divbutton" onclick="showPage( 'PatientList' )">The Patients</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'MissionList' )">The Mission</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'Settings' )">Advanced Settings</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'PatientList' )">The Patients</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">The Mission</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'Settings' )">Advanced Settings</button>
                     <a href="https://www.github.com/alfille/emission" target="_blank">Instructions</a>
                 </div>
             </div>
             <!-- body: Settings -->
             <div class="Settings pageOverlay">
                 <div id="SettingsContent">
-                    <button type="button" class="divbutton" onclick="showPage( 'MissionInfo' )">Mission Info</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'Download' )">Download</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">Mission Info</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="showPage( 'Administration' )">Privileged operations</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'RemoteDatabaseInput' )">Remote Database Setup</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'Administration' )">Privileged operations</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Remote Database Setup</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton delete" onclick="clearLocal()">Clear local data</button>
                 </div>
@@ -155,10 +155,10 @@
             <!-- body: Administration -->
             <div class="Administration pageOverlay">
                 <div id="AdministrationContent" >
-                    <button type="button" class="divbutton" onclick="showPage( 'SuperUser' )">User Management</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'SuperUser' )">User Management</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton" onClick="Remote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
-                    <button type="button" class="divbutton" onclick="showPage( 'DatabaseInfo' )">Database Information</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="Remote.forceReplicate()">Force Replicate</button>
                 </div>
             </div>
@@ -206,13 +206,13 @@
                 </div>
                 <div id="PatientPhotoButtons">
                     <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" onclick="showPage( 'PatientDemographics' )">Demographics</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'PatientMedical' )">Medical</button>
-                        <button type="button" class="divbutton" onclick="showPage( 'OperationList' )">Operations</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientDemographics' )">Demographics</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMedical' )">Medical</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationList' )">Operations</button>
                     </div>
                     <div class="PatientProcButtons" id="ProcList">
-                        <button type="button" class="divbutton" onclick="showPage( 'NoteList' )">Notes</button>
-                        <button class="create_note libutton divbutton" type="button" onclick="showPage( 'NoteNew' )">New Note</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'NoteList' )">Notes</button>
+                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
                     </div>
                     <div class="PatientProcButtons">
