@@ -513,7 +513,7 @@ function createQueries() {
                 return Promise.resolve(true);
             }
             })
-        .catch( (err) => {
+        .catch( () => {
             // assume because this is first time and cannot "get"
             return db.put( ddoc );
             });
@@ -522,7 +522,7 @@ function createQueries() {
 }
 
 class Search { // singleton class
-    constructor(type) {
+    constructor() {
         this.index={};
         this.fieldlist={
             note: ["text","title",],
@@ -822,9 +822,9 @@ class ImageNote extends ImagePlus {
 
 class ImageQuick extends Image {
     addListen(hfunc) {
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', (e) => objectPage.show('QuickPhoto') ); }
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
             catch {}
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', (e) => hfunc() ); }
+        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => hfunc() ); }
             catch {}
     }
 }
@@ -859,7 +859,6 @@ class PatientData { // singleton class
             ++ this.pairs;
         } 
         
-        PatientData.buttonStatus( true );
         [...document.getElementsByClassName("edit_data")].forEach( (e) => {
             e.disabled = false;
         });
@@ -1049,15 +1048,6 @@ class PatientData { // singleton class
         }
     }
         
-    static buttonStatus( bool ) {
-        document.querySelectorAll('.savedata').forEach( (e) => {
-            e.disabled = bool;
-        });
-        document.querySelectorAll('.discarddata').forEach( (e) => {
-            e.disabled = bool;
-        });
-    }
-    
     fsclick( target ) {
         if ( this.pairs > 1 ) {
             let ul = target.parentNode.parentNode.querySelector("ul");
@@ -1076,7 +1066,9 @@ class PatientData { // singleton class
     }
     
     clickEdit() {
-        PatientData.buttonStatus( false );
+        document.querySelectorAll(".topButtons").forEach( v=>v.style.display="none" ); 
+        document.querySelector(".patientDataEdit").style.display="block";
+        
         for ( let ipair=0; ipair<this.pairs; ++ipair ) {
             let struct = this.struct[ipair];
             let ul     = this.ul[ipair];
@@ -1952,9 +1944,9 @@ class Mission { // convenience class
                 });
             document.querySelectorAll(".missionButton")
             .forEach( logo => {
-				logo.addEventListener( 'click', () => window.open(doc.Link));
-				logo.title = `Open ${doc.Mission} website`;
-				});
+                logo.addEventListener( 'click', () => window.open(doc.Link));
+                logo.title = `Open ${doc.Mission} website`;
+                });
             document.querySelectorAll(".missionButtonImage")
             .forEach( logo => logo.src=src );
             })
@@ -2132,7 +2124,7 @@ class CSV { // convenience class
                                             .map( ff => olist[row.id][ff] ?? "" )
                                             .map( v => typeof(v) == "number" ? v : `"${v}"` )
                                             :
-                                            ofields.map( ff => "" ) ,
+                                            ofields.map( () => "" ) ,
                         [nlist[row.id]]
                         )
                     .join(',')
@@ -2223,11 +2215,14 @@ class Page { // singleton class
     show( state = "PatientList" ) { // main routine for displaying different "pages" by hiding different elements
         this.next(state) ;
 
+        document.querySelector(".patientDataEdit").style.display="none"; 
+        document.querySelectorAll(".topButtons")
+            .forEach( (v) => v.style.display = "block" );
+
         document.querySelectorAll(".pageOverlay")
             .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
 
         objectPatientData = null;
-        objectNoteList = null;
         objectTable = null;
 
         Image.clearSrc() ;
@@ -2428,17 +2423,13 @@ class Page { // singleton class
             case "PatientMedical":
                 if ( Patient.isSelected() ) {
                     let args;
-                    db.query("bySurgeon",{group:true,reduce:true})
-                    .then( s => {
-                        return Patient.getRecord( false ) ;
-                        })
+                    Patient.getRecord( false )
                     .then( (doc) => {
                         args = [doc,structMedical];
                         return Operation.getRecords(true);
                         })
                     .then( ( olist ) => {
                         olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-                        //objectPatientData = new PatientData( doc, structMedical );
                         objectPatientData = new PatientData( ...args );
                         })
                     .catch( (err) => {
@@ -2467,7 +2458,7 @@ class Page { // singleton class
                 db.get( missionId )
                 .then( () => Note.getRecords(true ) )
                 .then( notelist => objectNoteList = new NoteList(notelist) )
-                .catch( err=> objectPage.show( "MissionInfo" ) ) ;
+                .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
                 break;
                 
             case "NoteList":

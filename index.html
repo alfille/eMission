@@ -36,7 +36,6 @@
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: PatientList -->
@@ -67,24 +66,21 @@
                     <!-- top: PatientNew -->
                     <div class="PatientData PatientNew topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Add Patient</button>
                         <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Abandon this task">Cancel</button>
                     </div>
                     <!-- top: SuperUser -->
                     <div class="PatientData SuperUser topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Proceed</button>
                         <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Discard changes">Cancel</button>
                     </div>
                     <!-- top: UserNew Access -->
                     <div class="PatientData UserNew Access topButtons pageOverlay">
-                        <button type="button" class="divbutton savedata">Save Changes</button>
+                        <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: UserEdit -->
                     <div class="PatientData UserEdit topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
@@ -92,19 +88,16 @@
                     <div class="PatientData MissionInfo topButtons pageOverlay">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList')">Mission Notes</button>
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: PatientDemographics PatientMedical -->
                     <div class="PatientData PatientDemographics PatientMedical topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: OperationEdit -->
                     <div class="PatientData OperationEdit topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton delete" onclick="Operation.del()">Delete Operation</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
@@ -124,6 +117,14 @@
                         <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
+                    </div>
+                    <!-- top: EditMode (for any of th PatientData derivatives -->
+                    <div class="MissionList patientDataEdit pageOverlay">
+                        <button type="button" class="divbutton edit_data" disabled>Edit</button>
+                        <button type="button" class="divbutton savedata">Save Changes</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton Qmark"><B>?</B></button>
+                        <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage"></button>
                     </div>
                 </div>
             </div>

@@ -103,9 +103,12 @@ ul {
   color: grey;
   background: #9eb6ff ;
 }
+.divbutton:hover, a:hover {
+  color: yellow;
+}
 .missionButtonImage {
-	height: 15px;
-	width: auto;
+  height: 15px;
+  width: auto;
 }
  
 #deleteedit {
@@ -242,13 +245,6 @@ body {
 .delete {
   background: red !important;
   float: right;
-}
-.divbutton:hover, a:hover {
-  color: yellow;
-}
-.divbutton:disabled {
-  background: #ffffcc;
-  color: grey;
 }
 #searchbar {
     background: "darkblue";
