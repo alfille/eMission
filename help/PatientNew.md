@@ -1,3 +1,10 @@
+### eMission specific page help
+* General [screen layout](help/GeneralLayout.md)
+* Getting started
+* Working with the application
+
+
+
 # Add new patient
 ![](../images/NewPat.png)
 

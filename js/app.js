@@ -2209,7 +2209,7 @@ class Page { // singleton class
     }
 
     link() {
-        window.open( `http://github.com/alfille/eMission#${this.current()}`, '_blank' );
+        window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
         
     show( state = "PatientList" ) { // main routine for displaying different "pages" by hiding different elements
