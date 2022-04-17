@@ -115,7 +115,7 @@ ul {
   background: red;
   float: right;
 }
-.entryfield_image {
+.entryfield_image, #photoCard {
   max-width: 20%;
   display: inline-block;
   height: auto ;

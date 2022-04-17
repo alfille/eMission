@@ -1805,7 +1805,6 @@ class Operation { // convenience class
                 let newlist = doclist.rows
                     .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
                     .map( row => row.doc );
-                console.log(doclist.rows,newlist);
                 switch ( newlist.length ) {
                     case 0 :
                         throw null;
@@ -2213,6 +2212,7 @@ class Page { // singleton class
     } 
         
     show( state = "PatientList" ) { // main routine for displaying different "pages" by hiding different elements
+        Page.show_screen( true );
         this.next(state) ;
 
         document.querySelector(".patientDataEdit").style.display="none"; 
@@ -3035,6 +3035,7 @@ function printCard() {
         img.display();
         let link = new URL(window.location.href);
         link.searchParams.append( "patientId", patientId );
+        console.log(link);
         new QR(
             card.querySelector(".qrCard"),
             link.href,
@@ -3077,14 +3078,22 @@ function printCard() {
             t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
             t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
         }
+        // Hack from https://github.com/crabbly/Print.js/issues/348
+        let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
         printJS({
             printable: 'printCard',
             type: 'html',
             css: 'style/print.css',
             scanStyles: false,
+            onPrintDialogClose: () => {
+                clearInterval( focuser );
+                objectPage.show( "PatientPhoto" );
+                } ,
+            onError: () => {
+                clearInterval( focuser );
+                objectPage.show( "PatientPhoto" );
+                } ,
             });
-        Page.show_screen( true );
-        objectPage.show( "PatientPhoto" );
         })
     .catch( (err) => {
         console.log(err);
@@ -3150,7 +3159,7 @@ function cookies_n_query() {
 // Application starting point
 window.onload = () => {
     // Initial splash screen
-    Page.show_screen(true);
+    //Page.show_screen(true);
 
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
@@ -3172,7 +3181,6 @@ window.onload = () => {
     // Start pouchdb database
         
     if ( remoteCouch.database !== "" ) {
-        console.log("Bad Pouch",PouchDB(""));
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
 
