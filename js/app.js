@@ -764,7 +764,7 @@ class ImageNote extends ImagePlus {
     
     leave() {
         this.buttonsdisabled( false );
-        objectPage.show( (noteId == missionId) ? 'MissionList' : 'NoteList' );
+        objectPage.show( (patientId == missionId) ? 'MissionList' : 'NoteList' );
     }
 
     store() {
@@ -986,7 +986,7 @@ class PatientData { // singleton class
                     break;
                 case "date":
                     inp = document.createElement("input");
-                    inp.classList.add("flatpickr","flatpickr-input")
+                    inp.classList.add("flatpickr","flatpickr-input");
                     inp.type = "text";
                     inp.pattern="\d+-\d+-\d+";
                     inp.size = 10;
@@ -2137,6 +2137,35 @@ class CSV { // convenience class
 
 class Page { // singleton class
     constructor() {
+        this.safeLanding = [
+            "MainMenu",
+            "Administration",
+            "Download",
+            "Settings",
+            "RemoteDatabaseInput",
+            "SuperUser",
+            "UserList",
+//            "UserNew",
+//            "Access",
+//            "UserEdit",
+//            "SendUser",
+            "PatientList",
+            "SearchList",
+            "OperationList",
+//            "OperationNew",
+            "OperationEdit",
+//            "PatientNew",
+            "PatientPhoto",
+            "MissionInfo",
+            "PatientDemographics",
+            "PatientMedical",
+            "DatabaseInfo",
+//            "InvalidPatient",
+            "MissionList",
+            "NoteList",
+//            "NoteNew",
+//            "QuickPhoto",
+            ] ;
         const path = Cookie.get( "displayState" );
         if ( !Array.isArray(path) ) {
             this.path = [];
@@ -2144,20 +2173,8 @@ class Page { // singleton class
             this.path = path;
         }
 
-        const safeIndex = [
-            "MainMenu",
-            "MissionInfo",
-            "PatientList",
-            "PatientPhoto",
-            "NoteList",
-            "MissionList",
-            "OperationList",
-            "SearchList",
-            "SuperUser",
-            "Administration",
-            "PatientMedical",
-            "PatientDemographics",
-            ]
+        const safeIndex =
+            this.safeLanding
             .map(p=>this.path.indexOf(p))
             .filter(i=>i>-1)
             .reduce( (x,y)=>Math.min(x,y) , 1000 );
@@ -2175,7 +2192,11 @@ class Page { // singleton class
         if ( this.path.length == 0 ) {
             this.path = [ "MainMenu" ];
         }
-        Cookie.set ( "displayState", this.path ) ;
+        if ( this.safeLanding.includes(this.path[0]) ) {
+            Cookie.set ( "displayState", this.path ) ;
+        } else {
+            this.back() ;
+        }
     }
 
     current() {
@@ -2190,12 +2211,15 @@ class Page { // singleton class
             this.back();
         } else if ( page == null ) {
             return ;
-        } else if ( this.path.indexOf( page ) < 0 ) {
-            this.path.unshift( page ) ;
-            Cookie.set ( "displayState", this.path ) ;
         } else {
-            this.path = this.path.slice( this.path.indexOf(page) ) ;
-            Cookie.set ( "displayState", this.path ) ;
+            let iop = this.path.indexOf( page ) ;
+            if ( iop < 0 ) {
+                this.path.unshift( page ) ;
+                Cookie.set ( "displayState", this.path ) ;
+            } else {
+                this.path = this.path.slice( iop ) ;
+                Cookie.set ( "displayState", this.path ) ;
+            }
         }
     }
 
