@@ -109,6 +109,7 @@
                     <div class="NoteList topButtons pageOverlay">
                         <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
+                        <button class="sortOrder libutton divbutton" type="button" onclick="NoteList.by()">by Date</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: MissionList -->
@@ -281,7 +282,8 @@
             <!-- Note display -->
             <div class="notetemplate">
                 <img class="entryfield_image">
-                <div class="entryfield_title"></div>
+                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+                <label class="selectdiv">Type<select disabled><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
                 <div class="entryfield_text"></div>
             </div>
             <!-- Note edit -->
@@ -296,22 +298,23 @@
                     <button type="button" class="imageDelete delete" title="Delete this note"><span><B>Delete</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
-                <label>Title: <div class="entryfield_title" contenteditable></div></label>
+                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+                <label class="selectdiv">Type<select><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
                 <div class="entryfield_text" contenteditable></div>
             </div>
             <!-- New Note edit -->
             <div class="newnotetemplate_edit">
                 <img class="entryfield_image">
-                <div class="editToolbar">
+                <div class="editToolbar choice">
                     <button type="button" class="imageSave" title="Save this note"><span><B>Save</B></span></button>
                     <button type="button" class="imageCancel" title="Do not save any changes"><span><B>Cancel</B></span></button>
-                    <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
                     <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
-                <label>Title: <div class="entryfield_title" contenteditable></div></label>
-                <div class="entryfield_text" contenteditable></div>
+                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+                <label class="selectdiv">Type<select><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
+                <div class="entryfield_text choice" contenteditable></div>
             </div>
             <fieldset><legend><button type="button" value="show" onclick="objectPatientData.fsclick(this)">&#10134;</button></legend></fieldset>
             <!-- more top buttons -->

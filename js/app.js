@@ -741,18 +741,21 @@ class ImagePlus extends Image {
         super(...args);
         this.text = this.doc?.text ?? "";
         this.title = this.doc?.title ?? "";
+        this.category = this.doc?.category ?? "";
     }
 
     display() {
         super.display();
         this.parent.querySelector(".entryfield_text").innerText = this.text;
         this.parent.querySelector(".entryfield_title").innerText = this.title;
+        this.parent.querySelector("select").value = this.category;
     }
 
     save(doc) {
         super.save(doc);
         doc.text = this.parent.querySelector(".entryfield_text").innerText;
         doc.title = this.parent.querySelector(".entryfield_title").innerText;
+        doc.category = this.parent.querySelector("select").value;
     }
 }
 
@@ -789,8 +792,6 @@ class ImageNote extends ImagePlus {
         try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
             catch {}
         try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
-            catch {}
-        try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
             catch {}
     }
 
@@ -1621,7 +1622,7 @@ class Note { // convenience class
         }
     }
 
-    static new() {
+    static new() { // new note, not class
         let d = document.getElementById("NoteNewContent");
         cloneClass ( ".newnotetemplate_edit", d );
         let doc = Note.template();
@@ -2949,6 +2950,20 @@ class NoteList {
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
+        if ( NoteList.sortOrder == undefined ) {
+            NoteList.sortOrder="date";
+
+        }
+        switch( NoteList.sortOrder ) {
+            case "date":
+                document.querySelector(".sortOrder").innerText="by Type";
+                break ;
+            case "type":
+                document.querySelector(".sortOrder").innerText="by Date";
+                notelist.rows.sort( (a,b)=> (a.doc ?.category??"").localeCompare(b.doc ?.category??"") );
+                break ;
+        }
+
         // show notes
         if ( notelist.rows.length == 0 ) {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
@@ -2974,6 +2989,19 @@ class NoteList {
         }
         
         Note.dropPictureinNote( parent );        
+    }
+
+    static by() {
+        switch ( NoteList.sortOrder ) {
+            case "date":
+                NoteList.sortOrder="type";
+                break ;
+            case "type":
+            default:
+                NoteList.sortOrder="date";
+                break ;
+        }
+        objectPage.show("NoteList");
     }
 
     liLabel( note ) {
