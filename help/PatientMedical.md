@@ -1,14 +1,16 @@
 ### eMission specific page help
-* General [screen layout](help/GeneralLayout.md)
+* General [screen layout](GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Medical Status and Operations
-![](../images/PatientMed1.png)
-ccv
 
-Arrive here from *__Medical__* button in [Patient Menu](help/PatientPhoto.md)
+![](../images/PatientMed1.png)
+
+Arrive here from the *__Medical__* button in 
+[Patient Menu](PatientPhoto.md)
+
 * Selected patient is shown below buttons
 * Combines information from at least 2 records:
   * Patient's medical condition
