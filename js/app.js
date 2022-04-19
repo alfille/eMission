@@ -970,7 +970,7 @@ class PatientData { // singleton class
                     inp.type = "text";
                     inp.setAttribute( "list", dlist.id );
                     inp.value = preVal??"";
-                    inp.readonly = true;
+                    inp.readOnly = true;
                     inp.disabled = true;
                     lab.appendChild( dlist );
                     lab.appendChild( inp );                    
@@ -978,20 +978,19 @@ class PatientData { // singleton class
                     break;
                 case "datetime":
                     inp = document.createElement("input");
-                    inp.pattern="\d+-\d+-\d+ \d+:\d\d [AP]M";
                     inp.type = "text";
                     inp.value = preVal ? flatpickr.formatDate(new Date(preVal), "Y-m-d h:i K"):"" ;
                     inp.title = "Date and time in format YYYY-MM-DD HH:MM AM";
-                    inp.readonly = true;
+                    inp.readOnly = true;
                     lab.appendChild( inp );                    
                     break;
                 case "date":
                     inp = document.createElement("input");
                     inp.classList.add("flatpickr","flatpickr-input");
                     inp.type = "text";
-                    inp.pattern="\d+-\d+-\d+";
                     inp.size = 10;
                     inp.value = preVal??"";
+                    inp.readOnly = true;
                     inp.title = "Date in format YYYY-MM-DD";
                     lab.appendChild(inp);
                     break;
@@ -999,17 +998,18 @@ class PatientData { // singleton class
                     inp = document.createElement("input");
                     inp.classList.add("flatpickr","flatpickr-input");
                     inp.type = "text";
-                    inp.pattern="[0-1][0-9]:[0-5][0-9] [A|P]M";
                     inp.size = 9;
+                    inp.readOnly = true;
                     inp.value = preVal??"";
                     inp.title = "Time in format HH:MM PM or HH:MM AM";
                     lab.appendChild(inp);
                     break;
                 case "length":
+                console.log("Length1",preVal);
                     inp = document.createElement("input");
                     inp.classList.add("flatpickr","flatpickr-input");
+                    inp.readOnly = true;
                     inp.type = "text";
-                    inp.pattern="\d+:[0-5][0-9]";
                     inp.size = 6;
                     inp.value = PatientData.HMfromMin(preVal??"");
                     inp.title = "Time length in format HH:MM";
@@ -1076,7 +1076,7 @@ class PatientData { // singleton class
             ul.querySelectorAll("li").forEach( (li) => {
                 let idx = li.getAttribute("data-index");
                 let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
-                if ( ( "readonly" in struct[idx] ) && struct[idx].readonly == "true" ) {
+                if ( struct[idx] ?.readonly == "true" ) {
                     return;
                 }
                 switch ( struct[idx].type ) {
@@ -1090,41 +1090,49 @@ class PatientData { // singleton class
                         document.getElementsByName(localname).forEach( (i) => i.disabled = false );
                         break;
                     case "date":
+                        li.querySelector("input").readOnly = false;
                         flatpickr( li.querySelector("input"),
                             {
                                 enableTime: false,
                                 noCalendar: false,
                                 dateFormat: "Y-m-d",
-                                defaultDate: Date.now(),
+                                //defaultDate: Date.now(),
                             });
                         break;
                     case "time":
+                        li.querySelector("input").readOnly = false;
                         flatpickr( li.querySelector("input"),
                             {
                                 enableTime: true,
                                 noCalendar: true,
                                 dateFormat: "h:i K",
-                                defaultDate: "9:00",
+                                //defaultDate: "9:00",
                             });
                         break;
                     case "length":
-                        flatpickr( li.querySelector("input"),
+                        li.querySelector("input").readOnly = false;
+                    console.log("Length",li,li.querySelector("input"));
+                        let x=flatpickr( li.querySelector("input"),
                             {
+                                dateFormat: "H:i",
                                 time_24hr: true,
                                 enableTime: true,
                                 noCalendar: true,
-                                dateFormat: "h:i",
-                                defaultDate: "9:00",
+                                minuteIncrement: 5,
+                                formatDate: "H:i",
+                                //defaultDate: "09:00",
                             });
+                            console.log(x);
                         break;
                     case "datetime":
+                        li.querySelector("input").readOnly = false;
                         flatpickr( li.querySelector("input"),
                             {
                                 time_24hr: false,
                                 enableTime: true,
                                 noCalendar: false,
                                 dateFormat: "Y-m-d h:i K",
-                                defaultDate: Date.now(),
+                                //defaultDate: Date.now(),
                             });
                         break;
                     case "textarea":
@@ -1177,6 +1185,7 @@ class PatientData { // singleton class
                         break;
                     case "length":
                         postVal = PatientData.HMtoMin( li.querySelector("input").value );
+                        console.log("post-leng",postVal,li.querySelector("input").value );
                         break;
                     case "textarea":
                         postVal = li.querySelector("textarea").value;
