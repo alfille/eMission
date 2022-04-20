@@ -1007,7 +1007,6 @@ class PatientData { // singleton class
                     lab.appendChild(inp);
                     break;
                 case "length":
-                console.log("Length1",preVal);
                     inp = document.createElement("input");
                     inp.classList.add("flatpickr","flatpickr-input");
                     inp.readOnly = true;
@@ -1113,8 +1112,7 @@ class PatientData { // singleton class
                         break;
                     case "length":
                         li.querySelector("input").readOnly = false;
-                    console.log("Length",li,li.querySelector("input"));
-                        let x=flatpickr( li.querySelector("input"),
+                        flatpickr( li.querySelector("input"),
                             {
                                 dateFormat: "H:i",
                                 time_24hr: true,
@@ -1124,7 +1122,6 @@ class PatientData { // singleton class
                                 formatDate: "H:i",
                                 //defaultDate: "09:00",
                             });
-                            console.log(x);
                         break;
                     case "datetime":
                         li.querySelector("input").readOnly = false;
@@ -1187,7 +1184,6 @@ class PatientData { // singleton class
                         break;
                     case "length":
                         postVal = PatientData.HMtoMin( li.querySelector("input").value );
-                        console.log("post-leng",postVal,li.querySelector("input").value );
                         break;
                     case "textarea":
                         postVal = li.querySelector("textarea").value;
