@@ -4,12 +4,16 @@
 * Working with the application
 
 
-# Note List
-![](../images/NoteList_byDate.png)
+# Mission List
+![](../images/MissionList.png)
 
-Arrive here from the *__Notes__* button in [Patient Menu](PatientPhoto.md) or after [New Note](/NoteNew.md)
+Arrive here from
+* __The Mission__ button in [Main Menu](MainMenu.md)
+* __Mission List__ button from [Mission Info](/MissionInfo.md)
 
-Selected patient is shown above buttons.
+*The format and function of the mission notes is the same as [Patient Notes](NoteList.md)*
+
+The mission shown above buttons.
 
 ## Sort order
 ![](../images/NoteList_byType.png)

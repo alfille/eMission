@@ -793,6 +793,8 @@ class ImageNote extends ImagePlus {
             catch {}
         try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
             catch {}
+        try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
+            catch {}
     }
 
     buttonsdisabled( bool ) {
