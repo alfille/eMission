@@ -841,8 +841,8 @@ class ImageDrop extends Image { // can only save(doc)
 
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
-class PatientData { // singleton class
-    constructor(...args) {
+class PatientDataRaw { // singleton class
+    constructor(click,...args) {
         this.parent = document.getElementById("PatientDataContent");
         let fieldset = document.getElementById("templates").querySelector("fieldset");
         
@@ -862,20 +862,20 @@ class PatientData { // singleton class
             ++ this.pairs;
         } 
         
-        [...document.getElementsByClassName("edit_data")].forEach( (e) => {
+        document.querySelectorAll(".edit_data").forEach( (e) => {
             e.disabled = false;
         });
         this.parent.innerHTML = "";
         
         for ( let ipair = 0; ipair < this.pairs; ++ ipair ) {
             let fs = fieldset.cloneNode( true );
-            this.ul[ipair] = this.fill(ipair);
+            this.ul[ipair] = this.fill( ipair, click );
             fs.appendChild( this.ul[ipair] );
             this.parent.appendChild( fs );
         }
     }
     
-    fill( ipair ) {
+    fill( ipair, click ) {
         let doc = this.doc[ipair];
         let struct = this.struct[ipair];
 
@@ -916,6 +916,9 @@ class PatientData { // singleton class
                     this.images[localname] = new Image( inp, doc, item?.none ) ;
                     this.images[localname].display() ;
                     lab.appendChild(inp);
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break ;
                 case "radio":
                     choices
@@ -934,7 +937,12 @@ class PatientData { // singleton class
                         inp.title = item.hint;
                         lab.appendChild(inp);
                         lab.appendChild( document.createTextNode(c) );
-                    })); 
+                        }))
+                    .then( () => {
+                        if ( click ) {
+                            this.clickEditItem(ipair,li);
+                        }
+                        }); 
                     break ;
 
                 case "checkbox":
@@ -954,20 +962,18 @@ class PatientData { // singleton class
                         inp.title = item.hint;
                         lab.appendChild(inp);
                         lab.appendChild( document.createTextNode(c) );
-                    })); 
+                        }))
+                    .then( () => {
+                        if ( click ) {
+                            this.clickEditItem(ipair,li);
+                        }
+                        }); 
                     break;
 
                 case "list":
                     {
                     let dlist = document.createElement("datalist");
                     dlist.id = localname ;
-                        
-                    choices
-                    .then( clist => clist.forEach( (c) => {
-                        let op = document.createElement("option");
-                        op.value = c;
-                        dlist.appendChild(op);
-                        }));
                     inp = document.createElement("input");
                     inp.type = "text";
                     inp.setAttribute( "list", dlist.id );
@@ -976,6 +982,18 @@ class PatientData { // singleton class
                     inp.disabled = true;
                     lab.appendChild( dlist );
                     lab.appendChild( inp );                    
+                        
+                    choices
+                    .then( clist => clist.forEach( (c) => {
+                        let op = document.createElement("option");
+                        op.value = c;
+                        dlist.appendChild(op);
+                        }))
+                    .then( () => {
+                        if ( click ) {
+                            this.clickEditItem(ipair,li);
+                        }
+                        }); 
                     }
                     break;
                 case "datetime":
@@ -985,6 +1003,9 @@ class PatientData { // singleton class
                     inp.title = "Date and time in format YYYY-MM-DD HH:MM AM";
                     inp.readOnly = true;
                     lab.appendChild( inp );                    
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break;
                 case "date":
                     inp = document.createElement("input");
@@ -995,6 +1016,9 @@ class PatientData { // singleton class
                     inp.readOnly = true;
                     inp.title = "Date in format YYYY-MM-DD";
                     lab.appendChild(inp);
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break;
                 case "time":
                     inp = document.createElement("input");
@@ -1005,6 +1029,9 @@ class PatientData { // singleton class
                     inp.value = preVal??"";
                     inp.title = "Time in format HH:MM PM or HH:MM AM";
                     lab.appendChild(inp);
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break;
                 case "length":
                     inp = document.createElement("input");
@@ -1015,6 +1042,9 @@ class PatientData { // singleton class
                     inp.value = PatientData.HMfromMin(preVal??"");
                     inp.title = "Time length in format HH:MM";
                     lab.appendChild(inp);
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break;
                 default:
                     inp = document.createElement( item.type=="textarea" ? "textarea" : "input" );
@@ -1022,6 +1052,9 @@ class PatientData { // singleton class
                     inp.readOnly = true;
                     inp.value = preVal??"" ;
                     lab.appendChild(inp);
+                    if ( click ) {
+                        this.clickEditItem(ipair,li);
+                    }
                     break;
             }                
             
@@ -1068,88 +1101,92 @@ class PatientData { // singleton class
     }
     
     clickEdit() {
+        this.clickEditButtons();
+        for ( let ipair=0; ipair<this.pairs; ++ipair ) {
+            this.ul[ipair].querySelectorAll("li").forEach( (li) => this.clickEditItem( ipair, li ) );
+        }
+    }
+    
+    clickEditButtons() {
         document.querySelectorAll(".topButtons").forEach( v=>v.style.display="none" ); 
         document.querySelector(".patientDataEdit").style.display="block";
-        
-        for ( let ipair=0; ipair<this.pairs; ++ipair ) {
-            let struct = this.struct[ipair];
-            let ul     = this.ul[ipair];
-            ul.querySelectorAll("li").forEach( (li) => {
-                let idx = li.getAttribute("data-index");
-                let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
-                if ( struct[idx] ?.readonly == "true" ) {
-                    return;
-                }
-                switch ( struct[idx].type ) {
-                    case "image":
-                        cloneClass(".imagetemplate_edit",li.querySelector("div"));
-                        this.images[localname].display();
-                        this.images[localname].addListen();
-                        break;
-                    case "radio":
-                    case "checkbox":
-                        document.getElementsByName(localname).forEach( (i) => i.disabled = false );
-                        break;
-                    case "date":
-                        li.querySelector("input").readOnly = false;
-                        flatpickr( li.querySelector("input"),
-                            {
-                                enableTime: false,
-                                noCalendar: false,
-                                dateFormat: "Y-m-d",
-                                //defaultDate: Date.now(),
-                            });
-                        break;
-                    case "time":
-                        li.querySelector("input").readOnly = false;
-                        flatpickr( li.querySelector("input"),
-                            {
-                                enableTime: true,
-                                noCalendar: true,
-                                dateFormat: "h:i K",
-                                //defaultDate: "9:00",
-                            });
-                        break;
-                    case "length":
-                        li.querySelector("input").readOnly = false;
-                        flatpickr( li.querySelector("input"),
-                            {
-                                dateFormat: "H:i",
-                                time_24hr: true,
-                                enableTime: true,
-                                noCalendar: true,
-                                minuteIncrement: 5,
-                                formatDate: "H:i",
-                                //defaultDate: "09:00",
-                            });
-                        break;
-                    case "datetime":
-                        li.querySelector("input").readOnly = false;
-                        flatpickr( li.querySelector("input"),
-                            {
-                                time_24hr: false,
-                                enableTime: true,
-                                noCalendar: false,
-                                dateFormat: "Y-m-d h:i K",
-                                //defaultDate: Date.now(),
-                            });
-                        break;
-                    case "textarea":
-                        li.querySelector("textarea").readOnly = false;
-                        break;
-                    case "list":
-                        li.querySelector("input").readOnly = false;
-                        li.querySelector("input").disabled = false;
-                        break;
-                    default:
-                        li.querySelector("input").readOnly = false;
-                        break;
-                }
-            });
-        }
         document.querySelectorAll(".edit_data").forEach( (e) => {
             e.disabled = true;
         });
+    }
+    
+    clickEditItem(ipair,li) {
+        let idx = li.getAttribute("data-index");
+        let struct = this.struct[ipair];
+        let localname = [struct[idx].name,idx,ipair].map(x=>x+'').join("_");
+        if ( struct[idx] ?.readonly == "true" ) {
+            return;
+        }
+        switch ( struct[idx].type ) {
+            case "image":
+                cloneClass(".imagetemplate_edit",li.querySelector("div"));
+                this.images[localname].display();
+                this.images[localname].addListen();
+                break;
+            case "radio":
+            case "checkbox":
+                document.getElementsByName(localname).forEach( (i) => i.disabled = false );
+                break;
+            case "date":
+                li.querySelector("input").readOnly = false;
+                flatpickr( li.querySelector("input"),
+                    {
+                        enableTime: false,
+                        noCalendar: false,
+                        dateFormat: "Y-m-d",
+                        //defaultDate: Date.now(),
+                    });
+                break;
+            case "time":
+                li.querySelector("input").readOnly = false;
+                flatpickr( li.querySelector("input"),
+                    {
+                        enableTime: true,
+                        noCalendar: true,
+                        dateFormat: "h:i K",
+                        //defaultDate: "9:00",
+                    });
+                break;
+            case "length":
+                li.querySelector("input").readOnly = false;
+                flatpickr( li.querySelector("input"),
+                    {
+                        dateFormat: "H:i",
+                        time_24hr: true,
+                        enableTime: true,
+                        noCalendar: true,
+                        minuteIncrement: 5,
+                        formatDate: "H:i",
+                        //defaultDate: "09:00",
+                    });
+                break;
+            case "datetime":
+                li.querySelector("input").readOnly = false;
+                flatpickr( li.querySelector("input"),
+                    {
+                        time_24hr: false,
+                        enableTime: true,
+                        noCalendar: false,
+                        dateFormat: "Y-m-d h:i K",
+                        //defaultDate: Date.now(),
+                    });
+                break;
+            case "textarea":
+                li.querySelector("textarea").readOnly = false;
+                break;
+            case "list":
+                li.querySelector("input").readOnly = false;
+                li.querySelector("input").disabled = false;
+                break;
+            default:
+                li.querySelector("input").readOnly = false;
+                break;
+        }
     }
     
     loadDocData() {
@@ -1221,11 +1258,17 @@ class PatientData { // singleton class
     }
 }
 
-class PatientDataEditMode extends PatientData {
+class PatientData extends PatientDataRaw {
+    constructor(...args) {
+        super(false,...args); // clicked = false
+    }
+}
+
+class PatientDataEditMode extends PatientDataRaw {
     // starts withg "EDIT" clicked
     constructor(...args) {
-        super(...args);
-        this.clickEdit();
+        super(true,...args); // clicked = true
+        this.clickEditButtons() ;
     }
 }
 
@@ -1234,7 +1277,6 @@ class MissionData extends PatientData {
         this.saveChanged( "MainMenu" );
     }
 }    
-
 
 class OperationData extends PatientData {
     savePatientData() {
