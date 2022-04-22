@@ -4,7 +4,7 @@
 * Working with the application
 
 # Main Menu
-![](images/MainMenu.png)
+![](../images/MainMenu.png)
 
 Main menu of the application
 

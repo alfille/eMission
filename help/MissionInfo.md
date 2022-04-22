@@ -10,7 +10,7 @@
 Arrive here from
 
 * *__The Mission__* button in [Main Menu](MainMenu.md)
-* *__Mission Info__* button from [Mission List](/MissionList.md)
+* *__Mission Info__* button from [Mission List](MissionList.md)
 
 *Add the data (including the mission name, logo, dates and information) relevant to this medical mission. Mission info is also included in [Search](SearchList.md)*
 

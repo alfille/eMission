@@ -1,5 +1,5 @@
 ### eMission specific page help
-* General [screen layout](help/GeneralLayout.md)
+* General [screen layout](GeneralLayout.md)
 * Getting started
 * Working with the application
 

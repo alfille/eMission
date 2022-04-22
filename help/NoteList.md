@@ -9,7 +9,7 @@
 
 Arrive here from
 * __The Mission__ button in [Main Menu](MainMenu.md)
-* __Mission List__ button from [Mission Info](/MissionInfo.md)
+* __Mission List__ button from [Mission Info](MissionInfo.md)
 
 *The format and function of the mission notes is the same as [Patient Notes](NoteList.md)*
 
@@ -26,7 +26,7 @@ The mission shown above buttons.
 A note can be selected by
 * Clicking on the note
 * Newly creating it or editing it
-* Choosing from a [Search](help/SearchList.md)
+* Choosing from a [Search](SearchList.md)
 
 ## Edit a note
 Click the note's *__edit__* button
