@@ -218,7 +218,7 @@
                         <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
                     </div>
                     <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" onclick="printCard()">Print Card</button>
+                        <button type="button" class="divbutton" onclick="Patient.printCard()">Print Card</button>
                         <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
                     </div>
                 </div>
@@ -230,6 +230,7 @@
                     <div><label>User email:<input type=text readonly=true id="SendUserEmail"></label></div>
                     <div><label>User eMission link:<input type=text readonly=true id="SendUserLink"></label></div>
                     <div><a target="_blank" rel=noopener noreferrer href="" id="SendUserMail">Mail link</a></div>
+                    <div><button type="button" class="divbutton" id="SendUserPrint">Print for sending</button></div>
                 </div>
             </div>
             <!-- body: InvalidPatient -->
@@ -334,7 +335,7 @@
             </div>
         </footer>
         <!-- Card print -->
-        <div class="print_screen">
+        <div class="print_patient">
             <div id="printCard">
                 <div class=rowCard>
                     <div><img id="photoCard" alt="Patient photo"></div>
@@ -360,6 +361,17 @@
                         <tr><td>Equipment</td><td></td></tr>
                     </table></div>
                 </div>
+            </div>
+        </div>
+        <!-- User print -->
+        <div class="print_user">
+            <div id="printUser">
+                Simple QR code link:
+                
+                <center>
+                    <div><canvas class="qrUser" height=180 width=180></canvas></div>
+                </center>
+                <div id="printUserText"></div>
             </div>
         </div>
         <!-- Splash screen -->

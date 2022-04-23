@@ -308,7 +308,10 @@ body {
     rows: 3;
     cols: 35;
 }
-.print_screen {
+.print_patient {
+    display: none ;
+}
+.print_user {
     display: none ;
 }
 .work_screen {

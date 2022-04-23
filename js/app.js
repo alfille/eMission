@@ -441,32 +441,6 @@ function createQueries() {
         },
     }, 
     {
-        _id: "_design/Patient2Operation" ,
-        version: 0,
-        views: {
-            Patient2Operation: {
-                map: function( doc ) {
-                    if ( doc.type=="operation" ) {
-                        emit( doc.patient_id );
-                    }
-                }.toString(),
-            },
-        },
-    }, 
-    {
-        _id: "_design/Patient2Note" ,
-        version: 0,
-        views: {
-            Patient2Note: {
-                map: function( doc ) {
-                    if ( doc.type=="note" ) {
-                        emit( doc.patient_id );
-                    }
-                }.toString(),
-            },
-        },
-    }, 
-    {
         _id: "_design/Doc2Pid" ,
         version: 0,
         views: {
@@ -1585,6 +1559,84 @@ class Patient { // convenience class
         cloneClass( ".imagetemplate", d );
         inp.display();
     }
+    static printCard() {
+        if ( patientId == null ) {
+            return objectPage.show( "InvalidPatient" );
+        }
+        let card = document.getElementById("printCard");
+        let t = card.getElementsByTagName("table");
+        Patient.getRecord( true )
+        .then( (doc) => {
+            Page.show_screen( "patient" );
+            let img = new Image( card, doc, NoPhoto ) ;
+            img.display();
+            let link = new URL(window.location.href);
+            link.searchParams.append( "patientId", patientId );
+            console.log(link);
+            new QR(
+                card.querySelector(".qrCard"),
+                link.href,
+                195,195,
+                4);
+            // patient parameters
+            t[0].rows[0].cells[1].innerText = ""; // name
+            t[0].rows[1].cells[1].innerText = doc.Complaint??"";
+            t[0].rows[2].cells[1].innerText = ""; // procedure
+            t[0].rows[3].cells[1].innerText = ""; // length
+            t[0].rows[4].cells[1].innerText = ""; // surgeon
+            t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
+
+            t[1].rows[0].cells[1].innerText = DateMath.age(doc.DOB); 
+            t[1].rows[1].cells[1].innerText = doc.Sex??""; 
+            t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
+            t[1].rows[3].cells[1].innerText = doc.Allergies??"";
+            t[1].rows[4].cells[1].innerText = doc.Meds??"";
+            t[1].rows[5].cells[1].innerText = ""; // equipment
+            return db.query("Pid2Name",{key:doc._id}) ;
+            }) 
+        .then( (doc) => {
+            t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
+            return Operation.getRecords(true);
+            })
+        .then( (docs) => {
+            let oleng = docs.rows.length;
+            switch(oleng) {
+                case 0:
+                case 1:
+                    oleng -= 1 ;
+                    break;
+                default:
+                    oleng -= 2;
+                    break;
+            }
+            if ( oleng >= 0 ) {
+                t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
+                t[0].rows[3].cells[1].innerText = docs.rows[oleng].doc.Duration + " hr"??"";
+                t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
+                t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
+            }
+            // Hack from https://github.com/crabbly/Print.js/issues/348
+            let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
+            printJS({
+                printable: 'printCard',
+                type: 'html',
+                css: 'style/print.css',
+                scanStyles: false,
+                onPrintDialogClose: () => {
+                    clearInterval( focuser );
+                    objectPage.show( "PatientPhoto" );
+                    } ,
+                onError: () => {
+                    clearInterval( focuser );
+                    objectPage.show( "PatientPhoto" );
+                    } ,
+                });
+            })
+        .catch( (err) => {
+            console.log(err);
+            objectPage.show( "InvalidPatient" );
+            });
+    }
    
 }
 
@@ -1601,15 +1653,30 @@ class Note { // convenience class
     }
 
     static getRecords(attachments) {
+        let pspl = Patient.splitId();
         let doc = {
-            key: patientId,
+            startkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                ""].join(";"),
+            endkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                "\\fff0"].join(";"),
         };
         if (attachments) {
             doc.include_docs = true;
             doc.binary = true;
             doc.attachments = true;
         }
-        return db.query( "Patient2Note", doc) ;
+        
+        return db.allDocs(doc) ;
     }
 
     static makeId() {
@@ -1840,8 +1907,22 @@ class Operation { // convenience class
     }
 
     static getRecords(attachments) {
+        let pspl = Patient.splitId();
         let doc = {
-            key: patientId,
+            startkey: [
+                RecordFormat.type.operation,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                ""].join(";"),
+            endkey: [
+                RecordFormat.type.operation,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                "\\fff0"].join(";"),
         };
         if (attachments) {
             doc.include_docs = true;
@@ -1850,7 +1931,7 @@ class Operation { // convenience class
 
             // Adds a single "blank"
             // also purges excess "blanks"
-            return db.query( "Patient2Operation", doc)
+            return db.allDocs(doc)
             .then( (doclist) => {
                 let newlist = doclist.rows
                     .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
@@ -1877,7 +1958,7 @@ class Operation { // convenience class
                 })
             .catch( () => {
                 console.log("Add a record");
-                return Operation.new().then( () => db.query( "Patient2Operation", doc ) );
+                return Operation.new().then( () => db.allDocs(doc) );
                 });
         } else {
             return db.allDocs(doc);
@@ -1937,6 +2018,7 @@ class User { // convenience class
 
     static send( doc ) {
         document.getElementById("SendUserMail").href = "";
+        document.getElementById("SendUserPrint").onclick=null;
         let url = new URL( window.location.href );
         url.searchParams.append( "address", remoteCouch.address );
         url.searchParams.append( "database", remoteCouch.database );
@@ -1950,13 +2032,15 @@ class User { // convenience class
         document.getElementById("SendUserEmail").value = doc.email;
         document.getElementById("SendUserLink").value = url.href;
 
-        let mail_url = new URL( "mailto:" + doc.email );
-        mail_url.searchParams.append( "subject", "Welcome to eMission" );
-        mail_url.searchParams.append( "body",
-`Welcome, ${doc.name}, to eMission:
-  software for managing medical missions in resource-poor environments.
+        let bodytext=
+`Welcome, ${doc.name}, to eMission.
 
-You have an account:\n'
+  eMission: software for managing medical missions
+      in resource-poor environments.
+      https://emissionsystems.org
+
+You have an account:
+
   web address: ${remoteCouch.address}
      username: ${doc.name}
      password: ${User.password[User.id]}
@@ -1965,12 +2049,43 @@ You have an account:\n'
 Full link (paste into your browser address bar):
   ${url.href}
 
-We\'re looking forward to your participation.
+We are looking forward to your participation.
 `
-        ) ;
+        ;
+
+        let mail_url = new URL( "mailto:" + doc.email );
+        mail_url.searchParams.append( "subject", "Welcome to eMission" );
+        mail_url.searchParams.append( "body", bodytext );
         document.getElementById("SendUserMail").href = mail_url.href;
+        document.getElementById("SendUserPrint").onclick=()=>User.printCard(url,bodytext);
     }
 
+    static printCard(url,bodytext="") {
+        let card = document.getElementById("printUser");
+        card.querySelector("#printUserText").innerText=bodytext;
+        new QR(
+            card.querySelector(".qrUser"),
+            url.href,
+            300,300,
+            4);
+
+        // Hack from https://github.com/crabbly/Print.js/issues/348
+        let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
+        printJS({
+            printable: 'printUser',
+            type: 'html',
+            css: 'style/print.css',
+            scanStyles: false,
+            onPrintDialogClose: () => {
+                clearInterval( focuser );
+                objectPage.show( "SendUser" );
+                } ,
+            onError: () => {
+                clearInterval( focuser );
+                objectPage.show( "SendUser" );
+                } ,
+            });
+    }
 }
 
 class Mission { // convenience class
@@ -2286,7 +2401,7 @@ class Page { // singleton class
     } 
         
     show( state = "PatientList" ) { // main routine for displaying different "pages" by hiding different elements
-        Page.show_screen( true );
+        Page.show_screen( "screen" );
         this.next(state) ;
 
         document.querySelector(".patientDataEdit").style.display="none"; 
@@ -2323,27 +2438,39 @@ class Page { // singleton class
                 break;
                 
             case "UserList":
-                objectTable = new UserTable( ["name", "role", "email", "type", ] );
-                User.getAll(true)
-                .then( docs => objectTable.fill(docs.rows ) )
-                .catch( (err) => {
-                    console.log(err.message) ;
-                    this.show ( "SuperUser" );
-                    });
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else {
+                    objectTable = new UserTable( ["name", "role", "email", "type", ] );
+                    User.getAll(true)
+                    .then( docs => objectTable.fill(docs.rows ) )
+                    .catch( (err) => {
+                        console.log(err.message) ;
+                        this.show ( "SuperUser" );
+                        });
+                }
                 break;
 
             case "UserNew":
-                User.unselect();
-                objectPatientData = new NewUserData( {}, structNewUser );
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else {
+                    User.unselect();
+                    objectPatientData = new NewUserData( {}, structNewUser );
+                }
                 break;
 
             case "Access":
-                security_db.get("_security")
-                .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
-                .catch ( err => {
-                    console.log(err);
-                    this.show( "SuperUser" ) ;
-                    });
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else {
+                    security_db.get("_security")
+                    .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
+                    .catch ( err => {
+                        console.log(err);
+                        this.show( "SuperUser" ) ;
+                        });
+                }
                 break ;
                 
             case "UserEdit":
@@ -2576,14 +2703,18 @@ class Page { // singleton class
         }
     }
 
-    static show_screen( bool ) { // switch between screen and print
+    static show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
-        document.querySelectorAll(".work_screen").forEach( (v)=> {
-            v.style.display = bool ? "block" : "none";
-        });
-        document.querySelectorAll(".print_screen").forEach( (v)=> {
-            v.style.display = bool ? "none" : "block";
-        });
+        let bool = {
+            ".work_screen": type=="screen",
+            ".print_patient": type == "patient",
+            ".print_user": type == "user",
+        };
+        for ( let cl in bool ) {
+            document.querySelectorAll(cl)
+            .forEach( (v)=> v.style.display=bool[cl]?"block":"none"
+            );
+        }
     }    
 
     static setButtons() {
@@ -3123,84 +3254,6 @@ class NoteList {
 
 }
 
-function printCard() {
-    if ( patientId == null ) {
-        return objectPage.show( "InvalidPatient" );
-    }
-    let card = document.getElementById("printCard");
-    let t = card.getElementsByTagName("table");
-    Patient.getRecord( true )
-    .then( (doc) => {
-        Page.show_screen( false );
-        let img = new Image( card, doc, NoPhoto ) ;
-        img.display();
-        let link = new URL(window.location.href);
-        link.searchParams.append( "patientId", patientId );
-        console.log(link);
-        new QR(
-            card.querySelector(".qrCard"),
-            link.href,
-            195,195,
-            4);
-        // patient parameters
-        t[0].rows[0].cells[1].innerText = ""; // name
-        t[0].rows[1].cells[1].innerText = doc.Complaint??"";
-        t[0].rows[2].cells[1].innerText = ""; // procedure
-        t[0].rows[3].cells[1].innerText = ""; // length
-        t[0].rows[4].cells[1].innerText = ""; // surgeon
-        t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
-
-        t[1].rows[0].cells[1].innerText = DateMath.age(doc.DOB); 
-        t[1].rows[1].cells[1].innerText = doc.Sex??""; 
-        t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
-        t[1].rows[3].cells[1].innerText = doc.Allergies??"";
-        t[1].rows[4].cells[1].innerText = doc.Meds??"";
-        t[1].rows[5].cells[1].innerText = ""; // equipment
-        return db.query("Pid2Name",{key:doc._id}) ;
-        }) 
-    .then( (doc) => {
-        t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
-        return Operation.getRecords(true);
-        })
-    .then( (docs) => {
-        let oleng = docs.rows.length;
-        switch(oleng) {
-            case 0:
-            case 1:
-                oleng -= 1 ;
-                break;
-            default:
-                oleng -= 2;
-                break;
-        }
-        if ( oleng >= 0 ) {
-            t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
-            t[0].rows[3].cells[1].innerText = docs.rows[oleng].doc.Duration + " hr"??"";
-            t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
-            t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
-        }
-        // Hack from https://github.com/crabbly/Print.js/issues/348
-        let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
-        printJS({
-            printable: 'printCard',
-            type: 'html',
-            css: 'style/print.css',
-            scanStyles: false,
-            onPrintDialogClose: () => {
-                clearInterval( focuser );
-                objectPage.show( "PatientPhoto" );
-                } ,
-            onError: () => {
-                clearInterval( focuser );
-                objectPage.show( "PatientPhoto" );
-                } ,
-            });
-        })
-    .catch( (err) => {
-        console.log(err);
-        objectPage.show( "InvalidPatient" );
-        });
-}
 
 function parseQuery() {
     // returns a dict of keys/values or null
@@ -3260,7 +3313,6 @@ function cookies_n_query() {
 // Application starting point
 window.onload = () => {
     // Initial splash screen
-    //Page.show_screen(true);
 
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
