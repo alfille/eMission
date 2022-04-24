@@ -7,7 +7,7 @@
 # Add new patient
 ![](../images/NewPat.png)
 
-Arrive here from the *__Add Patient__* button in [PatientList](PatientList.md)
+Arrive here from the *__Add Patient__* button in [Patient List](AllPatients.md)
 * Starts automatically with *__Edit__* clicked
 * No patient selected (of course)
 * All 3 elements required

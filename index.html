@@ -38,8 +38,8 @@
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
-                    <!-- top: PatientList -->
-                    <div class="PatientList topButtons pageOverlay">
+                    <!-- top: AllPatients -->
+                    <div class="AllPatients topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
@@ -57,8 +57,8 @@
                         <button type="button" class="divbutton" onclick="objectPage.show( 'Access' )" title="Set user\'s access rights">Access Permissions</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
                     </div>
-                    <!-- top: OperationList -->
-                    <div class="OperationList topButtons pageOverlay">
+                    <!-- top: AllOperations OperationList -->
+                    <div class="AllOperations OperationList topButtons pageOverlay">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
@@ -103,7 +103,7 @@
                     </div>
                     <!-- top: InvalidPatient -->
                     <div class="InvalidPatient topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'PatientList' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'AllPatients' )">Return</button>
                     </div>
                     <!-- top: NoteList -->
                     <div class="NoteList topButtons pageOverlay">
@@ -136,7 +136,8 @@
             <!-- body: MainMenu -->
             <div class="MainMenu pageOverlay">
                 <div id="MainMenuContent" >
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'PatientList' )">The Patients</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">The Mission</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'Settings' )">Advanced Settings</button>
                     <a href="https://www.github.com/alfille/emission" target="_blank">Instructions</a>
@@ -172,10 +173,10 @@
                     <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
                 </div>
             </div>
-            <!-- body: PatientList -->
-            <div class="PatientList pageOverlay">
+            <!-- body: AllPatients -->
+            <div class="AllPatients pageOverlay">
                 <div id="PatientListContent" >
-                    <table id="PatientList"></table>
+                    <table id="AllPatients"></table>
                 </div>
             </div>
             <!-- body: SearchList -->
@@ -191,8 +192,8 @@
                     <table id="UserList"></table>
                 </div>
             </div>
-            <!-- body: OperationList -->
-            <div class="OperationList pageOverlay">
+            <!-- body: AllOperations OperationList -->
+            <div class="AllOperations OperationList pageOverlay">
                 <div id="OperationListContent" >
                     <table id="OperationsList"></table>
                 </div>

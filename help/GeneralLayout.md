@@ -15,8 +15,21 @@ The clickable buttons include links to the Mission website and specific help pag
  
 ## Working area
 This area takes up most of the display. It will show
-* Lists: [Patient](PatientList.md), [Notes](NoteList.md), [Operations](OperationList.md), [Search results](SearchList.md)
-* Edit Data: [New Patient](PatientNew.md), [Demographics](PatientDemographics.md), [Medical](PatientMedical.md), [Operation](OperationEdit.md)
-* Menus: [Main](MainMenu.md), [Patient](PatientPhoto.md), [Advanced settings](Setrtings.md)
+* __Lists:__ 
+  * [Patient](AllPatients.md)
+  * [Notes](NoteList.md)
+  * [AllOperations](AllOperations.md)
+  * [Operations](OperationList.md)
+  * [Search results](SearchList.md)
+  * [Users](UserList.md)
+* __Edit Data:__ 
+  * [New Patient](PatientNew.md)
+  * [Patient Demographics](PatientDemographics.md)
+  * [Patient Medical Info](PatientMedical.md)
+  * [Operation Data](OperationEdit.md)
+* Menus: 
+  * [Main](MainMenu.md)
+  * [Patient](PatientPhoto.md)
+  * [Advanced settings](Settings.md)
 ## Database status
 Your User Name, and the status of data synchronization to the central database.

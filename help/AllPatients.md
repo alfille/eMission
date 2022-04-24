@@ -7,7 +7,7 @@
 # Patient List
 ![PatientList](../images/PatientList_sort.png)
 
-Arrive here from *__The Patients__* button in [Main Menu](MainMenu.md) 
+Arrive here from *__All Patients__* button in [Main Menu](MainMenu.md) 
 
 *This is the most useful general screen. You can sort through your patients, select a patient, or add a new patient.*
 

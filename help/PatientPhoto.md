@@ -9,7 +9,7 @@ Choosed from the available options for the selected patient
 
 ![](../images/PatientMenu.png)
 
-Reach this screen from the [Patient List](PatientList.md) screen
+Reach this screen from the [Patient List](AllPatients.md) screen
 
 What the menu choices do:
 * [*__Demographics__*](PatientDemographics.md) photo, name and other non-medical info.
