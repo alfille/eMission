@@ -30,15 +30,16 @@ Some special features:
 ____
 
 
-![Select Patient](../images/PatientList_select.png)
+![Select Patient](../images/SearchList3.png)
 
-Here a patient has been *selected*
+Here a record has been *selected*
 
-* Selected patient is shown above buttons
-* Patient row is highlighted in yellow
-* the [*__Review/Edit Patient__*](PatientPhoto.md) button is now enabled
+* Selaect record is highlighted in yellow
+* the *__Open the record__* button is now enabled
 * To use this patient you can either:
-  * Click [*__Review/Edit Patient__*](PatientPhoto.md)
+  * Click *__Open this record__*
   * Double-click the row
   * Swipe the row left or right
+  
+
 

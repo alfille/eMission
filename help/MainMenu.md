@@ -12,6 +12,6 @@ Main menu of the application
 * Working area is a submenu of navigation choices:
   * [*__All Patients__*](AllPatients.md) a sortable list of all patients
   * [*__All Operations__*](AllOperations.md) a sortable list of all Operations
-  * [*__The Mission__*](MissionList.md) information on the mission -- contacts, links and notes
-  * [*__Advanced Settings__*](Settings.md) Information on the database, connections, and administrative tasks
-  * *__Instructions__* is a jump to the help system.
+  * [*__The Mission__*](MissionList.md) the Mission -- contacts, links and notes
+  * [*__Advanced Settings__*](Settings.md) database, connections, and administrative tasks
+  * *__Instructions__* is a jump to the help system

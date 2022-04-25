@@ -8,12 +8,13 @@
 ![](../images/NewPat.png)
 
 Arrive here from the *__Add Patient__* button in [Patient List](AllPatients.md)
+
 * Starts automatically with *__Edit__* clicked
 * No patient selected (of course)
-* All 3 elements required
+* All 3 elements are required
   * Last Name
   * First Name
-  * Date Of Birth
+  * Date Of Birth (DOB)
 + Patient ID (A unique internal identifier) created from these 3 elements
 + Click *__Save Changes__* to actually create this patient or *__Cancel__*
 + These entries can be modified in [Demographics](PatientDemographics.md)

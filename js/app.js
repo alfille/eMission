@@ -1186,7 +1186,11 @@ class PatientDataRaw { // singleton class
                             .map(i=>i.value)[0];
                         break;
                     case "datetime":
-                        postVal = new Date(flatpickr.parseDate(li.querySelector("input").value, "Y-m-d h:i K")).toISOString();
+						try {
+							postVal = new Date(flatpickr.parseDate(li.querySelector("input").value, "Y-m-d h:i K")).toISOString();
+						} catch {
+							postVal="";
+						}
                         break;
                     case "checkbox":
                         postVal = [...document.getElementsByName(localname)]
@@ -3113,6 +3117,7 @@ class UserTable extends SortTable {
 class SearchTable extends SortTable {
     constructor( collist ) {
         super( collist, "SearchList");
+        document.getElementById("editreviewsearch").disabled=true;
     }
 
     selectId() {
@@ -3121,6 +3126,7 @@ class SearchTable extends SortTable {
 
     selectFunc(id) {
         objectSearch.select_id = id ;
+        document.getElementById("editreviewsearch").disabled=false;
         objectTable.highlight();
     }
     
