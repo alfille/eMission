@@ -4,39 +4,25 @@
 * Working with the application
 
 
-# Search Entire Database
-![PatientList](../images/SearchList1.png)
+# Operation List (per patient)
+![PatientList](../images/OperationList.png)
 
-Arrive here from the *__search link__* button on every page.
+Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md).
 
-*Search is a free text search of text fields in the full database, including patient and mission info, operations and notes. It is not case sensitive.*
+*This is a list of operations for this patient. It can be sorted by each field, and includes the placeholder for the next operation.*
 
-* Enter the search terms in the input field and press *__Search__*
-* The previous search will be retained when you return
-* Change the text to run a new search
+Using this page:
 
-___
-
-![](../images/SearchList2.png)
-
-Some special features:
-
-* Results include Notes, Patient info and Operations (see __Type__ column)
+* Operations are shown in a table
 * The list is sortable by each column
-  * Click the heading (like __Type__) to sort on that column
+  * Click the heading (like __Surgeon__) to sort on that column
   * Click it again to reverse the sort order
-* Touch or click any row to *select* a patient for editing
+* Touch or click any row to *select* an operation for editing (or deleting)
 
-____
+Selected operation:
 
-
-![Select Patient](../images/PatientList_select.png)
-
-Here a patient has been *selected*
-
-* Selected patient is shown above buttons
-* Patient row is highlighted in yellow
-* the [*__Review/Edit Patient__*](PatientPhoto.md) button is now enabled
+* Operation row is highlighted in yellow
+* the [*__Review/Edit Operation__*](OperationEdit.md) button is now enabled
 * To use this patient you can either:
   * Click [*__Review/Edit Patient__*](PatientPhoto.md)
   * Double-click the row
