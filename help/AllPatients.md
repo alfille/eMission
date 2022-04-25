@@ -4,25 +4,34 @@
 * Working with the application
 
 
-# Operation List (per patient)
-![PatientList](../images/OperationList.png)
+# Patient List
+![](../images/AllPatients.png)
 
-Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md).
+Arrive here from the *__All Patients__* button on [Main Menu](MainMenu.md).
 
-*This is a list of operations for this patient. It can be sorted by each field, and includes the placeholder for the next operation.*
+*This is a sortable list of all the patients. It is a common starting point for your work, allowing you to select a particular patient and chart data or plan operations.*
 
-Using this page:
+Note that currently, no patient is selected and so the *__Review/Edit Patient__* button is not active.
 
-* Operations are shown in a table
-* The list is sortable by each column
-  * Click the heading (like __Surgeon__) to sort on that column
-  * Click it again to reverse the sort order
-* Touch or click any row to *select* an operation for editing (or deleting)
+___
+
+![](../images/PatientList_sort.png)
+
+This table is *sortable*:
+
+* Column headings are active
+* Click (or touch) a heading to sort on that field
+* Click again to reverse the sort order
+* Click on a row to *select* that patient
+
+___
+
+![](../images/PatientList_select.png)
 
 Selected operation:
 
-* Operation row is highlighted in yellow
-* the [*__Review/Edit Operation__*](OperationEdit.md) button is now enabled
+* Patient row is highlighted in yellow
+* the [*__Review/Edit Patient__*](PatientPhoto.md) button is now enabled
 * To use this patient you can either:
   * Click [*__Review/Edit Patient__*](PatientPhoto.md)
   * Double-click the row

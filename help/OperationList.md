@@ -4,34 +4,26 @@
 * Working with the application
 
 
-# View / Edit Operation
-![PatientList](../images/OperationEdit1.png)
+# Operation List (per patient)
+![](../images/OperationList0.png)
 
-Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md) or from the *__All Operations__* button on the [Main Menu](MainMenu.md).
+Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md).
 
-*This is a single operation, either planned, scheduled or completed.*
+*This is the list of scheduled and planned operations on this patient.*
 
-Using this page:
-
-There are 3 choices (besides *__Emission__*, *__Help__*,...)
-
-* *__Edit__* to add/update data
-* *__Delete__* to remote the operation (You will be asked for confirmation)
-* *__Return__* to go back to the [Patient Menu](PatientPhoto.md)
+* The list always includes a *placeholder* for the next operation.
+* The create a new operation, either select the *placeholder* or click the *__Add Operation__* button
+* Select an operation to view or edit by clicking the row
 
 ___
 
-![](../images/OperationEdit2.png)
+![](../images/OperationList.png)
 
-Once editing:
+Once selected:
 
-* __Complaint__, __Procedure__ for this operation
-* __Surgeon__ includes a drop-down list
-* __Equipment__ for planing
-* __Status__ of the planned (or completed) operation for tracking
-* __Date-Time__ of the operation
-* Anticipated __duration__
-* __Laterality__
-
-Press *__Save Changes__* or *__Cancel__* when complete.
+* The operation will be highlighted in yellow
+* Open the operation by
+*   * Clicking the [*__Review/Edit__*](OperationEdit.md) button
+*   * Double-clicking the row
+*   * Swiping the row right or left
 
