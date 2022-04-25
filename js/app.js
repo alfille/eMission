@@ -2558,7 +2558,6 @@ class Page { // singleton class
                 
             case "AllOperations":
             {
-				console.log("AllOps");
 				Patient.unselect();
 				let last_pid = "" ;
 				let rlist;

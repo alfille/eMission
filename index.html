@@ -57,8 +57,13 @@
                         <button type="button" class="divbutton" onclick="objectPage.show( 'Access' )" title="Set user\'s access rights">Access Permissions</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
                     </div>
-                    <!-- top: AllOperations OperationList -->
-                    <div class="AllOperations OperationList topButtons pageOverlay">
+                    <!-- top: AllOperations -->
+                    <div class="AllOperations topButtons pageOverlay">
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                    </div>
+                    <!-- top: OperationList -->
+                    <div class="OperationList topButtons pageOverlay">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'OperationEdit' )" id="editreviewoperation" title="Update/change info on this operation">Review/Edit Operation</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
