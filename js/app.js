@@ -232,7 +232,7 @@ const structDatabase = [
 const structDatabaseInfo = [
     {
         name: "db_name",
-        alias: "Dabase name",
+        alias: "Database name",
         hint: "Name of underlying database",
         type: "text",
     },
@@ -2606,8 +2606,7 @@ class Page { // singleton class
                             this.show( "InvalidPatient" );
                             });
                     } else {
-                        objectPatien
-                        tData = new OperationData(
+                        objectPatientData = new OperationData(
                         {
                             _id: Operation.makeId(),
                             type: "operation",

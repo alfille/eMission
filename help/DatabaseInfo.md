@@ -4,10 +4,20 @@
 * Working with the application
 
 
-# Download
-![](../images/Download.png)
+# Database Info
+![](../images/DatabaseInfo.png)
 
-*Export data in __CSV__ format (comma-separated values) commonly usable by spreadsheet programs*
- 
-Arrive here from the *__Download__* button in [Privileged operations](Administration.md)
+Arrive here from
+
+* *__Database Information__* button in [Privileged operations](Administration.md)
+
+*Information on the local copy of the database as reported by pouchdb. No particular utility for anyone except and administrator debugging browser support.*
+
+All the data is read-only:
+
+* Database name: same as remote server's database name. Here *testdb* is the practice database with **Lord of the Rings** characters/
+* Document count: total number of records, including patioent, notes and operations
+* update_seq: used for syncing with central server
+* Database adapter: browser internal database type
+
 

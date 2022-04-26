@@ -4,18 +4,15 @@
 * Working with the application
 
 
-# Mission Info
-![](../images/MissionInfo.png)
+# Database Info
+![](../images/DatabaseInfo.png)
 
 Arrive here from
 
-* *__The Mission__* button in [Main Menu](MainMenu.md)
-* *__Mission Info__* button from [Mission List](MissionList.md)
+* *__Database Information__* button in [Privileged operations](Administration.md)
 
-*Add the data (including the mission name, logo, dates and information) relevant to this medical mission. Mission info is also included in [Search](SearchList.md)*
+*Information on the local copy of the database as reported by pouchdb. No particular utility for anyone except and administrator debugging browser support.*
 
-Like other data entry screen, press *__Edit__* to start editing the data.
+All the data is read-only:
 
-![](../images/MissionList_edit.png)
-
-Then *__Save Changes__* or *__Cancel__*.
+* Database name
