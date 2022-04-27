@@ -7,5 +7,5 @@
 # Super User Access
 ![](../images/SuperUser.png)
 
-*Required for database administrator access for functions like user management.*
+*Required for database administrator access for functions like user management and native database console (Fauxton).*
 
