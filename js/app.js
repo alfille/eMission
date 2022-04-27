@@ -286,23 +286,6 @@ const structNewUser = [
     }
 ];
 
-const structAccess = [
-    {
-        name: "name",
-        alias: "Users",
-        hint: "Regular users with access",
-        type: "checkbox",
-        userlist: "name",
-    },
-    {
-        name: "admin",
-        alias: "Administrators",
-        hint: "Administrative users with access",
-        type: "checkbox",
-        userlist: "name",
-    },
-];
-
 const structEditUser = [
     {
         name: "name",
@@ -876,8 +859,6 @@ class PatientDataRaw { // singleton class
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
-            } else if ( "userlist" in item ) {
-                choices = User.getAll(true).then( u=>u.rows.map(r=>r.doc[item.userlist]) ) ;
             }
 
             // get value and make type-specific input field with filled in value
@@ -1186,11 +1167,11 @@ class PatientDataRaw { // singleton class
                             .map(i=>i.value)[0];
                         break;
                     case "datetime":
-						try {
-							postVal = new Date(flatpickr.parseDate(li.querySelector("input").value, "Y-m-d h:i K")).toISOString();
-						} catch {
-							postVal="";
-						}
+                        try {
+                            postVal = new Date(flatpickr.parseDate(li.querySelector("input").value, "Y-m-d h:i K")).toISOString();
+                        } catch {
+                            postVal="";
+                        }
                         break;
                     case "checkbox":
                         postVal = [...document.getElementsByName(localname)]
@@ -1717,13 +1698,13 @@ class Note { // convenience class
         // Check patient existence
         db.get(nid)
         .then( doc => {
-			if ( doc.patient_id != patientId ) {
-				Patient.select( doc.patient_id);
-			}
-			Cookie.set( "noteId", nid );
-			})
-		.catch( err => console.log(err.message));
-``	            
+            if ( doc.patient_id != patientId ) {
+                Patient.select( doc.patient_id);
+            }
+            Cookie.set( "noteId", nid );
+            })
+        .catch( err => console.log(err.message));
+``              
         if ( objectPage.test("NoteList") || objectPage.test("MissionList")) {
             // highlight the list row
             let li = document.getElementById("NoteList").getElementsByTagName("li");
@@ -1830,17 +1811,17 @@ class Operation { // convenience class
         // Check patient existence
         db.get(oid)
         .then( doc => {
-			if ( doc.patient_id != patientId ) {
-				Patient.select( doc.patient_id);
-			}
-			Cookie.set ( "operationId", oid  );
-			// highlight the list row
-			if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
-				objectTable.highlight();
-			}
-			document.getElementById("editreviewoperation").disabled = false;
-			})
-		.catch( err => console.log(err.message));``	            
+            if ( doc.patient_id != patientId ) {
+                Patient.select( doc.patient_id);
+            }
+            Cookie.set ( "operationId", oid  );
+            // highlight the list row
+            if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
+                objectTable.highlight();
+            }
+            document.getElementById("editreviewoperation").disabled = false;
+            })
+        .catch( err => console.log(err.message));``             
     }
 
     static unselect() {
@@ -2326,7 +2307,6 @@ class Page { // singleton class
             "SuperUser",
             "UserList",
 //            "UserNew",
-//            "Access",
 //            "UserEdit",
 //            "SendUser",
             "AllPatients",
@@ -2394,11 +2374,11 @@ class Page { // singleton class
         } else {
             let iop = this.path.indexOf( page ) ;
             if ( iop < 0 ) {
-				// add to from of page list
+                // add to from of page list
                 this.path.unshift( page ) ;
                 Cookie.set ( "displayState", this.path ) ;
             } else {
-				// trim page list back to prior occurence of this page (no loops, finite size)
+                // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
                 Cookie.set ( "displayState", this.path ) ;
             }
@@ -2418,7 +2398,7 @@ class Page { // singleton class
     } 
         
     show( state = "AllPatients" ) { // main routine for displaying different "pages" by hiding different elements
-		console.log(state);
+        console.log(state);
         Page.show_screen( "screen" );
         this.next(state) ;
 
@@ -2444,7 +2424,7 @@ class Page { // singleton class
             case "Administration":
             case "Download":
             case "Settings":
-				// Pure menus
+                // Pure menus
                 break;
                 
             case "RemoteDatabaseInput":
@@ -2479,19 +2459,6 @@ class Page { // singleton class
                 }
                 break;
 
-            case "Access":
-                if ( User.db == null ) {
-                    this.show( "SuperUser" );
-                } else {
-                    security_db.get("_security")
-                    .then( doc => objectPatientData = new AccessData( doc, structAccess ) )
-                    .catch ( err => {
-                        console.log(err);
-                        this.show( "SuperUser" ) ;
-                        });
-                }
-                break ;
-                
             case "UserEdit":
                 if ( User.db == null ) {
                     this.show( "SuperUser" );
@@ -2558,34 +2525,34 @@ class Page { // singleton class
                 
             case "AllOperations":
             {
-				Patient.unselect();
-				let last_pid = "" ;
-				let rlist;
-				Operation.getAll()
-				.then( doclist =>  
-						doclist.rows.
-						filter( r=> { 
-							if ( r.doc.patient_id !== last_pid ) {
-								last_pid = r.doc.patient_id;
-								return true ;
-							} else {
-								return r.doc.Procedure == "Enter new procedure";
-							}
-							})
-					)
-				.then( doclist => {
-					rlist = doclist ;
-					return db.query( "Pid2Name",{keys:rlist.map(r=>r.doc.patient_id),});
-					})	
-				.then( nlist => {
+                Patient.unselect();
+                let last_pid = "" ;
+                let rlist;
+                Operation.getAll()
+                .then( doclist =>  
+                        doclist.rows.
+                        filter( r=> { 
+                            if ( r.doc.patient_id !== last_pid ) {
+                                last_pid = r.doc.patient_id;
+                                return true ;
+                            } else {
+                                return r.doc.Procedure == "Enter new procedure";
+                            }
+                            })
+                    )
+                .then( doclist => {
+                    rlist = doclist ;
+                    return db.query( "Pid2Name",{keys:rlist.map(r=>r.doc.patient_id),});
+                    })  
+                .then( nlist => {
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Name", "Date-Time" ]  );
-					rlist.forEach((r,i)=>r.doc.Name=nlist.rows[i].value[0]);
-					objectTable.fill(rlist);
-					})
-				.catch( err=>console.log(err) )
-					;
+                    rlist.forEach((r,i)=>r.doc.Name=nlist.rows[i].value[0]);
+                    objectTable.fill(rlist);
+                    })
+                .catch( err=>console.log(err) )
+                    ;
                 break;
-			}
+            }
                 
             case "OperationNew":
                 if ( Patient.isSelected() ) {

@@ -15,6 +15,10 @@ After [adding a user](UserAdd.md) with the *__Add User__* button, that user will
 
 ![](../images/UserList_selected.png)
 
-The selected user can be [edited](UserEdit.md) with the *__Review/Edit User__* button, or by double-clicking or swiping left or right.
+The selected user can be 
+
+* [edited](UserEdit.md) with the *__Review/Edit User__* button
+* double-clicking
+* swiping left or right.
 
 Users can be removed in the [editing](UserEdit/md) screen as well.
