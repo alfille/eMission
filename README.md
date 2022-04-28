@@ -117,75 +117,8 @@ Add a new note
 Add a new photo
 ![Note](images/mdb-NewPhoto.png)
 
-# Schema as implemented
-### <a id="Schema"></a> ###
 
-* Patient record
-
-|key|name|type|note|
-|:-|:-|:-|:-|
-|_id|Patient Id|automatic|p;0;Last;First;DOB "p",version,...|
-|author|user name|automatic|username of record creator|
-|type|record type|automatic|"patient"|
-|LastName|Last name|text|required|
-|FirstName|First Name|text|required|
-|DOB|Date of Birth|YYYY-MM-DD|required|
-|email|e-mail address|email format|in Demographics|
-|phone|phone number|phone format|in Demographics|
-|Address|address |free text|in Demographics|
-|Contact|contact info|free text|in Demographics|
-|Dx|Diagnosis| free text|in Medical|
-|Sex|Sex| multiple choice|in Medical|
-|Weight|Patient weight (kg)|number|in Medical|
-|Height|Patient height (cm)|number|in Medical|
-|ASA|ASA class|multiple choice|in Medical|
-|Allergies|Allergies|free text|in Medical|
-|Meds|Medications|free text|in Medical|
-|_attachments:image:data|Image|automatic|binary image data|
-|_attachments:image:content_type|Image type|automatic|e.g. png||
-
-* Operation record
-
-|key|name|type|note|
-|:-|:-|:-|:-|
-|_id|Operation Id|automatic|o;0;Last;First;DOB;timestamp modified patient_id + creation timestamp |
-|author|user name|automatic|username of record creator|
-|type|record type|automatic|"operation"|
-|patient_id|Patient Id|automatic|link back to patient|
-|Complaint|Patient presenting complaint|free text|in Medical|
-|Procedure|Type of operation|text||
-|Surgeon|Surgeon|text||
-|Equipment|Needed equipment|free text||
-|Status|Scheduling status|multiple choice||
-|Date-Time|Time of operation|date time|if known|
-|Duration|Expected length (hours)|number|without turnover|
-|Laterality|Left / Right|multiple choice||
-
-* Note Record
-
-|key|name|type|note|
-|:-|:-|:-|:-|
-|_id|Operation Id|automatic|c;0;Last;First;DOB;timestamp modified patient_id + creation timestamp |
-|author|user name|automatic|username of record creator|
-|type|record type|automatic|"note"|
-|patient_id|Patient Id|automatic|link back to patient|
-|text|Note text|free text||
-|date|Date|YYY-MM-DD|automatic and editable|
-|_attachments:image:data|Image|automatic|binary image data|
-|_attachments:image:content_type|Image type|automatic|e.g. png||
-
-* Local record (does not replicate to other places)
-
-|key|name|type|note|
-|:-|:-|:-|:-|
-|_id|_local/username|automatic|in MainMenu -> Settings |
-|username|user name|text|your user name|
-|remoteCouch|Remote database|list +|link to remote replication databases|
-|displayState|internal state|automatic|resume place in program|
-|patientId|Patient Id|automatic|Last patient selected|
-|noteId|Note Id|automatic|Last note selected|
-|operationId|Operation Id|automatic|Last operation selected|
-
+# [Database Design](/help/Schema.md)
 
 
 # Installation
