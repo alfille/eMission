@@ -83,4 +83,6 @@ eMission design used the unique key as follows:
 |StartDate|Beginning|Date|of mission|
 |EndDate|End|Date|of mission|
 |Emergency|Emergency contact|free text|Who to contact -- i.e. local official|
+|_attachments:image:data|Mission Logo|automatic|binary image data|
+|_attachments:image:content_type|Mission logo|automatic|e.g. png||
 

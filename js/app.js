@@ -1251,6 +1251,10 @@ class DatabaseInfoData extends PatientData {
 class DatabaseData extends PatientDataEditMode {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
+            console.log(this.doc);
+            console.log(this.doc[0]);
+            console.log(this.doc[0].address);
+            this.doc[0].address=Remote.SecureURLparse(this.doc[0].address); // fix up URL
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
             objectPage.show( "MainMenu" );
         } else {
@@ -2182,6 +2186,27 @@ class Remote { // convenience class
 
     static link() {
         window.open( `${remoteCouch.address}/_utils`, '_blank' );
+    }
+
+    static SecureURLparse( url ) {
+        let prot = "https";
+        let addr = url;
+        let port = "6984";
+        let spl = url.split(":\/\/") ;
+        if (spl.length < 2 ) {
+            addr=spl[0];
+        } else {
+            prot = spl[0];
+            addr = spl[1];
+        }
+        spl = addr.split(":");
+        if (spl.length < 2 ) {
+            addr=spl[0];
+        } else {
+            addr = spl[0];
+            port = spl[1];
+        }
+        return [prot,[addr,port].join(":")].join("://");
     }
 }
 
