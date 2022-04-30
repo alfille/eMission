@@ -1255,10 +1255,8 @@ class DatabaseData extends PatientDataEditMode {
             console.log(this.doc[0].address);
             this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
-            objectPage.show( "MainMenu" );
-        } else {
-            objectPage.show( "MainMenu" );
         }
+        objectPage.next( "MainMenu" );
         location.reload(); // force reload
     }
 }
@@ -2460,10 +2458,11 @@ class Page { // singleton class
         objectPatientData = null;
         objectTable = null;
 
+        // clear old image urls
         Image.clearSrc() ;
 
-        if ( db == null ) {
-            // can't bypass this!
+        if ( db == null || remoteCouch.database=='' ) {
+            // can't bypass this! test if database exists
             this.next("RemoteDatabaseInput");
         }
 
