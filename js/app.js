@@ -7,6 +7,7 @@ var objectPatientData;
 var objectNoteList;
 var objectTable = null;
 var objectSearch = null;
+var objectRemote = null;
 
 // globals cookie backed
 var objectPage ;
@@ -33,8 +34,6 @@ const remoteSecurity = {
     address: "", // set in SuperUser
     };
 
-// For remote replication
-const remoteFields = [ "address", "username", "password", "database" ];
 // used for record keys ( see makeId, etc )
 const RecordFormat = {
     type: {
@@ -1254,7 +1253,7 @@ class DatabaseData extends PatientDataEditMode {
             console.log(this.doc);
             console.log(this.doc[0]);
             console.log(this.doc[0].address);
-            this.doc[0].address=Remote.SecureURLparse(this.doc[0].address); // fix up URL
+            this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
             objectPage.show( "MainMenu" );
         } else {
@@ -1292,19 +1291,19 @@ class SuperUserData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
 
-        Remote.closeRemoteDB()
+        objectRemote.closeRemoteDB()
         .then( () => {
             // remote User database
             remoteUser.username = this.doc[0].username;
             remoteUser.password = this.doc[0].password;
-            User.db = Remote.openRemoteDB( remoteUser );
+            User.db = objectRemote.openRemoteDB( remoteUser );
 
             // admin access to this database
             remoteSecurity.username = remoteUser.username;
             remoteSecurity.password = remoteUser.password;
             remoteSecurity.address  = remoteCouch.address;
             remoteSecurity.database = remoteCouch.database;        
-            security_db = Remote.openRemoteDB( remoteSecurity );
+            security_db = objectRemote.openRemoteDB( remoteSecurity );
 
             objectPage.show( "UserList" ); })
         .catch( err => {
@@ -2119,51 +2118,74 @@ class Mission { // convenience class
 }
 
 class Remote { // convenience class
-    static syncHandler = null;
+    constructor( qline ) {
+        this.remoteFields = [ "address", "username", "password", "database" ];
+        this.remoteDB = null;
+        this.syncHandler = null;
+
+        // need remote database for sync
+        if ( this.remoteFields.every( k => k in qline ) ) {
+            remoteCouch = {};
+            this.remoteFields.forEach( f => remoteCouch[f] = qline[f] );
+            Cookie.set( "remoteCouch", remoteCouch );
+        } else if ( Cookie.get( "remoteCouch" ) == null ) {
+            remoteCouch = {
+                database: "", // must be set to continue
+                username: "",
+                password: "",
+                address: "",
+                };
+        }    
+    }
 
     // Initialise a sync process with the remote server
-    static foreverSync() {
-        Remote.remoteDB = Remote.openRemoteDB( remoteCouch ); // null initially
+    foreverSync() {
+        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
         document.getElementById( "userstatus" ).value = remoteCouch.username;
-        if ( Remote.remoteDB ) {
+        if ( this.remoteDB ) {
             const synctext = document.getElementById("syncstatus");
-            synctext.value = "syncing...";
-                
-            Remote.syncHandler = db.sync( Remote.remoteDB ,
-                {
-                    live: true,
-                    retry: true,
-                    filter: (doc) => doc._id.indexOf('_design') !== 0,
-                } )
-                .on('change', ()       => synctext.value = "changed" )
-                .on('paused', ()       => synctext.value = "resting" )
-                .on('active', ()       => synctext.value = "active" )
-                .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
-                .on('complete', ()     => synctext.value = "stopped" )
-                .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
+
+            synctext.value = "download remote...";
+            db.replicate.from( this.remoteDB )
+            .catch( (err) => synctext.value=err.message )
+            .finally( () => {
+                synctext.value = "syncing...";
+                    
+                this.syncHandler = db.sync( this.remoteDB ,
+                    {
+                        live: true,
+                        retry: true,
+                        filter: (doc) => doc._id.indexOf('_design') !== 0,
+                    } )
+                    .on('change', ()       => synctext.value = "changed" )
+                    .on('paused', ()       => synctext.value = "resting" )
+                    .on('active', ()       => synctext.value = "active" )
+                    .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
+                    .on('complete', ()     => synctext.value = "stopped" )
+                    .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
+                })
         }
     }
     
-    static forceReplicate(id=null) {
-        if (Remote.syncHandler) {
-            Remote.syncHandler.cancel();
-            Remote.syncHandler = null;
+    forceReplicate(id=null) {
+        if (this.syncHandler) {
+            this.syncHandler.cancel();
+            this.syncHandler = null;
         }
-        if (Remote.remoteDB) {
-            db.replicate.to( Remote.remoteDB,
+        if (this.remoteDB) {
+            db.replicate.to( this.remoteDB,
                 {
                     filter: (doc) => id ?
                         doc._id == id :
                         doc._id.indexOf('_design') !== 0,
                 } )
             .catch( err => id ? console.log( id,err ) : console.log(err) )
-            .finally( () => Remote.foreverSync() );
+            .finally( () => this.foreverSync() );
         }
     }
 
-    static remoteDB;
-    static openRemoteDB( DBstruct ) {
-        if ( DBstruct && remoteFields.every( k => k in DBstruct )  ) {
+    openRemoteDB( DBstruct ) {
+        if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -2177,18 +2199,19 @@ class Remote { // convenience class
         }
     }
             
-    static closeRemoteDB() {
+    closeRemoteDB() {
         return Promise.all( [
             User.db ? User.db.close() : Promise.resolve(true),
             security_db ? security_db.close() : Promise.resolve(true),
             ]);
     }
 
-    static link() {
+    // Fauxton link
+    link() {
         window.open( `${remoteCouch.address}/_utils`, '_blank' );
     }
 
-    static SecureURLparse( url ) {
+    SecureURLparse( url ) {
         let prot = "https";
         let addr = url;
         let port = "6984";
@@ -3329,24 +3352,12 @@ function cookies_n_query() {
     objectPage = new Page();
     Cookie.get ( "operationId" );
 
+    
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
+    objectRemote = new Remote( qline ) ;
     
-    // need remote database for sync
-    if ( remoteFields.every( k => k in qline ) ) {
-        remoteCouch = {};
-        remoteFields.forEach( f => remoteCouch[f] = qline[f] );
-        Cookie.set( "remoteCouch", remoteCouch );
-    } else if ( Cookie.get( "remoteCouch" ) == null ) {
-        remoteCouch = {
-            database: "", // must be set to continue
-            username: "",
-            password: "",
-            address: "",
-            };
-    }    
-
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
         Patient.select( qline.patientId );
@@ -3418,7 +3429,7 @@ window.onload = () => {
         .catch( err => console.log(err) );
 
             // start sync with remote database
-            Remote.foreverSync();
+            objectRemote.foreverSync();
 
             // set link for mission
             Mission.link();
