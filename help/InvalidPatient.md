@@ -1,11 +1,11 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Invalid Patient
-![](../images/InvalidPatient.png)
+![](/images/InvalidPatient.png)
 
 
 *Common error screen. Sometimes this can be caused by a reference to a patient that has subsequently been deleted or not yet acquired from the central server. The program and database should still be useable.*

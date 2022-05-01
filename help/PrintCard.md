@@ -1,5 +1,5 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
@@ -7,9 +7,9 @@
 
 *Print a card for managing the patient*
 
-![](../images/PrintCard.png)
+![](/images/PrintCard.png)
 
-Reach this screen from the [Patient Menu](PatientPhoto.md) screen
+Reach this screen from the [Patient Menu](/help/PatientPhoto.md) screen
 
 Card elements:
 

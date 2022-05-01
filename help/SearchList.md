@@ -1,11 +1,11 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Search Entire Database
-![PatientList](../images/SearchList1.png)
+![PatientList](/images/SearchList1.png)
 
 Arrive here from the *__search link__* button on every page.
 
@@ -17,7 +17,7 @@ Arrive here from the *__search link__* button on every page.
 
 ___
 
-![](../images/SearchList2.png)
+![](/images/SearchList2.png)
 
 Some special features:
 
@@ -30,7 +30,7 @@ Some special features:
 ____
 
 
-![Select Patient](../images/SearchList3.png)
+![Select Patient](/images/SearchList3.png)
 
 Here a record has been *selected*
 

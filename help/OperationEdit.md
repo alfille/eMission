@@ -1,13 +1,13 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # View / Edit Operation
-![PatientList](../images/OperationEdit1.png)
+![PatientList](/images/OperationEdit1.png)
 
-Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md) or from the *__All Operations__* button on the [Main Menu](MainMenu.md).
+Arrive here from the *__Operations__* button on [Patient Menu](/help/PatientPhoto.md) or from the *__All Operations__* button on the [Main Menu](MainMenu.md).
 
 *This is a single operation, either planned, scheduled or completed.*
 
@@ -17,11 +17,11 @@ There are 3 choices (besides *__Emission__*, *__Help__*,...)
 
 * *__Edit__* to add/update data
 * *__Delete__* to remote the operation (You will be asked for confirmation)
-* *__Return__* to go back to the [Patient Menu](PatientPhoto.md)
+* *__Return__* to go back to the [Patient Menu](/help/PatientPhoto.md)
 
 ___
 
-![](../images/OperationEdit2.png)
+![](/images/OperationEdit2.png)
 
 Once editing:
 

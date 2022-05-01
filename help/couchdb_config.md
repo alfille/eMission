@@ -27,7 +27,7 @@ tcp:
   22 * (sshd)
    [ 1] allow 22/tcp
 
-  4369 * (epmd)
+  4369 * (/help/epmd)
   443 * (lighttpd)
    [ 3] allow 443
 
@@ -44,7 +44,7 @@ tcp6:
   22 * (sshd)
    [ 6] allow 22/tcp
 
-  4369 * (epmd)
+  4369 * (/help/epmd)
 udp:
 
 ```

@@ -1,13 +1,13 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # New Operation
-![Operation New](../images/OperationNew.png)
+![Operation New](/images/OperationNew.png)
 
-Arrive here from the *__Add Operation__* button on [Operation List](OperationList.md). (You can also edit a *placeholder* operation to effectively create a new operation as well.)
+Arrive here from the *__Add Operation__* button on [Operation List](/help/OperationList.md). (You can also edit a *placeholder* operation to effectively create a new operation as well.)
 
 *This is a single operation, either planned, scheduled or completed.*
 

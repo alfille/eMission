@@ -1,13 +1,13 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Patient List
-![](../images/AllPatients.png)
+![](/images/AllPatients.png)
 
-Arrive here from the *__All Patients__* button on [Main Menu](MainMenu.md).
+Arrive here from the *__All Patients__* button on [Main Menu](/help/MainMenu.md).
 
 *This is a sortable list of all the patients. It is a common starting point for your work, allowing you to select a particular patient and chart data or plan operations.*
 
@@ -15,7 +15,7 @@ Note that currently, no patient is selected and so the *__Review/Edit Patient__*
 
 ___
 
-![](../images/PatientList_sort.png)
+![](/images/PatientList_sort.png)
 
 This table is *sortable*:
 
@@ -26,14 +26,14 @@ This table is *sortable*:
 
 ___
 
-![](../images/PatientList_select.png)
+![](/images/PatientList_select.png)
 
 Selected operation:
 
 * Patient row is highlighted in yellow
-* the [*__Review/Edit Patient__*](PatientPhoto.md) button is now enabled
+* the [*__Review/Edit Patient__*](/help/PatientPhoto.md) button is now enabled
 * To use this patient you can either:
-  * Click [*__Review/Edit Patient__*](PatientPhoto.md)
+  * Click [*__Review/Edit Patient__*](/help/PatientPhoto.md)
   * Double-click the row
   * Swipe the row left or right
 

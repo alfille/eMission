@@ -1,13 +1,13 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Operation List (per patient)
-![](../images/OperationList0.png)
+![](/images/OperationList0.png)
 
-Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md).
+Arrive here from the *__Operations__* button on [Patient Menu](/help/PatientPhoto.md).
 
 *This is the list of scheduled and planned operations on this patient.*
 
@@ -17,13 +17,13 @@ Arrive here from the *__Operations__* button on [Patient Menu](PatientPhoto.md).
 
 ___
 
-![](../images/OperationList.png)
+![](/images/OperationList.png)
 
 Once selected:
 
 * The operation will be highlighted in yellow
 * Open the operation by
-*   * Clicking the [*__Review/Edit__*](OperationEdit.md) button
+*   * Clicking the [*__Review/Edit__*](/help/OperationEdit.md) button
 *   * Double-clicking the row
 *   * Swiping the row right or left
 

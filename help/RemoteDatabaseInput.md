@@ -1,11 +1,11 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Remote Database Setup
-![](../images/Database.png)
+![](/images/Database.png)
 
 *Settings for accessing the mission database. It may not be needed since usually this will be sent automatically as a URL or QR code.*
 
@@ -14,5 +14,5 @@
 * port 6984 is the typical secure couchdb port
 * These settings (Hobbit/TheShire/testdb) are available for the test database.
  
-Arrive here from the *__Remote Database Setup__* button in [Advanced Settings](settings.md)
+Arrive here from the *__Remote Database Setup__* button in [Advanced Settings](/help/settings.md)
 

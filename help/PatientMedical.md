@@ -1,15 +1,15 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 
 # Medical Status and Operations
 
-![](../images/PatientMed1.png)
+![](/images/PatientMed1.png)
 
 Arrive here from the *__Medical__* button in 
-[Patient Menu](PatientPhoto.md)
+[Patient Menu](/help/PatientPhoto.md)
 
 * Selected patient is shown below buttons
 * Combines information from at least 2 records:
@@ -21,4 +21,4 @@ Arrive here from the *__Medical__* button in
 
 If the Screen seems too cluttered, it is possible to hide some of the data (Either medical, or any operation) by toggling the *__+__* / *__-__* buttons.
 
-![](../images/PatientMed2.png)
+![](/images/PatientMed2.png)

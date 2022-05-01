@@ -1,17 +1,17 @@
 ### eMission specific page help
-* General [screen layout](GeneralLayout.md)
+* General [screen layout](/help/GeneralLayout.md)
 * Getting started
 * Working with the application
 
 # Main Menu
-![](../images/MainMenu.png)
+![](/images/MainMenu.png)
 
 Main menu of the application
 
 * You can always land here using the *__eMission__* button in the upper left
 * Working area is a submenu of navigation choices:
-  * [*__All Patients__*](AllPatients.md) a sortable list of all patients
-  * [*__All Operations__*](AllOperations.md) a sortable list of all Operations
-  * [*__The Mission__*](MissionList.md) the Mission -- contacts, links and notes
-  * [*__Advanced Settings__*](Settings.md) database, connections, and administrative tasks
+  * [*__All Patients__*](/help/AllPatients.md) a sortable list of all patients
+  * [*__All Operations__*](/help/AllOperations.md) a sortable list of all Operations
+  * [*__The Mission__*](/help/MissionList.md) the Mission -- contacts, links and notes
+  * [*__Advanced Settings__*](/help/Settings.md) database, connections, and administrative tasks
   * *__Instructions__* is a jump to the help system
