@@ -59,81 +59,82 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 
 Typically the user with get an invitaion by email. text or hard copy. It will include a web link with all the information needed to install and register your name/password included
 
-More information on starting.
+[More information on starting up](/help/Start.md).
 
-# Usage
-* Initial login. 
-Choose User Name 
-![Login screen](images/mdb-Login.png)
-* Main Menu. 
-Patient List is most common choice 
-![Patient list](images/mdb-MainMenu.png)
-* Patient List. 
-List of known patients 
-![Patient list](images/mdb-PatientList.png)
-* Patient List. 
-Select a patient 
-![Patient menu](images/mdb-PatientListSelect.png)
-* Patient is selected. Menu for this patient 
-![Demographics](images/mdb-PatientPhoto.png)
-* Demographics for this patient. How to edit 
-![Demographics](images/mdb-PatientDemographics1.png)
-* Demographics for this patient. How to save changes 
-![Medical](images/mdb-PatientDemographics2.png)
-* Medical Information and Operations 
-This is the main data entry screen for planning and recording operations
-* Notes List
-Controls
-![Note](images/mdb-NoteList.png)
-* Notes List
-Start editting
-![Note](images/mdb-NoteList2.png)
-* Notes List
-Text entry field
-![Note](images/mdb-NoteList3.png)
-* Notes List
-Edit picture
-![Note](images/mdb-NoteList4.png)
-* Notes List
-Save or cancel changes
-![Note](images/mdb-NoteList5.png)
-* Notes List
-Edit the date and time
-![Note](images/mdb-NoteList6.png)
-* Notes List
-How to delete a note
-![Note](images/mdb-NoteList7.png)
-* Notes List
-Add a new note
-![Note](images/mdb-NewNote.png)
-* Notes List
-Add a new photo
-![Note](images/mdb-NewPhoto.png)
+# Usage -- Common tasks
+
+## Display
+
+![Layout](/images/GeneralLayout1.png)
+To make navigating easy, __eMission__ uses a consistent [screen layout](/help/GeneralLayout.md)
+
+All choices can be made by clicking a button, or swiping (phone) and doubleclicking (laptop)
+
+## Choosing a patient
+
+* All the patients are listed in the [All Patients](/help/AllPateints.md) list
+  * The list can be sorted by any of the headings
+  * A simple swipe or double click will select that patient
+  * You can also add a [new patient](/help/PatientNew.md)
++ All the patients are also included in [All Operations](/help/AllOperations.md)
+  + This is list is sortable by patient, surgeon, operations, ...
+* The [full text search](/help/SearchList.md) will find patients, operations and notes.
+  * Use the __[&#x1F50E;&#xFE0E;]__ icon found in the top buttons
+* Scan a [patient card](/help/PatientCard.md)![](/images/PrintCard.png)
+
+## Patient information
+
+To look at or edit patient information, first select that patient (see __Choosing a patient__ above).
+
+You will see the [Patient Menu](/help/PatientPhoto.md)
+![](/images/PatientMenu.png)
+
+Information on the patient is split between
+
+* [Demographics](/help/PatientDemographics.md)
+  * Name, age, address, picture, ...
+
+* [Medical](/help/PatientMedical.md)
+  * Diagnosis, complaints, weight, height, medicines, allergies,...
+  * for convenience, the operations can also be accessed from this page
+* [Notes](/help/NoteList.md) provides a place to give longitudinal information on the patient
+  * Include followup information and pictures
+  * [New Notes](/help/NoteNew.md) is a convenient way to add a note
+  * *__New Picture__* adds a picture to a new note
+   
+## Operations
+
+* A full sortable list in [All Operations](/help/AllOperations.md)
+* The [full text search](/help/SearchList.md) will find patients, operations and notes.
+  * Use the __[&#x1F50E;&#xFE0E;]__ icon found in the top buttons
+* For each patient, the [Operations](/help/OperationList.md) 
+  * shows the scheduled and completed operations
+  * allows adding and deleting operations
++ The *Surgeon*, *Procedure*, and *Equipment* have drop-down suggestions from prior choices
+
+## Other features
+
+As you explore, you will find more features
+
+* __[?]__ help is available on every screen
+* [Mission information](/help/MissionInfo.md) and [Notes](/help/MissionList.md) for more general conversation about the mission
+* Notes can be categorized by group (anesthesia, surgery or nursing and sorted)
+* Data can be []downloaded](/help/Download.md) to spreadsheet format
+
+# Advanced information 
+
+This section is for administrators and developers
+
+* [Database Design](/help/Schema.md)
+  * Includes the fields
+  * Includes the structure used for the data entry screens
++ [Security](/help/secure.md) information
+* License: [MIT](https://mit-license.org) (OpenSource)
+*  Copyright 2021-2022 Paul H Alfille MD palfille@mgh.harvard.edu
 
 
-# [Database Design](/help/Schema.md)
 
 
-# Installation
-* Instructions from [pouchdb](https://pouchdb.com/guides/setup-couchdb.html):
-```
-#install couchdb
-sudo apt install couchdb
-
-#start couchdb
-sudo systemctl start couchdb
-
-#test
-curl localhost:598
-
-# add [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
-sudo npm install -g add-cors-to-couchdb
-add-cors-to-couchdb
-
-# PouchDB
-sudo npm install --save pouchdb-browser
-
-```
 
   
 

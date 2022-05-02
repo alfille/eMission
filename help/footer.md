@@ -6,3 +6,4 @@ ___
 
 * For Information on DCTOHC and the eMission project contact [Dr. Gennaidiy Fuzaylov](email:gfuzaylov@mgh.harvard.edu)
 * For troubleshooting and information on setting up the software for your own mission, contact the author [Dr Paul Alfille](email:palfille@mgh.harvard.edu) 
+* *[Source code](https://github.com/alfille/emission)*
