@@ -8,7 +8,7 @@ eMission is a database for medical mission work. Intentionally simple. Supports 
 ## Inspiration
 Dr. Gennadiy Fuzaylov, a pediatric anesthesiologist at Massachusetts General Hospital and veteran of over 60 medical missions to the Ukraine and  Columbia and found keeping track of patients, procedures and results was increasingly difficult. 
 
-![[Doctors Collaborating To Help Children](http://dcthc.org)](images/dctohc.png)
+![[Doctors Collaborating To Help Children](http://dcthc.org)](/images/dctohc.png)
 
 He needed a way to:
 
@@ -17,18 +17,17 @@ He needed a way to:
 * keep a visual record of the injuries and document followup
 
 
-A spreadsheet was not adequate -- poor phone interface, poor support for images, poorly multi-user and problematic security. Hence this project was born.
+A spreadsheet was not adequate -- poor phone interface, poor support for images, poorly multi-user and problematic security. Hence the __eMission__ project was born.
 
 ------------------------------
 
 ## Scope (i.e. what eMission does)
 
-- Patient name, problem, image and demographics
-- Medical procedures with description, data, images, tailored checklists
-- Providers with contact information
-- Followup
+- Keep track of patients, problems, images and demographics
+- Record operative procedures with description, data, images, tailored checklists
+- Document outcomes and followup
 - Workflow support including patient ID cards, downloadable data
-- Supports phones, tablets and laptops
+- Usable on phones, tablets and laptops
 
 ### Out of scope
 - lab values 
@@ -39,19 +38,12 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 ----------------
 
 ## Design
-* Written by Paul Alfille MD at Massachusetts General Hospital in 2021
-* __Non-technical__
-  * Runs entirely in a web browser (like Chrome, Safari, Edge)
-  * Connects and shares data whenever the internet is available
-  * Installed just be clicking a web link
-  * Password protected and encrypted communication
-  * Free to use and modify
-  * Open Source
-* __Technical__
-  * Hosted on [Github](https://github.com/alfille/emission)
-  * Document database: [Pouchdb](https://pouchdb.com/) for users and [Couchdb](https://couchdb.apache.org/) backend
-  * Pure Javascript with no dependencies
-  * Included javascript libraries are open source as well
+* Runs entirely in a web browser (like Chrome, Safari, Edge)
+* Connects and shares data whenever the internet is available
+* Installed just be clicking a web link
+* Password protected and encrypted communication
+* Free to use and modify
+* Open Source
 
 # Start up / installation
 
@@ -68,7 +60,7 @@ Typically the user with get an invitaion by email. text or hard copy. It will in
 ![Layout](/images/GeneralLayout1.png)
 To make navigating easy, __eMission__ uses a consistent [screen layout](/help/GeneralLayout.md)
 
-All choices can be made by clicking a button, or swiping (phone) and doubleclicking (laptop)
+All choices can be made by clicking a button, or swiping (phone) or doubleclicking (laptop)
 
 ## Choosing a patient
 
@@ -125,10 +117,15 @@ As you explore, you will find more features
 
 This section is for administrators and developers
 
-* [Database Design](/help/Schema.md)
+* [Database Schema](/help/Schema.md)
   * Includes the fields
   * Includes the structure used for the data entry screens
 + [Security](/help/secure.md) information
+* Design
+  * Hosted on [Github](https://github.com/alfille/emission)
+  * Document database: [Pouchdb](https://pouchdb.com/) for users and [Couchdb](https://couchdb.apache.org/) backend
+  * Pure Javascript with no dependencies
+  * Included javascript libraries are open source as well
 * License: [MIT](https://mit-license.org) (OpenSource)
 *  Copyright 2021-2022 Paul H Alfille MD palfille@mgh.harvard.edu
 
