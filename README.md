@@ -23,10 +23,10 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 
 ## Scope (i.e. what eMission does)
 
-- Keep track of patients, problems, images and demographics
-- Record operative procedures with description, data, images, tailored checklists
-- Document outcomes and followup
-- Workflow support including patient ID cards, downloadable data
+- Keeps rack of patients, problems, images and demographics
+- Records operative procedures with description, data, images, tailored checklists
+- Documents outcomes and followup
+- Support a workflow including patient ID cards, downloadable data
 - Usable on phones, tablets and laptops
 
 ### Out of scope
@@ -40,7 +40,7 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 ## Design
 * Runs entirely in a web browser (like Chrome, Safari, Edge)
 * Connects and shares data whenever the internet is available
-* Installed just be clicking a web link
+* Installed just by clicking a web link
 * Password protected and encrypted communication
 * Free to use and modify
 * Open Source
@@ -64,7 +64,7 @@ All choices can be made by clicking a button, or swiping (phone) or doubleclicki
 
 ## Choosing a patient
 
-* All the patients are listed in the [All Patients](/help/AllPateints.md) list
+* All patients are listed in the [All Patients](/help/AllPateints.md) list
   * The list can be sorted by any of the headings
   * A simple swipe or double click will select that patient
   * You can also add a [new patient](/help/PatientNew.md)
@@ -112,6 +112,21 @@ As you explore, you will find more features
 * [Mission information](/help/MissionInfo.md) and [Notes](/help/MissionList.md) for more general conversation about the mission
 * Notes can be categorized by group (anesthesia, surgery or nursing and sorted)
 * Data can be []downloaded](/help/Download.md) to spreadsheet format
+
+# Test it out now
+
+There is a test database available for use
+
+* No real patient information
+* Based on J.R.R.Tolkien's **Lord of the Rings**
+* User: Hobbit
+* Password: TheShire
+* Address: https://emissionsystem.org:6984
+* Database: testdb
+* Direct Link: https://emissionsystem.org/?address=https%3A%2F%2Femissionsystem.org%3A6984&database=testdb&password=TheShire&username=Hobbit
+* QR code (scan with your phone camera)
+
+![test database line](/images/qr.png)
 
 # Advanced information 
 
