@@ -275,7 +275,7 @@ const structNewUser = [
         name: "roles",
         hint: "Regular user or administrator",
         type: "radio",
-        choices: ["user","admin",],
+        roles: ["user","admin"],
     },
     {
         name: "email",
@@ -301,7 +301,7 @@ const structEditUser = [
         name: "roles",
         hint: "Regular user or administrator",
         type: "radio",
-        choices: ["user","admin",],
+        roles: ["user","admin"],
     },
     {
         name: "email",
@@ -858,6 +858,8 @@ class PatientDataRaw { // singleton class
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
+            } else if ( "roles" in item ) {
+                choices = Promise.resolve( item.roles.map( r => [remoteCouch.database,"all"].map( d=> [d,r].join("-"))).reduce( (a,e)=>a.concat(e)) );
             }
 
             // get value and make type-specific input field with filled in value
@@ -2487,7 +2489,7 @@ class Page { // singleton class
                 if ( User.db == null ) {
                     this.show( "SuperUser" );
                 } else {
-                    objectTable = new UserTable( ["name", "role", "email", "type", ] );
+                    objectTable = new UserTable( ["name", "roles", "email", "type", ] );
                     User.getAll(true)
                     .then( docs => objectTable.fill(docs.rows ) )
                     .catch( (err) => {
