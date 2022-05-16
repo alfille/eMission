@@ -135,6 +135,9 @@ This section is for administrators and developers
 * [Database Schema](/help/Schema.md)
   * Includes the fields
   * Includes the structure used for the data entry screens
+* [Off-line caching](/help/Caching.md)
+  * Satisfies *PWA* criteria
+  * Uses browser *Service Workers*
 + [Security](/help/secure.md) information
 * Design
   * Hosted on [Github](https://github.com/alfille/emission)
