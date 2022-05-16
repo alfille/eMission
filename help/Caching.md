@@ -9,17 +9,17 @@ eMission is designed for off-line as well as on-line work. It passes the [PWA Bu
 That means:
 
 * All processing is done locally in the browser
-* Code, static images and layout is stores locally in *Cache*
+* Code, static images and layout is stored locally in *Cache*
 * Content (medical information) is stored locally in the browser database
 * When available, the network is queried to refresh code and synchronize changes to content
 
 ## Service Worker
 
-eMission uses the modern caching technique of *Service Workers*
+eMission uses the modern caching technique of [Service Workers](https://developer.chrome.com/docs/workbox/service-worker-overview/). eMission uses a simple direct service worker program instead of a framework like *Workbox*.
 
 The service worker is a long-running background program (in the browser) with persistent storage only in **Cache** or **IndexDb**
 
-Service worker startup is:
+eMission's service worker startup is:
 
 ```
     // Service worker (to manage cache for off-line function)
@@ -31,6 +31,9 @@ Service worker startup is:
 ```
 
 ## Code
+
+Contents of sw.js
+
 ```
 /* Service Worker with strategy:
     1. Add selected files to cache
