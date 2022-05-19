@@ -2348,6 +2348,7 @@ class Page { // singleton class
     constructor() {
         this.safeLanding = [
             "MainMenu",
+            "FirstTime",
             "Administration",
             "Download",
             "Settings",
@@ -2465,7 +2466,9 @@ class Page { // singleton class
 
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
-            this.next("RemoteDatabaseInput");
+            if ( state != "FirstTime" ) {
+				this.next("RemoteDatabaseInput");
+			}
         }
 
         switch( objectPage.current() ) {  
@@ -2473,6 +2476,7 @@ class Page { // singleton class
             case "Administration":
             case "Download":
             case "Settings":
+            case "FirstTime":
                 // Pure menus
                 break;
                 
@@ -3440,21 +3444,23 @@ window.onload = () => {
             db.viewCleanup()
             .catch( err => console.log(err) );
 
+		// now jump to proper page
+		objectPage.show( null ) ;
+
+		// Set patient, operation and note -- need page shown first
+		if ( Patient.isSelected() ) { // mission too
+			Patient.select() ;
+		}
+		if ( operationId ) {
+			Operation.select() ;
+		}
+		if ( noteId ) {
+			Note.select() ;
+		}
+
     } else {
         db = null;
+        objectPage.show("FirstTime");
     }
 
-    // now jump to proper page
-    objectPage.show( null ) ;
-
-    // Set patient, operation and note -- need page shown first
-    if ( Patient.isSelected() ) { // mission too
-        Patient.select() ;
-    }
-    if ( operationId ) {
-        Operation.select() ;
-    }
-    if ( noteId ) {
-        Note.select() ;
-    }
 };
