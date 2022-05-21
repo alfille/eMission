@@ -275,7 +275,7 @@ const structNewUser = [
         name: "roles",
         hint: "Regular user or administrator",
         type: "radio",
-        choices: ["user","admin",],
+        roles: ["user","admin"],
     },
     {
         name: "email",
@@ -301,7 +301,7 @@ const structEditUser = [
         name: "roles",
         hint: "Regular user or administrator",
         type: "radio",
-        choices: ["user","admin",],
+        roles: ["user","admin"],
     },
     {
         name: "email",
@@ -858,6 +858,8 @@ class PatientDataRaw { // singleton class
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
+            } else if ( "roles" in item ) {
+                choices = Promise.resolve( item.roles.map( r => [remoteCouch.database,"all"].map( d=> [d,r].join("-"))).reduce( (a,e)=>a.concat(e)) );
             }
 
             // get value and make type-specific input field with filled in value
@@ -2346,6 +2348,7 @@ class Page { // singleton class
     constructor() {
         this.safeLanding = [
             "MainMenu",
+            "FirstTime",
             "Administration",
             "Download",
             "Settings",
@@ -2463,7 +2466,9 @@ class Page { // singleton class
 
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
-            this.next("RemoteDatabaseInput");
+            if ( state != "FirstTime" ) {
+				this.next("RemoteDatabaseInput");
+			}
         }
 
         switch( objectPage.current() ) {  
@@ -2474,6 +2479,12 @@ class Page { // singleton class
                 // Pure menus
                 break;
                 
+            case "FirstTime":
+				if ( db !== null ) {
+					this.show("MainMenu");
+				}
+				break;
+				
             case "RemoteDatabaseInput":
                 objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
                 break;
@@ -2487,7 +2498,7 @@ class Page { // singleton class
                 if ( User.db == null ) {
                     this.show( "SuperUser" );
                 } else {
-                    objectTable = new UserTable( ["name", "role", "email", "type", ] );
+                    objectTable = new UserTable( ["name", "roles", "email", "type", ] );
                     User.getAll(true)
                     .then( docs => objectTable.fill(docs.rows ) )
                     .catch( (err) => {
@@ -3438,21 +3449,23 @@ window.onload = () => {
             db.viewCleanup()
             .catch( err => console.log(err) );
 
+		// now jump to proper page
+		objectPage.show( null ) ;
+
+		// Set patient, operation and note -- need page shown first
+		if ( Patient.isSelected() ) { // mission too
+			Patient.select() ;
+		}
+		if ( operationId ) {
+			Operation.select() ;
+		}
+		if ( noteId ) {
+			Note.select() ;
+		}
+
     } else {
         db = null;
+        objectPage.show("FirstTime");
     }
 
-    // now jump to proper page
-    objectPage.show( null ) ;
-
-    // Set patient, operation and note -- need page shown first
-    if ( Patient.isSelected() ) { // mission too
-        Patient.select() ;
-    }
-    if ( operationId ) {
-        Operation.select() ;
-    }
-    if ( noteId ) {
-        Note.select() ;
-    }
 };

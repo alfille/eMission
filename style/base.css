@@ -275,12 +275,16 @@ body {
     justify-content: center;
 }
 
-#MainMenuContent, #DownloadContent, #AdministrationContent, #SendUserContent, #SettingsContent {
+#MainMenuContent, #DownloadContent, #AdministrationContent, #SendUserContent, #SettingsContent, #FirstTimeContent {
   display: flex ;
-  background: #b3b3ff ;
+  background: #bcbce9 ;
   justify-content: center;
   align-items: center;
   flex-direction: column ; 
+}
+#FirstTimeContent p {
+  margin-left: 5px;
+  margin-right: 5px;
 }
 #PatientPhotoButtons {
   display: flex;
@@ -324,7 +328,6 @@ body {
   justify-content: center;
   align-items: center;
 }
-
 #footer {
   color: darkblue;
   position: absolute;
