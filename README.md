@@ -23,17 +23,18 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 
 ## Scope (i.e. what eMission does)
 
-- Keeps rack of patients, problems, images and demographics
+- Keeps track of patients, problems, images and demographics
 - Records operative procedures with description, data, images, tailored checklists
 - Documents outcomes and followup
-- Support a workflow including patient ID cards, downloadable data
+- Supports a workflow that includes patient ID cards and downloadable data
 - Usable on phones, tablets and laptops
 
 ### Out of scope
 - lab values 
 - vital signs / monitoring
 - drug and supply information
-- But free text fields are available for extra information
+
+Note that *free text fields* are available for extra information
 
 ----------------
 
@@ -47,22 +48,30 @@ A spreadsheet was not adequate -- poor phone interface, poor support for images,
 
 # Start up / installation
 
-![](images/printUser.png)
+![](/images/printUser.png)
 
-Typically the user with get an invitaion by email. text or hard copy. It will include a web link with all the information needed to install and register your name/password included
+Typically the user with get an invitation by email. text or hard copy. It will include a web link with all the information needed to install and register. Your name and password are included.
 
 [More information on starting up](/help/Start.md).
+
 
 # Usage -- Common tasks
 
 ## Display
 
 ![Layout](/images/GeneralLayout1.png)
+
 To make navigating easy, __eMission__ uses a consistent [screen layout](/help/GeneralLayout.md)
 
-All choices can be made by clicking a button, or swiping (phone) or doubleclicking (laptop)
+Choices can be made by 
+
+* clicking a button
+* swiping right or left (phone)
+* double-clicking (laptop)
 
 ## Choosing a patient
+
+![](/images/PatientList_sort.png)
 
 * All patients are listed in the [All Patients](/help/AllPateints.md) list
   * The list can be sorted by any of the headings
@@ -72,13 +81,17 @@ All choices can be made by clicking a button, or swiping (phone) or doubleclicki
   + This is list is sortable by patient, surgeon, operations, ...
 * The [full text search](/help/SearchList.md) will find patients, operations and notes.
   * Use the __[&#x1F50E;&#xFE0E;]__ icon found in the top buttons
-* Scan a [patient card](/help/PatientCard.md)![](/images/PrintCard.png)
+
+* You can also select a patient by scanning a [patient card](/help/PatientCard.md)
+
+![](/images/PrintCard.png)
 
 ## Patient information
 
 To look at or edit patient information, first select that patient (see __Choosing a patient__ above).
 
 You will see the [Patient Menu](/help/PatientPhoto.md)
+
 ![](/images/PatientMenu.png)
 
 Information on the patient is split between
@@ -118,7 +131,7 @@ As you explore, you will find more features
 There is a test database available for use
 
 * No real patient information
-* Based on J.R.R.Tolkien's **Lord of the Rings**
+* Based on J.R.R.Tolkien's *Lord of the Rings*
 * User: Hobbit
 * Password: TheShire
 * Address: https://emissionsystem.org:6984
@@ -127,6 +140,8 @@ There is a test database available for use
 * QR code (scan with your phone camera)
 
 ![test database line](/images/qr.png)
+
+Or just go to [https://emissionsystem.org](https://emissionsystem.org) and follow the instructions on the [Welcome Page](/help/FirstTime.md)
 
 # Advanced information 
 
@@ -146,10 +161,3 @@ This section is for administrators and developers
   * Included javascript libraries are open source as well
 * License: [MIT](https://mit-license.org) (OpenSource)
 *  Copyright 2021-2022 Paul H Alfille MD palfille@mgh.harvard.edu
-
-
-
-
-
-  
-
