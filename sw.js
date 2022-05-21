@@ -47,7 +47,16 @@ self.addEventListener('fetch', event => {
                         throw 404;
                     }
                     let rc = response.clone() ;
-                    caches.open(cacheName).then( cache => cache.put( event.request, rc ) );
+                    caches.open(cacheName)
+                    .then( cache => {
+                        cache.put( event.request, rc );
+                        cache.keys()
+                        .then( keys =>
+                            keys
+                            .filter( key => !cacheList.includes(new URL(key.url).pathname))
+                            .forEach( key => cache.delete(key.url) )
+                            );
+                        });
                     return response ;
                     })
                 .catch( () => caches.match(event.request) )
