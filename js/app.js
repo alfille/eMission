@@ -2476,10 +2476,15 @@ class Page { // singleton class
             case "Administration":
             case "Download":
             case "Settings":
-            case "FirstTime":
                 // Pure menus
                 break;
                 
+            case "FirstTime":
+				if ( db !== null ) {
+					this.show("MainMenu");
+				}
+				break;
+				
             case "RemoteDatabaseInput":
                 objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
                 break;
