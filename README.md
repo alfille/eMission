@@ -147,6 +147,7 @@ Or just go to [https://emissionsystem.org](https://emissionsystem.org) and follo
 
 This section is for administrators and developers
 
+* [Database Creation](/help/NewDatabase.md) -- how to set up a new mission database
 * [Database Schema](/help/Schema.md)
   * Includes the fields
   * Includes the structure used for the data entry screens

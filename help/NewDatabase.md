@@ -27,8 +27,10 @@ Selecting the database icon shows a list of databases
 ![](/images/fauxton2.png)
 
 * There are two special databases for couchdb internal use with specialized formatting
-
-* All the Mission databases are also included. *Note that all the mission databases share the same user list*
+* See [couchdb documentation](https://docs.couchdb.org/en/stable/intro/security.html) on the `_user` database design and restrictions
+* All the Mission databases are also included. 
+  * *Note that all the mission databases share the same user list*
+  * We assign roles that are database-specific to restrict access to relevant database
 
 ## New mission database
 
@@ -71,6 +73,28 @@ __eMission__ uses a convention of:
 This is done by an administrator withing eMission in __*[New User](/help/UserNew.md)*__ or __*[Edit User](/help/UserEdit.md)
 
 Roles can be changed and users deleted within eMission as well.
+
+## First Use
+
+Before users and invitations can be generated, the database must be accessed as a *administrative user* -- the same access used to access *Fauxton* to create the database.
+
+* Go to the website (i.e. [emissionsystem.org](https://emissionsystem.org)
+
+![](/images/firstuser.png)
+
+* Once signed in, choose *advanced settings*
+
+![](/images/firstuser1.png)
+
+* Then *Priviledged Operations*
+
+![](/images/firstuser2.png)
+
+* Finally *User Management*
+
+![](/images/firstuser3.png)
+
+
 
 
 
