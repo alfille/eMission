@@ -115,7 +115,7 @@ ul {
   background: red;
   float: right;
 }
-.entryfield_image, #photoCard {
+.entryfield_image {
   max-width: 20%;
   display: inline-block;
   height: auto ;
@@ -144,6 +144,11 @@ ul {
     display: inline-block;
     width: auto ;
   }
+}
+@media print {
+    header, footer, aside, form {
+        display: none;
+    }
 }
 .titlediv {
   overflow: auto;
@@ -320,6 +325,18 @@ body {
 }
 .work_screen {
     display: none ;
+}
+#printCard {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+#photoCard {
+  max-height: 200px;
+  display: inline-block;
+  width: auto ;
 }
 #UserNameContent {
   background: #5e6cc7;

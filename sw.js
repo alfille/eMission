@@ -20,7 +20,6 @@ const cacheList = [
     "/js/app.js",
     "/js/flatpickr.min.js",
     "/js/qrenc-4.0.0.min.js",
-    "/js/print.min.js",
     "/js/pouchdb-7.3.0.min.js",
     "/js/elasticlunr.min.js",
     ];

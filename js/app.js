@@ -1603,22 +1603,8 @@ class Patient { // convenience class
                 t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
                 t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
             }
-            // Hack from https://github.com/crabbly/Print.js/issues/348
-            let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
-            printJS({
-                printable: 'printCard',
-                type: 'html',
-                css: 'style/print.css',
-                scanStyles: false,
-                onPrintDialogClose: () => {
-                    clearInterval( focuser );
-                    objectPage.show( "PatientPhoto" );
-                    } ,
-                onError: () => {
-                    clearInterval( focuser );
-                    objectPage.show( "PatientPhoto" );
-                    } ,
-                });
+            window.print();
+            objectPage.show("PatientPhoto");
             })
         .catch( (err) => {
             console.log(err);
@@ -2068,22 +2054,9 @@ We are looking forward to your participation.
             300,300,
             4);
 
-        // Hack from https://github.com/crabbly/Print.js/issues/348
-        let focuser = setInterval(() => window.dispatchEvent(new Event('focus')), 500 ) ;
-        printJS({
-            printable: 'printUser',
-            type: 'html',
-            css: 'style/print.css',
-            scanStyles: false,
-            onPrintDialogClose: () => {
-                clearInterval( focuser );
-                objectPage.show( "SendUser" );
-                } ,
-            onError: () => {
-                clearInterval( focuser );
-                objectPage.show( "SendUser" );
-                } ,
-            });
+        Page.show_screen( "user" ) ;
+        window.print();
+        objectPage.show("SendUser");
     }
 }
 
