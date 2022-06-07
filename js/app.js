@@ -1693,7 +1693,7 @@ class Note { // convenience class
             Cookie.set( "noteId", nid );
             })
         .catch( err => console.log(err.message));
-``              
+              
         if ( objectPage.test("NoteList") || objectPage.test("MissionList")) {
             // highlight the list row
             let li = document.getElementById("NoteList").getElementsByTagName("li");
@@ -1810,7 +1810,7 @@ class Operation { // convenience class
             }
             document.getElementById("editreviewoperation").disabled = false;
             })
-        .catch( err => console.log(err.message));``             
+        .catch( err => console.log(err.message));             
     }
 
     static unselect() {
@@ -2136,7 +2136,7 @@ class Remote { // convenience class
                     .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
                     .on('complete', ()     => synctext.value = "stopped" )
                     .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
-                })
+                });
         }
     }
     
@@ -2753,7 +2753,7 @@ class Page { // singleton class
 
     static show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
-        let bool = {
+        let showscreen = {
             ".work_screen": type=="screen",
             ".print_patient": type == "patient",
             ".print_user": type == "user",
