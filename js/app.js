@@ -1258,7 +1258,7 @@ class DatabaseData extends PatientDataEditMode {
             this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
-        objectPage.next( "MainMenu" );
+        objectPage.reset();
         location.reload(); // force reload
     }
 }
@@ -2095,19 +2095,32 @@ class Remote { // convenience class
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.syncHandler = null;
-
-        // need remote database for sync
-        if ( this.remoteFields.every( k => k in qline ) ) {
-            remoteCouch = {};
-            this.remoteFields.forEach( f => remoteCouch[f] = qline[f] );
-            Cookie.set( "remoteCouch", remoteCouch );
-        } else if ( Cookie.get( "remoteCouch" ) == null ) {
+        
+        // Get remote DB from cookies if available
+        if ( Cookie.get( "remoteCouch" ) == null ) {
             remoteCouch = {
                 database: "", // must be set to continue
                 username: "",
                 password: "",
                 address: "",
                 };
+		}
+
+        // Get Remote DB fron command line if available
+        if ( this.remoteFields.every( k => k in qline ) ) {
+			let updateCouch = false ;
+            this.remoteFields.forEach( f => {
+				q = qline[f] ;
+				if ( remoteCouch[f] != q ) {
+					updateCouch = true ;
+					remoteCouch[f] = q ;
+				}
+				};
+			// Changed, so reset page
+			if ( updateCouch ) {
+				objectPage.reset() ;	           
+				Cookie.set( "remoteCouch", remoteCouch );
+			}
         }    
     }
 
@@ -2350,7 +2363,7 @@ class Page { // singleton class
             ] ;
         const path = Cookie.get( "displayState" );
         if ( !Array.isArray(path) ) {
-            this.path = [];
+			this.reset();
         } else {
             this.path = path;
         }
@@ -2362,17 +2375,22 @@ class Page { // singleton class
             .reduce( (x,y)=>Math.min(x,y) , 1000 );
         
         if ( safeIndex == 1000 ) {
-            this.path = [] ;
-            Cookie.set ( "displayState", this.path ) ;
+            this.reset() ;
         } else {
             this.next( this.path[safeIndex] );
         }
     }
+    
+    reset() {
+		// resets to just MainMenu
+		this.path = [ "MainMenu" ] ;
+		Cookie.set ( "displayState", this.path ) ;
+	}
 
     back() {
         this.path.shift() ;
         if ( this.path.length == 0 ) {
-            this.path = [ "MainMenu" ];
+			this.reset();
         }
         if ( this.safeLanding.includes(this.path[0]) ) {
             Cookie.set ( "displayState", this.path ) ;
@@ -2383,7 +2401,7 @@ class Page { // singleton class
 
     current() {
         if ( this.path.length == 0 ) {
-            this.path = [ "MainMenu" ];
+			this.reset();
         }
         return this.path[0];
     }
@@ -3323,9 +3341,8 @@ function clearLocal() {
         Cookie.del("remoteCouch");
         Cookie.del("operationId");
         Cookie.del( "commentId" );
-        db.destroy()
-        .finally( () => location.reload() );
-    }
+        db.destroy().finally( ()=>objectPage.reset() );
+	}
     objectPage.show( "MainMenu" );
 }
 
