@@ -2776,9 +2776,9 @@ class Page { // singleton class
             ".print_patient": type == "patient",
             ".print_user": type == "user",
         };
-        for ( let cl in bool ) {
+        for ( let cl in showscreen ) {
             document.querySelectorAll(cl)
-            .forEach( (v)=> v.style.display=bool[cl]?"block":"none"
+            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
             );
         }
     }    
