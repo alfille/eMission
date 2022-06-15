@@ -2110,7 +2110,7 @@ class Remote { // convenience class
         if ( this.remoteFields.every( k => k in qline ) ) {
 			let updateCouch = false ;
             this.remoteFields.forEach( f => {
-				q = qline[f] ;
+				const q = qline[f] ;
 				if ( remoteCouch[f] != q ) {
 					updateCouch = true ;
 					remoteCouch[f] = q ;
