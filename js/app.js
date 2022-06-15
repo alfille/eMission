@@ -2115,7 +2115,7 @@ class Remote { // convenience class
 					updateCouch = true ;
 					remoteCouch[f] = q ;
 				}
-				};
+				});
 			// Changed, so reset page
 			if ( updateCouch ) {
 				objectPage.reset() ;	           
@@ -3322,7 +3322,6 @@ class NoteList {
 
 }
 
-
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -3385,8 +3384,7 @@ window.onload = () => {
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
 
-    // Start pouchdb database
-        
+    // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
@@ -3455,6 +3453,7 @@ window.onload = () => {
 
     } else {
         db = null;
+        objectPage.reset();
         objectPage.show("FirstTime");
     }
 
