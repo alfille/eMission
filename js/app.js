@@ -9,6 +9,7 @@ var objectTable = null;
 var objectSearch = null;
 var objectRemote = null;
 
+
 // globals cookie backed
 var objectPage ;
 var patientId;
@@ -3386,7 +3387,7 @@ window.onload = () => {
 
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
-        db = new PouchDB( remoteCouch.database ); // open local copy
+        db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
 
         // Set up text search
