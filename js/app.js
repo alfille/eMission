@@ -8,6 +8,7 @@ var objectNoteList;
 var objectTable = null;
 var objectSearch = null;
 var objectRemote = null;
+var objectCollation = null;
 
 
 // globals cookie backed
@@ -15,6 +16,7 @@ var objectPage ;
 var patientId;
 var noteId;
 var operationId;
+var databaseId;
 var remoteCouch;
 var NoPhoto = "style/NoPhoto.png";
 var DCTOHClogo = "style/DCTOHC11.jpg";
@@ -2105,23 +2107,23 @@ class Remote { // convenience class
                 password: "",
                 address: "",
                 };
-		}
+        }
 
         // Get Remote DB fron command line if available
         if ( this.remoteFields.every( k => k in qline ) ) {
-			let updateCouch = false ;
+            let updateCouch = false ;
             this.remoteFields.forEach( f => {
-				const q = qline[f] ;
-				if ( remoteCouch[f] != q ) {
-					updateCouch = true ;
-					remoteCouch[f] = q ;
-				}
-				});
-			// Changed, so reset page
-			if ( updateCouch ) {
-				objectPage.reset() ;	           
-				Cookie.set( "remoteCouch", remoteCouch );
-			}
+                const q = qline[f] ;
+                if ( remoteCouch[f] != q ) {
+                    updateCouch = true ;
+                    remoteCouch[f] = q ;
+                }
+                });
+            // Changed, so reset page
+            if ( updateCouch ) {
+                objectPage.reset() ;               
+                Cookie.set( "remoteCouch", remoteCouch );
+            }
         }    
     }
 
@@ -2173,6 +2175,7 @@ class Remote { // convenience class
 
     openRemoteDB( DBstruct ) {
         if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
+            Collation.select( '0'+DBstruct.database );
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -2339,6 +2342,7 @@ class Page { // singleton class
             "Administration",
             "Download",
             "Settings",
+            "DBTable",
             "RemoteDatabaseInput",
             "SuperUser",
             "UserList",
@@ -2364,7 +2368,7 @@ class Page { // singleton class
             ] ;
         const path = Cookie.get( "displayState" );
         if ( !Array.isArray(path) ) {
-			this.reset();
+            this.reset();
         } else {
             this.path = path;
         }
@@ -2383,15 +2387,15 @@ class Page { // singleton class
     }
     
     reset() {
-		// resets to just MainMenu
-		this.path = [ "MainMenu" ] ;
-		Cookie.set ( "displayState", this.path ) ;
-	}
+        // resets to just MainMenu
+        this.path = [ "MainMenu" ] ;
+        Cookie.set ( "displayState", this.path ) ;
+    }
 
     back() {
         this.path.shift() ;
         if ( this.path.length == 0 ) {
-			this.reset();
+            this.reset();
         }
         if ( this.safeLanding.includes(this.path[0]) ) {
             Cookie.set ( "displayState", this.path ) ;
@@ -2402,7 +2406,7 @@ class Page { // singleton class
 
     current() {
         if ( this.path.length == 0 ) {
-			this.reset();
+            this.reset();
         }
         return this.path[0];
     }
@@ -2459,8 +2463,8 @@ class Page { // singleton class
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
             if ( state != "FirstTime" ) {
-				this.next("RemoteDatabaseInput");
-			}
+                this.next("RemoteDatabaseInput");
+            }
         }
 
         switch( objectPage.current() ) {  
@@ -2472,11 +2476,11 @@ class Page { // singleton class
                 break;
                 
             case "FirstTime":
-				if ( db !== null ) {
-					this.show("MainMenu");
-				}
-				break;
-				
+                if ( db !== null ) {
+                    this.show("MainMenu");
+                }
+                break;
+                
             case "RemoteDatabaseInput":
                 objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
                 break;
@@ -2556,6 +2560,21 @@ class Page { // singleton class
                     })
                 .catch( (err) => console.log(err) );
                 break;
+
+            case "DBTable":
+                objectTable = new DatabaseTable( ["Name","Organization","Location","StartDate"] );
+                Collation.getAll()
+                .then( (docs) => {
+                    console.log("DBTable",docs);
+                    objectTable.fill(docs.rows) ;
+                    if ( Collation.isSelected() ) {
+                        Collation.select( databaseId );
+                    } else {
+                        Collation.unselect();
+                    }
+                    })
+                .catch( (err) => console.log(err) );
+                break ;
 
             case "SearchList":
                 objectTable = new SearchTable( ["Name","Type","Text"] ) ;
@@ -3093,6 +3112,24 @@ class PatientTable extends SortTable {
     }
 }
 
+class DatabaseTable extends SortTable {
+    constructor( collist ) {
+        super( collist, "DBTable" );
+    }
+
+    selectId() {
+        return databaseId;
+    }
+
+    selectFunc(id) {
+        Collation.select(id) ;
+    }
+
+    editpage() {
+        objectPage.show("PatientPhoto");
+    }
+}
+
 class OperationTable extends SortTable {
     constructor( collist ) {
         super( collist, "OperationsList");
@@ -3323,6 +3360,68 @@ class NoteList {
 
 }
 
+class Collation {
+    constructor() {
+        this.db = new PouchDB( 'databases' );
+        PouchDB.replicate( 'https://emissionsystem.org:6984/databases', this.db, { live:true, retry:true } ) ;
+    }
+
+    static getAll() {
+        let doc = {
+            startkey: '0',
+            endkey:   '1',
+            include_docs: true,
+            attachments: true,
+        };
+        return objectCollation.db.allDocs(doc);
+    }
+
+    static select( did = databaseId ) {
+        if ( databaseId != did ) {
+            // change database
+            Collation.unselect();
+        }
+
+        objectCollation.db.get(did)
+        .then( (doc) => {
+            Cookie.set( "databaseId", did );
+            // highlight the list row
+            if ( objectPage.test('DBTable') && objectTable ) {
+                objectTable.highlight();
+            }
+            console.log(did,doc);
+        document.getElementById("editreviewpatient").disabled = false;
+            document.getElementById( "titlebox" ).innerHTML = [doc.Name,doc.Location,doc.Organization].join(" ");
+            })
+        .catch( (err) => {
+            console.log("DatabaseId not in list",err);
+            Collation.unselect();
+            });
+    }
+
+    static isSelected() {
+        return ( databaseId != null );
+    }
+
+    static unselect() {
+        databaseId = null;
+        Cookie.del ( "documentId" );
+        Patient.unselect();
+        if ( objectPage.test("DBTable") ) {
+            let pt = document.getElementById("DBTable");
+            if ( pt ) {
+                let rows = pt.rows;
+                for ( let i = 0; i < rows.length; ++i ) {
+                    rows[i].classList.remove('choice');
+                }
+            }
+        }
+        document.getElementById("editreviewpatient").disabled = true;
+        document.getElementById( "titlebox" ).innerHTML = "";
+    }
+
+}
+
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -3341,8 +3440,9 @@ function clearLocal() {
         Cookie.del("remoteCouch");
         Cookie.del("operationId");
         Cookie.del( "commentId" );
+        Cookie.del( "databaseId" );
         db.destroy().finally( ()=>objectPage.reset() );
-	}
+    }
     objectPage.show( "MainMenu" );
 }
 
@@ -3351,6 +3451,7 @@ function cookies_n_query() {
     Cookie.get ( "commentId" );
     objectPage = new Page();
     Cookie.get ( "operationId" );
+    Cookie.get ( "databaseId") ;
 
     
     // need to establish remote db and credentials
@@ -3385,10 +3486,14 @@ window.onload = () => {
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
 
+    // database list
+    objectCollation = new Collation();
+
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
+        Collation.select( '0'+remoteCouch.database ) ;
 
         // Set up text search
         objectSearch = new Search();
@@ -3438,19 +3543,19 @@ window.onload = () => {
             db.viewCleanup()
             .catch( err => console.log(err) );
 
-		// now jump to proper page
-		objectPage.show( null ) ;
+        // now jump to proper page
+        objectPage.show( null ) ;
 
-		// Set patient, operation and note -- need page shown first
-		if ( Patient.isSelected() ) { // mission too
-			Patient.select() ;
-		}
-		if ( operationId ) {
-			Operation.select() ;
-		}
-		if ( noteId ) {
-			Note.select() ;
-		}
+        // Set patient, operation and note -- need page shown first
+        if ( Patient.isSelected() ) { // mission too
+            Patient.select() ;
+        }
+        if ( operationId ) {
+            Operation.select() ;
+        }
+        if ( noteId ) {
+            Note.select() ;
+        }
 
     } else {
         db = null;

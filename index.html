@@ -44,6 +44,12 @@
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
                     </div>
+                    <!-- top: DBTable -->
+                    <div class="DBTable topButtons pageOverlay">
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientPhoto' )" id="editreviewpatient" title="menu for this patient">Review/Edit Patient</button>
+                    </div>
                     <!-- top: SearchList -->
                     <div class="SearchList topButtons pageOverlay">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'back' )">Return</button>
@@ -144,6 +150,7 @@
                     <button type="button" class="divbutton" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">The Mission</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'Settings' )">Advanced Settings</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'DBTable' )">Switch Mission Database</button>
                     <a href="https://emissionsystem.org/README.md" target="_blank">Instructions</a>
                 </div>
             </div>
@@ -198,6 +205,13 @@
             <div class="AllPatients pageOverlay">
                 <div id="PatientListContent" >
                     <table id="AllPatients"></table>
+                </div>
+            </div>
+            <!-- body: DBTable -->
+            <div class="DBTable pageOverlay">
+                Choose a medical mission to use:
+                <div id="DBTableContent" >
+                    <table id="DBTable"></table>
                 </div>
             </div>
             <!-- body: SearchList -->
