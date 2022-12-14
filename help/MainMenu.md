@@ -14,4 +14,5 @@ Main menu of the application
   * [*__All Operations__*](/help/AllOperations.md) a sortable list of all Operations
   * [*__The Mission__*](/help/MissionList.md) the Mission -- contacts, links and notes
   * [*__Advanced Settings__*](/help/Settings.md) database, connections, and administrative tasks
+  * [*__Switch Mission Database__*](/help/DBTable.md) Choose to see and use a different Mission's records (You will need permission from that Mission)
   * *__Instructions__* is a jump to the help system
