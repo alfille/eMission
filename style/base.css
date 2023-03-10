@@ -271,13 +271,26 @@ body {
   background: #3366CC;
 }
   
-#PatientPhotoContent{
+#PatientPhotoContent, #NoteChoiceButtons {
   background: #b3b3ff ;
+  background-color: #b3b3ff ;
+}
+
+#NoteChoiceButtons2 {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
 }
 
 #PatientPhotoContent2 {
     display: flex;
     justify-content: center;
+}
+
+legend {
+	font-size: 16px;
+	font-family: inherit;
+	font-weight: bold;
 }
 
 #MainMenuContent, #DownloadContent, #AdministrationContent, #SendUserContent, #SettingsContent, #FirstTimeContent {
@@ -291,7 +304,7 @@ body {
   margin-left: 5px;
   margin-right: 5px;
 }
-#PatientPhotoButtons {
+#PatientPhotoButtons{
   display: flex;
   color: white;
   background: #b3b3ff;
