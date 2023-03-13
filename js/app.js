@@ -2438,8 +2438,8 @@ class Page { // singleton class
         window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
         
-    show( state = "AllPatients" ) { // main routine for displaying different "pages" by hiding different elements
-        //console.log(state);
+    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+        console.log(state,extra);
         Page.show_screen( "screen" );
         this.next(state) ;
 

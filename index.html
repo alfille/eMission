@@ -255,16 +255,16 @@
 						<legend>Notes</legend>
 						<div id="PatientPhotoButtons0">
 							<div class="PatientProcButtons">
-								<button type="button" class="divbutton" onclick="objectPage.show( 'NoteList' )">All Notes</button>
+								<button type="button" class="divbutton" onclick="objectPage.show( 'NoteList', 'All' )">All Notes</button>
 								<button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
 								<button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
 							</div>
 							<div class="PatientProcButtons">
-								<button class="libutton divbutton" type="button">Anesthesia</button>
-								<button class="libutton divbutton" type="button">Admission</button>
-								<button class="libutton divbutton" type="button">Op Note</button>
-								<button class="libutton divbutton" type="button">Post-Op</button>
-								<button class="libutton divbutton" type="button">Follow-up</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Preop' )">Pre-Op</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Anesthesia' )">Anesthesia</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Op' )">Op Note</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Postop' )">Post-Op</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Followup' )">Follow-up</button>
 							</div>
 						</div>
 					</fieldset>
@@ -339,8 +339,19 @@
             <!-- Note display -->
             <div class="notetemplate">
                 <img class="entryfield_image">
-                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
-                <label class="selectdiv">Type<select disabled><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
+                <div class="titlediv">
+					<label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+					<label class="selectdiv">Type
+						<select disabled>
+							<option>Uncategorized</option>
+							<option>Pre Op</option>
+							<option>Anesthesia</option>
+							<option>Op Note</option>
+							<option>Post Op</option>
+							<option>Followup</option>
+						</select>
+					</label>
+				</div>
                 <div class="entryfield_text"></div>
             </div>
             <!-- Note edit -->
@@ -355,8 +366,19 @@
                     <button type="button" class="imageDelete delete" title="Delete this note"><span><B>Delete</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
-                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
-                <label class="selectdiv">Type<select><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
+                <div class="titlediv">
+					<label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+					<label class="selectdiv">Type
+						<select>
+							<option>Uncategorized</option>
+							<option>Pre Op</option>
+							<option>Anesthesia</option>
+							<option>Op Note</option>
+							<option>Post Op</option>
+							<option>Followup</option>
+						</select>
+					</label>
+				</div>
                 <div class="entryfield_text" contenteditable></div>
             </div>
             <!-- New Note edit -->
@@ -369,8 +391,18 @@
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
                 </div>
-                <div class="titlediv"><label>Title: <div class="entryfield_title choice" contenteditable></div></label>
-                <label class="selectdiv">Type<select><option></option><option>Anesthesia</option><option>Surgery</option><option>Nursing</option></select></label></div>
+                <div class="titlediv">
+					<label>Title: <div class="entryfield_title choice" contenteditable></div></label>
+					<label class="selectdiv">Type
+						<select>
+							<option>Uncategorized</option>
+							<option>Pre Op</option>
+							<option>Anesthesia</option>
+							<option>Op Note</option>
+							<option>Post Op</option>
+							<option>Followup</option>
+						</select>
+				</div>
                 <div class="entryfield_text choice" contenteditable></div>
             </div>
             <fieldset><legend><button type="button" value="show" onclick="objectPatientData.fsclick(this)">&#10134;</button></legend></fieldset>
