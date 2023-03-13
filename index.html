@@ -241,34 +241,39 @@
                 <div id="PatientPhotoContent" >
                     <div id="PatientPhotoContent2"></div>
                 </div>
-                <div id="NoteChoiceButtons">
-					<fieldset>
-						<legend>Notes</legend>
-						<div class="PatientProcButtons" id="NoteChoiceButtons2">
-							<button type="button" class="divbutton" onclick="objectPage.show( 'NoteList' )">All Notes</button>
-							<button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-							<button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
-							<button class="libutton divbutton" type="button">Anesthesia</button>
-							<button class="libutton divbutton" type="button">Admission</button>
-							<button class="libutton divbutton" type="button">Op Note</button>
-							<button class="libutton divbutton" type="button">Post-Op</button>
-							<button class="libutton divbutton" type="button">Follow-up</button>
-						</div>
-					</fieldset>
-                </div>
-                <div id="PatientPhotoButtons">
+                <div id="PatientPhotoButtons1">
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientDemographics' )">Demographics</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMedical' )">Medical</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationList' )">Operations</button>
-                    </div>
-                    <div class="PatientProcButtons" id="ProcList">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'NoteList' )">Notes</button>
-                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
                     </div>
                     <div class="PatientProcButtons">
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationList' )">Operations</button>
+                    </div>
+                </div>
+                <div id="NoteChoiceButtons">
+					<fieldset id="NoteFieldset">
+						<legend>Notes</legend>
+						<div id="PatientPhotoButtons0">
+							<div class="PatientProcButtons">
+								<button type="button" class="divbutton" onclick="objectPage.show( 'NoteList' )">All Notes</button>
+								<button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
+								<button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
+							</div>
+							<div class="PatientProcButtons">
+								<button class="libutton divbutton" type="button">Anesthesia</button>
+								<button class="libutton divbutton" type="button">Admission</button>
+								<button class="libutton divbutton" type="button">Op Note</button>
+								<button class="libutton divbutton" type="button">Post-Op</button>
+								<button class="libutton divbutton" type="button">Follow-up</button>
+							</div>
+						</div>
+					</fieldset>
+                </div>
+                <div id="PatientPhotoButtons1">
+                    <div class="PatientProcButtons">
                         <button type="button" class="divbutton" onclick="Patient.printCard()">Print Card</button>
+                    </div>
+                    <div class="PatientProcButtons">
                         <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
                     </div>
                 </div>
