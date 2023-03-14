@@ -121,6 +121,13 @@
                         <button class="sortOrder libutton divbutton" type="button" onclick="NoteList.by()">by Date</button>
                         <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
+                    <!-- top: NoteListCategory -->
+                    <div class="NoteListCategory topButtons pageOverlay">
+                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
+                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
+                        <button class="libutton divbutton" type="button" onclick="objectPage.show('NoteList')">All Notes</button>
+                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
+                    </div>
                     <!-- top: MissionList -->
                     <div class="MissionList topButtons pageOverlay">
                         <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo')">Mission Info</button>
@@ -260,11 +267,11 @@
 								<button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
 							</div>
 							<div class="PatientProcButtons">
-								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Preop' )">Pre-Op</button>
-								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Anesthesia' )">Anesthesia</button>
-								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Op' )">Op Note</button>
-								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Postop' )">Post-Op</button>
-								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteList', 'Followup' )">Follow-up</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteListCategory', 'Pre Op' )">Pre Op</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteListCategory', 'Anesthesia' )">Anesthesia</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteListCategory', 'Op Note' )">Op Note</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteListCategory', 'Post Op' )">Post Op</button>
+								<button class="libutton divbutton" type="button" onclick="objectPage.show( 'NoteListCategory', 'Followup' )">Followup</button>
 							</div>
 						</div>
 					</fieldset>
@@ -296,7 +303,7 @@
                     <center><button type="button" class="divbutton" onclick="objectPage.show('AllPatients')">Ok</button></center>
                 </div>
             </div>
-            <!-- body: NoteList MissionList -->
+            <!-- body: NoteList NoteListCategory MissionList -->
             <div class="NoteList MissionList pageOverlay">
                 <div id="NoteListContent"></div>
             </div>

@@ -4,12 +4,12 @@
 
 // singleton class instances
 var objectPatientData;
-var objectNoteList;
+var objectNoteList={};
+	objectNoteList.category = 'Uncategorized' ;
 var objectTable = null;
 var objectSearch = null;
 var objectRemote = null;
 var objectCollation = null;
-
 
 // globals cookie backed
 var objectPage ;
@@ -1468,6 +1468,7 @@ class Patient { // convenience class
         if ( patientId != pid ) {
             // change patient -- notes dont apply
             Note.unselect();
+            objectNoteList.category = 'Uncategorized' ;
         }
 
         if ( pid == missionId ) {
@@ -1527,6 +1528,7 @@ class Patient { // convenience class
         patientId = null;
         Cookie.del ( "patientId" );
         Note.unselect();
+		objectNoteList.category = 'Uncategorized' ;
         Operation.unselect();
         if ( objectPage.test("AllPatients") ) {
             let pt = document.getElementById("PatientTable");
@@ -1695,7 +1697,7 @@ class Note { // convenience class
             })
         .catch( err => console.log(err.message));
               
-        if ( objectPage.test("NoteList") || objectPage.test("MissionList")) {
+        if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
             // highlight the list row
             let li = document.getElementById("NoteList").getElementsByTagName("li");
             if ( li && (li.length > 0) ) {
@@ -1764,13 +1766,17 @@ class Note { // convenience class
             });
     }
 
-    static template( ) {
+    static template(category=objectNoteList.category) {
+		if ( category=='' ) {
+			category = 'Uncategorized' ;
+		}
         return {
             _id: Note.makeId(),
             text: "",
             title: "",
             author: remoteCouch.username,
             type: "note",
+            category: category,
             patient_id: patientId,
             date: new Date().toISOString(),
         };
@@ -2359,6 +2365,7 @@ class Page { // singleton class
 //            "InvalidPatient",
             "MissionList",
             "NoteList",
+//            "NoteListCatagory",
 //            "NoteNew",
 //            "QuickPhoto",
             ] ;
@@ -2439,7 +2446,6 @@ class Page { // singleton class
     } 
         
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        console.log(state,extra);
         Page.show_screen( "screen" );
         this.next(state) ;
 
@@ -2734,17 +2740,20 @@ class Page { // singleton class
                 Mission.select() ;
                 db.get( missionId )
                 .then( () => Note.getRecords(true ) )
-                .then( notelist => objectNoteList = new NoteList(notelist) )
+                .then( notelist => objectNoteList = new NoteList(notelist,'Uncategorized') )
                 .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
                 break;
                 
             case "NoteList":
+				extra = 'Uncategorized';
+				// Fall through
+            case "NoteListCategory":
                 if ( Patient.isSelected() ) {
                     Patient.getRecord( false )
                     .then( () => Note.getRecords(true) )
-                    .then( notelist => objectNoteList = new NoteList(notelist) )
+                    .then( notelist => objectNoteList = new NoteList(notelist,extra) )
                     .catch( (err) => {
-                        console.log("NoteList",err);
+                        console.log("NoteList",extra,err);
                         this.show( "InvalidPatient" );
                         });
                 } else {
@@ -2767,7 +2776,7 @@ class Page { // singleton class
            case "QuickPhoto":
                 this.forget(); // don't return here!
                 if ( patientId ) { // patient or Mission!
-                    Note.quickPhoto();
+                    Note.quickPhoto(extra);
                 } else {
                     this.show( "AllPatients" );
                 }
@@ -3277,24 +3286,40 @@ function cloneClass( fromClass, target ) {
 }    
 
 class NoteList {
-    constructor( notelist ) {
+    constructor( notelist, category="Uncategorized" ) {
+		this.category = category;
+		if ( category == "" ) {
+			this.category = "Uncategorized" ;
+		}
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
+		// Default sort order
         if ( NoteList.sortOrder == undefined ) {
             NoteList.sortOrder="date";
-
-        }
-        switch( NoteList.sortOrder ) {
-            case "date":
-                document.querySelector(".sortOrder").innerText="by Type";
-                break ;
-            case "type":
-                document.querySelector(".sortOrder").innerText="by Date";
-                notelist.rows.sort( (a,b)=> (a.doc ?.category??"").localeCompare(b.doc ?.category??"") );
-                break ;
         }
 
+        // place categories (if none exist)
+        notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
+
+		// Filter or sort
+		if ( this.category == 'Uncategorized' ) {
+			// All, can sort -- and relabel top button
+			switch( NoteList.sortOrder ) {
+				case "date":
+					document.querySelector(".sortOrder").innerText="by Type";
+					break ;
+				case "type":
+					document.querySelector(".sortOrder").innerText="by Date";
+					notelist.rows.sort( (a,b)=> (a.doc.category).localeCompare(b.doc.category) );
+					break ;
+			}
+		} else {
+			// category selected, must filter
+            NoteList.sortOrder="date";
+			notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
+		}
+		
         // show notes
         if ( notelist.rows.length == 0 ) {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
@@ -3332,6 +3357,7 @@ class NoteList {
                 NoteList.sortOrder="date";
                 break ;
         }
+        console.log(NoteList.sortOrder);
         objectPage.show("NoteList");
     }
 

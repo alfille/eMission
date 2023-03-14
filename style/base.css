@@ -195,7 +195,7 @@ body {
   display: none ;
 }
 
-#NoteList li:nth-child(odd) {
+.NoteList li:nth-child(odd) {
   font-style: italic;
   display: flex;
   width: 100%;
