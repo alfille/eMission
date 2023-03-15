@@ -725,7 +725,13 @@ class ImageNote extends ImagePlus {
     
     leave() {
         this.buttonsdisabled( false );
-        objectPage.show( (patientId == missionId) ? 'MissionList' : 'NoteList' );
+        if (patientId == missionId) {
+			objectPage.show( 'MissionList');
+		} else if ( objectNoteList.category == 'Uncategorized' ) {
+			objectPage.show( 'NoteList');
+		} else {
+			objectPage.show( 'NoteListCategory', objectNoteList.category);
+		}
     }
 
     store() {
@@ -1543,13 +1549,30 @@ class Patient { // convenience class
         document.getElementById( "titlebox" ).innerHTML = "";
     }
 
-    static menu( doc ) {
+    static menu( doc, notelist ) {
         let d = document.getElementById("PatientPhotoContent2");
         let inp = new Image( d, doc, NoPhoto );
 
         cloneClass( ".imagetemplate", d );
         inp.display();
+		NoteList.categorize(notelist);
+		Patient.buttonSub( "nAll", notelist.rows.length );
+		Patient.buttonCalcSub( "nPreOp",      "Pre Op",     notelist ) ;
+		Patient.buttonCalcSub( "nAnesthesia", "Anesthesia", notelist ) ;
+		Patient.buttonCalcSub( "nOpNote",     "Op Note",    notelist ) ;
+		Patient.buttonCalcSub( "nPostOp",     "Post Op",    notelist ) ;
+		Patient.buttonCalcSub( "nFollowup",   "Followup",   notelist ) ;
     }
+
+	static buttonCalcSub( id, cat, notelist ) {
+		Patient.buttonSub( id, notelist.rows.filter( r=>r.doc.category==cat ).length );
+	}
+
+	static buttonSub( id, num ) {
+		let d=document.getElementById(id);
+		d.innerText=d.innerText.replace( /\(.*\)/ , `(${num})` );
+	}
+	
     static printCard() {
         if ( patientId == null ) {
             return objectPage.show( "InvalidPatient" );
@@ -1762,7 +1785,13 @@ class Note { // convenience class
                     }))
                     .then( () => Note.getRecords(false) ) // refresh the list
                     .catch( err => console.log(err) )
-                    .finally( () => objectPage.show( "NoteList" ) );
+                    .finally( () => {
+						if (objectNoteList.category=='Uncategorized') {
+							objectPage.show( "NoteList" );
+						} else {
+							objectPage.show( "NoteListCategory",objectNoteList.category );
+						}
+						});
             });
     }
 
@@ -2663,8 +2692,13 @@ class Page { // singleton class
             case "PatientPhoto":
                 if ( Patient.isSelected() ) {
                     Patient.select( patientId );
+                    let pdoc;
                     Patient.getRecord( true )
-                    .then( (doc) => Patient.menu( doc ) )
+                    .then( (doc) => {
+						pdoc = doc;
+						return Note.getRecords( true ); 
+						})
+                    .then ( (notelist) => Patient.menu( pdoc, notelist ) )
                     .catch( (err) => {
                         console.log("PatientPhoto",err);
                         this.show( "InvalidPatient" );
@@ -3291,6 +3325,8 @@ class NoteList {
 		if ( category == "" ) {
 			this.category = "Uncategorized" ;
 		}
+		NoteList.categorize(notelist);
+
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
@@ -3298,9 +3334,6 @@ class NoteList {
         if ( NoteList.sortOrder == undefined ) {
             NoteList.sortOrder="date";
         }
-
-        // place categories (if none exist)
-        notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
 
 		// Filter or sort
 		if ( this.category == 'Uncategorized' ) {
@@ -3332,7 +3365,6 @@ class NoteList {
                 this.ul.appendChild( li1 );
                 let li2 = this.liNote(note,li1);
                 this.ul.appendChild( li2 );
-
                 });
             this.li = this.ul.getElementsByTagName('li');
         }
@@ -3357,9 +3389,15 @@ class NoteList {
                 NoteList.sortOrder="date";
                 break ;
         }
-        console.log(NoteList.sortOrder);
         objectPage.show("NoteList");
     }
+
+	static categorize( notelist ) {
+		// place categories (if none exist)
+        notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
+        notelist.rows.forEach(r=> { if (r.doc.category=='') r.doc.category = "Uncategorized" ; } ); 
+	}
+
 
     liLabel( note ) {
         let li = document.createElement("li");
