@@ -739,7 +739,7 @@ class ImageNote extends ImagePlus {
         db.put( this.doc )
         .then( resp => {
             Note.select( resp.id );
-            return Note.getAll(); // to prime list
+            return Note.getAllIdDoc(); // to prime list
             })
         .catch( err => console.log(err) )
         .finally( () => this.leave() );
@@ -768,7 +768,7 @@ class ImageNote extends ImagePlus {
 
     delete() {
         let pdoc;
-        Patient.getRecord( false )
+        Patient.getRecordId()
         .then( (doc) => {
             pdoc = doc;
             return db.get( noteId );
@@ -1410,16 +1410,16 @@ class Patient { // convenience class
             let pdoc;
             let ndocs;
             let odocs;
-            Patient.getRecord( true )
+            Patient.getRecordIdPix()
                 // get patient
             .then( (doc) => {
                 pdoc = doc;
-                return Note.getRecords(true);
+                return Note.getRecordsIdDoc();
                 })
             .then( (docs) => {
                 // get notes
                 ndocs = docs.rows;
-                return Operation.getRecords(true);
+                return Operation.getRecordsIdDoc();
                 })
             .then( (docs) => {
                 // get operations
@@ -1452,20 +1452,41 @@ class Patient { // convenience class
         }
     }
 
-    static getRecord(attachments) {
-        return db.get( patientId, { attachments: attachments, binary: attachments } );
+    static getRecordId(id=patientId ) {
+        return db.get( id );
     }
 
-    static getAll(attachments) {
+    static getRecordIdPix(id=patientId ) {
+        return db.get( id, { attachments:true, binary:true } );
+    }
+
+	static getAllId() {
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
         };
-        if (attachments) {
-            doc.include_docs = true;
-            doc.binary = true;
-            doc.attachments = true;
-        }
+
+        return db.allDocs(doc);
+    }
+		
+	static getAllIdDoc() {
+        let doc = {
+            startkey: [ RecordFormat.type.patient, ""].join(";"),
+            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            include_docs: true,
+        };
+
+        return db.allDocs(doc);
+    }
+		
+	static getAllIdDocPix() {
+        let doc = {
+            startkey: [ RecordFormat.type.patient, ""].join(";"),
+            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            include_docs: true,
+            binary: true,
+            attachments: true,
+        };
 
         return db.allDocs(doc);
     }
@@ -1579,7 +1600,7 @@ class Patient { // convenience class
         }
         let card = document.getElementById("printCard");
         let t = card.getElementsByTagName("table");
-        Patient.getRecord( true )
+        Patient.getRecordIdPix()
         .then( (doc) => {
             Page.show_screen( "patient" );
             let img = new Image( card, doc, NoPhoto ) ;
@@ -1610,7 +1631,7 @@ class Patient { // convenience class
             }) 
         .then( (doc) => {
             t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
-            return Operation.getRecords(true);
+            return Operation.getRecordsIdDoc();
             })
         .then( (docs) => {
             let oleng = docs.rows.length;
@@ -1641,7 +1662,7 @@ class Patient { // convenience class
 }
 
 class Note { // convenience class
-    static getAll() {
+    static getAllIdDoc() {
         let doc = {
             startkey: [ RecordFormat.type.note, ""].join(";"),
             endkey:   [ RecordFormat.type.note, "\\fff0"].join(";"),
@@ -1652,7 +1673,7 @@ class Note { // convenience class
         return db.allDocs(doc);
     }
 
-    static getRecords(attachments) {
+    static getRecordsId() {
         let pspl = Patient.splitId();
         let doc = {
             startkey: [
@@ -1670,12 +1691,52 @@ class Note { // convenience class
                 pspl.dob,
                 "\\fff0"].join(";"),
         };
-        if (attachments) {
-            doc.include_docs = true;
-            doc.binary = true;
-            doc.attachments = true;
-        }
-        
+        return db.allDocs(doc) ;
+    }
+
+    static getRecordsIdDoc() {
+        let pspl = Patient.splitId();
+        let doc = {
+            startkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                ""].join(";"),
+            endkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                "\\fff0"].join(";"),
+            include_docs: true,
+        };
+        return db.allDocs(doc) ;
+    }
+
+    static getRecordsIdPix() {
+        let pspl = Patient.splitId();
+        let doc = {
+            startkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                ""].join(";"),
+            endkey: [
+                RecordFormat.type.note,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                "\\fff0"].join(";"),
+            include_docs: true,
+            binary: true,
+            attachments: true,
+        };
         return db.allDocs(doc) ;
     }
 
@@ -1783,7 +1844,7 @@ class Note { // convenience class
                             });
                     reader.readAsDataURL(file); // start reading the file data.
                     }))
-                    .then( () => Note.getRecords(false) ) // refresh the list
+                    .then( () => Note.getRecordsId() ) // refresh the list
                     .catch( err => console.log(err) )
                     .finally( () => {
 						if (objectNoteList.category=='Uncategorized') {
@@ -1820,7 +1881,7 @@ class Note { // convenience class
             img.handle();
             img.save(doc);
             db.put(doc)
-            .then( () => Note.getRecords( false ) ) // to try to prime the list
+            .then( () => Note.getRecordsId() ) // to try to prime the list
             .catch( err => console.log("QuickPhoto",err) )
             .finally( objectPage.show( null ) );
         }
@@ -1896,7 +1957,7 @@ class Operation { // convenience class
     static del() {
         if ( operationId ) {
             let pdoc;
-            Patient.getRecord( false )
+            Patient.getRecordId()
             .then( (doc) => { 
                 pdoc = doc;
                 return db.get( operationId );
@@ -1916,19 +1977,17 @@ class Operation { // convenience class
         return true;
     }    
         
-    static getAll() {
+    static getAllIdDoc() {
         let doc = {
             startkey: [ RecordFormat.type.operation, ""].join(";"),
             endkey:   [ RecordFormat.type.operation, "\\fff0"].join(";"),
             include_docs: true,
-            binary: true,
-            attachments: true,
         };
         return db.allDocs(doc);
     }
 
-    static getRecords(attachments) {
-        let pspl = Patient.splitId();
+    static getRecordsId(pid=patientId) {
+        let pspl = Patient.splitId(pid);
         let doc = {
             startkey: [
                 RecordFormat.type.operation,
@@ -1944,45 +2003,63 @@ class Operation { // convenience class
                 pspl.first,
                 pspl.dob,
                 "\\fff0"].join(";"),
+            include_docs: true,
         };
-        if (attachments) {
-            doc.include_docs = true;
-            doc.binary = true;
-            doc.attachments = true;
+        return db.allDocs(doc) ;
+    }
+	static getRecordsIdDoc( pid=patientId ) {
+        let pspl = Patient.splitId(pid);
+        let doc = {
+            startkey: [
+                RecordFormat.type.operation,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                ""].join(";"),
+            endkey: [
+                RecordFormat.type.operation,
+                RecordFormat.version,
+                pspl.last,
+                pspl.first,
+                pspl.dob,
+                "\\fff0"].join(";"),
+            include_docs: true,
+        };
 
-            // Adds a single "blank"
-            // also purges excess "blanks"
-            return db.allDocs(doc)
-            .then( (doclist) => {
-                let newlist = doclist.rows
-                    .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
-                    .map( row => row.doc );
-                switch ( newlist.length ) {
-                    case 0 :
-                        throw null;
-                    case 1 :
-                        return Promise.resolve( doclist );
-                    default:
-                        throw newlist.slice(1);
-                    }
-                })
-            .catch( (dlist) => {
-                if ( dlist == null ) {
-                    // needs an empty
-                    throw null;
-                }
-                // too many empties
-                //console.log("Remove", dlist.length,"entries");
-                return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-                    .then( ()=> Operation.getRecords( attachments )
-                    );
-                })
-            .catch( () => {
-                return Operation.create().then( () => db.allDocs(doc) );
-                });
-        } else {
-            return db.allDocs(doc);
-        }
+		// Adds a single "blank"
+		// also purges excess "blanks"
+		//console.log(doc);
+		return db.allDocs(doc)
+		.then( (doclist) => {
+			//console.log(doclist);
+			let newlist = doclist.rows
+				.filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
+				.map( row => row.doc );
+			//console.log(newlist);
+			switch ( newlist.length ) {
+				case 0 :
+					throw null;
+				case 1 :
+					return Promise.resolve( doclist );
+				default:
+					throw newlist.slice(1);
+				}
+			})
+		.catch( (dlist) => {
+			if ( dlist == null ) {
+				// needs an empty
+				throw null;
+			}
+			// too many empties
+			//console.log("Remove", dlist.length,"entries");
+			return Promise.all(dlist.map( (doc) => db.remove(doc) ))
+				.then( ()=> Operation.getRecordsIdDoc( pid )
+				);
+			})
+		.catch( () => {
+			return Operation.create().then( () => db.allDocs(doc) );
+			});
     }
 
 }
@@ -2021,10 +2098,13 @@ class User { // convenience class
         document.getElementById("editreviewuser").disabled = true;
     }
 
-    static getAll(attachments) {
+    static getAllIdDoc() {
         let doc = {
             startkey: "org.couchdb.user:",
             endkey: "org.couchdb.user:\\fff0",
+            include_docs: true,
+            binary: true,
+            attachments: true,
         } ;
         if (attachments) {
             doc.include_docs = true;
@@ -2306,7 +2386,7 @@ class CSV { // convenience class
     static downloadPatients() {
         const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
         let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
-        Patient.getAll(true)
+        Patient.getAllIdDoc()
         .then( doclist => {
             csv += doclist.rows
                 .map( row => fields
@@ -2329,17 +2409,17 @@ class CSV { // convenience class
         let plist;
         let olist = {};
         let nlist = {};
-        Patient.getAll(true)
+        Patient.getAllIdDoc()
         .then( doclist => {
             plist = doclist.rows;
             plist.forEach( p => nlist[p.id] = 0 );
-            return Operation.getAll();
+            return Operation.getAllIdDoc();
             })
         .then ( doclist => {
             doclist.rows
             .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
             .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
-            return Note.getAll();
+            return Note.getAllIdDoc();
             })
         .then( doclist => {
             doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
@@ -2526,7 +2606,7 @@ class Page { // singleton class
                     this.show( "SuperUser" );
                 } else {
                     objectTable = new UserTable( ["name", "roles", "email", "type", ] );
-                    User.getAll(true)
+                    User.getAllIdDoc()
                     .then( docs => objectTable.fill(docs.rows ) )
                     .catch( (err) => {
                         console.log("UserList",err.message) ;
@@ -2580,7 +2660,7 @@ class Page { // singleton class
                 
             case "AllPatients":
                 objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
-                Patient.getAll(true)
+                Patient.getAllIdDoc()
                 .then( (docs) => {
                     objectTable.fill(docs.rows );
                     if ( Patient.isSelected() ) {
@@ -2594,7 +2674,7 @@ class Page { // singleton class
 
             case "DBTable":
                 objectTable = new DatabaseTable( ["Name","Organization","Location","StartDate"] );
-                Collation.getAll()
+                Collation.getAllIdDoc()
                 .then( (docs) => {
                     objectTable.fill(docs.rows) ;
                     })
@@ -2609,7 +2689,7 @@ class Page { // singleton class
             case "OperationList":
                 if ( Patient.isSelected() ) {
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Date-Time", "Duration", "Equipment" ]  );
-                    Operation.getRecords(true)
+                    Operation.getRecordsIdDoc()
                     .then( (docs) => objectTable.fill(docs.rows ) )
                     .catch( (err) => console.log("OperationList",err) );
                 } else {
@@ -2621,27 +2701,32 @@ class Page { // singleton class
             {
                 Patient.unselect();
                 let last_pid = "" ;
-                let rlist;
-                Operation.getAll()
+                let olist;
+                Operation.getAllIdDoc()
                 .then( doclist =>  
                         doclist.rows.
                         filter( r=> { 
                             if ( r.doc.patient_id !== last_pid ) {
+								// different patient
                                 last_pid = r.doc.patient_id;
                                 return true ;
                             } else {
-                                return r.doc.Procedure == "Enter new procedure";
+								// test for null op
+                                return r.doc.Procedure !== "Enter new procedure";
                             }
                             })
                     )
                 .then( doclist => {
-                    rlist = doclist ;
-                    return db.query( "Pid2Name",{keys:rlist.map(r=>r.doc.patient_id),});
+                    olist = doclist ;
+                    return db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),});
                     })  
                 .then( nlist => {
+					const n2id = {} ;
+					nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
+					olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Name", "Date-Time" ]  );
-                    rlist.forEach((r,i)=>r.doc.Name=nlist.rows[i].value[0]);
-                    objectTable.fill(rlist);
+					// Default value
+                    objectTable.fill(olist);
                     })
                 .catch( err=>console.log("AllOperations",err) )
                     ;
@@ -2693,10 +2778,10 @@ class Page { // singleton class
                 if ( Patient.isSelected() ) {
                     Patient.select( patientId );
                     let pdoc;
-                    Patient.getRecord( true )
+                    Patient.getRecordIdPix()
                     .then( (doc) => {
 						pdoc = doc;
-						return Note.getRecords( true ); 
+						return Note.getRecordsIdDoc(); 
 						})
                     .then ( (notelist) => Patient.menu( pdoc, notelist ) )
                     .catch( (err) => {
@@ -2710,7 +2795,7 @@ class Page { // singleton class
                 
             case "MissionInfo":
                 Mission.select();
-                Patient.getRecord( true )
+                Patient.getRecordIdPix()
                 .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
                 .catch( () => {
                     let doc = {
@@ -2726,7 +2811,7 @@ class Page { // singleton class
                 
             case "PatientDemographics":
                 if ( Patient.isSelected() ) {
-                    Patient.getRecord( true )
+                    Patient.getRecordIdPix()
                     .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
                     .catch( (err) => {
                         console.log("PatientDemographics",err);
@@ -2740,10 +2825,10 @@ class Page { // singleton class
             case "PatientMedical":
                 if ( Patient.isSelected() ) {
                     let args;
-                    Patient.getRecord( false )
+                    Patient.getRecordId()
                     .then( (doc) => {
                         args = [doc,structMedical];
-                        return Operation.getRecords(true);
+                        return Operation.getRecordsIdDoc();
                         })
                     .then( ( olist ) => {
                         olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
@@ -2773,7 +2858,7 @@ class Page { // singleton class
             case "MissionList":
                 Mission.select() ;
                 db.get( missionId )
-                .then( () => Note.getRecords(true ) )
+                .then( () => Note.getRecordsIdPix() )
                 .then( notelist => objectNoteList = new NoteList(notelist,'Uncategorized') )
                 .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
                 break;
@@ -2783,8 +2868,8 @@ class Page { // singleton class
 				// Fall through
             case "NoteListCategory":
                 if ( Patient.isSelected() ) {
-                    Patient.getRecord( false )
-                    .then( () => Note.getRecords(true) )
+                    Patient.getRecordId()
+                    .then( () => Note.getRecordsIdPix() )
                     .then( notelist => objectNoteList = new NoteList(notelist,extra) )
                     .catch( (err) => {
                         console.log("NoteList",extra,err);
@@ -3475,12 +3560,11 @@ class Collation {
         PouchDB.replicate( 'https://emissionsystem.org:6984/databases', this.db, { live:true, retry:true } ) ;
     }
 
-    static getAll() {
+    static getAllIdDoc() {
         let doc = {
             startkey: '0',
             endkey:   '1',
             include_docs: true,
-            attachments: true,
         };
         return objectCollation.db.allDocs(doc);
     }
@@ -3612,7 +3696,7 @@ window.onload = () => {
             Patient.select() ;
         }
         if ( operationId ) {
-            Operation.select() ;
+            Operation.select(operationId) ;
         }
         if ( noteId ) {
             Note.select() ;
