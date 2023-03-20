@@ -1986,6 +1986,25 @@ class Operation { // convenience class
         return db.allDocs(doc);
     }
 
+	static getAllIdDocCurated() {
+		// only real cases or placeholder if no others for that paitent
+		let last_pid = "" ;
+		return Operation.getAllIdDoc()
+		.then( doclist =>  
+				doclist.rows.
+				filter( r=> { 
+					if ( r.doc.patient_id !== last_pid ) {
+						// different patient
+						last_pid = r.doc.patient_id;
+						return true ;
+					} else {
+						// test for null op
+						return r.doc.Procedure !== "Enter new procedure";
+					}
+					}) 
+			);
+	}
+
     static getRecordsId(pid=patientId) {
         let pspl = Patient.splitId(pid);
         let doc = {
@@ -2659,9 +2678,20 @@ class Page { // singleton class
                 break;
                 
             case "AllPatients":
-                objectTable = new PatientTable( ["LastName", "FirstName", "DOB","Dx" ] );
-                Patient.getAllIdDoc()
+                objectTable = new PatientTable( ["LastName", "FirstName", "Procedure","Date-Time","Surgeon" ] );
+                let o2pid = {} ;
+                Operation.getAllIdDocCurated()
+                .then( doclist => {
+					doclist.forEach( r => o2pid[r.doc.patient_id] = ({
+						"Procedure": r.doc["Procedure"],
+						"Date-Time": r.doc["Date-Time"],
+						"Surgeon": r.doc["Surgeon"],
+						})) ;
+					console.log(o2pid);
+					return Patient.getAllIdDoc() ;
+					})
                 .then( (docs) => {
+					docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
                     objectTable.fill(docs.rows );
                     if ( Patient.isSelected() ) {
                         Patient.select( patientId );
@@ -2702,20 +2732,7 @@ class Page { // singleton class
                 Patient.unselect();
                 let last_pid = "" ;
                 let olist;
-                Operation.getAllIdDoc()
-                .then( doclist =>  
-                        doclist.rows.
-                        filter( r=> { 
-                            if ( r.doc.patient_id !== last_pid ) {
-								// different patient
-                                last_pid = r.doc.patient_id;
-                                return true ;
-                            } else {
-								// test for null op
-                                return r.doc.Procedure !== "Enter new procedure";
-                            }
-                            })
-                    )
+                Operation.getAllIdDocCurated()
                 .then( doclist => {
                     olist = doclist ;
                     return db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),});
