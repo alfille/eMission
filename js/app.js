@@ -2722,11 +2722,13 @@ class Page { // singleton class
                     })  
                 .then( nlist => {
 					const n2id = {} ;
+					// create an pid -> name dict
 					nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
+					// Assign names, filter out empties
 					olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Name", "Date-Time" ]  );
 					// Default value
-                    objectTable.fill(olist);
+                    objectTable.fill(olist.filter(o=>o.doc.Name!==""));
                     })
                 .catch( err=>console.log("AllOperations",err) )
                     ;
