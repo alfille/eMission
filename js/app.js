@@ -1570,12 +1570,13 @@ class Patient { // convenience class
         document.getElementById( "titlebox" ).innerHTML = "";
     }
 
-    static menu( doc, notelist ) {
+    static menu( doc, notelist, onum=0 ) {
         let d = document.getElementById("PatientPhotoContent2");
         let inp = new Image( d, doc, NoPhoto );
 
         cloneClass( ".imagetemplate", d );
         inp.display();
+		Patient.buttonSub( "nOps", onum );
 		NoteList.categorize(notelist);
 		Patient.buttonSub( "nAll", notelist.rows.length );
 		Patient.buttonCalcSub( "nPreOp",      "Pre Op",     notelist ) ;
@@ -2797,12 +2798,18 @@ class Page { // singleton class
                 if ( Patient.isSelected() ) {
                     Patient.select( patientId );
                     let pdoc;
+                    let onum ;
                     Patient.getRecordIdPix()
                     .then( (doc) => {
 						pdoc = doc;
+						return Operation.getRecordsIdDoc(); 
+						})
+					.then ( (doclist) => {
+						onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
+						console.log("onum",onum);
 						return Note.getRecordsIdDoc(); 
 						})
-                    .then ( (notelist) => Patient.menu( pdoc, notelist ) )
+                    .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
                     .catch( (err) => {
                         console.log("PatientPhoto",err);
                         this.show( "InvalidPatient" );
