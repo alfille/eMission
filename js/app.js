@@ -5,7 +5,7 @@
 // singleton class instances
 var objectPatientData;
 var objectNoteList={};
-	objectNoteList.category = 'Uncategorized' ;
+    objectNoteList.category = 'Uncategorized' ;
 var objectTable = null;
 var objectSearch = null;
 var objectRemote = null;
@@ -726,12 +726,12 @@ class ImageNote extends ImagePlus {
     leave() {
         this.buttonsdisabled( false );
         if (patientId == missionId) {
-			objectPage.show( 'MissionList');
-		} else if ( objectNoteList.category == 'Uncategorized' ) {
-			objectPage.show( 'NoteList');
-		} else {
-			objectPage.show( 'NoteListCategory', objectNoteList.category);
-		}
+            objectPage.show( 'MissionList');
+        } else if ( objectNoteList.category == 'Uncategorized' ) {
+            objectPage.show( 'NoteList');
+        } else {
+            objectPage.show( 'NoteListCategory', objectNoteList.category);
+        }
     }
 
     store() {
@@ -1460,7 +1460,7 @@ class Patient { // convenience class
         return db.get( id, { attachments:true, binary:true } );
     }
 
-	static getAllId() {
+    static getAllId() {
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
@@ -1468,8 +1468,8 @@ class Patient { // convenience class
 
         return db.allDocs(doc);
     }
-		
-	static getAllIdDoc() {
+        
+    static getAllIdDoc() {
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
@@ -1478,8 +1478,8 @@ class Patient { // convenience class
 
         return db.allDocs(doc);
     }
-		
-	static getAllIdDocPix() {
+        
+    static getAllIdDocPix() {
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
@@ -1555,7 +1555,7 @@ class Patient { // convenience class
         patientId = null;
         Cookie.del ( "patientId" );
         Note.unselect();
-		objectNoteList.category = 'Uncategorized' ;
+        objectNoteList.category = 'Uncategorized' ;
         Operation.unselect();
         if ( objectPage.test("AllPatients") ) {
             let pt = document.getElementById("PatientTable");
@@ -1576,25 +1576,25 @@ class Patient { // convenience class
 
         cloneClass( ".imagetemplate", d );
         inp.display();
-		Patient.buttonSub( "nOps", onum );
-		NoteList.categorize(notelist);
-		Patient.buttonSub( "nAll", notelist.rows.length );
-		Patient.buttonCalcSub( "nPreOp",      "Pre Op",     notelist ) ;
-		Patient.buttonCalcSub( "nAnesthesia", "Anesthesia", notelist ) ;
-		Patient.buttonCalcSub( "nOpNote",     "Op Note",    notelist ) ;
-		Patient.buttonCalcSub( "nPostOp",     "Post Op",    notelist ) ;
-		Patient.buttonCalcSub( "nFollowup",   "Followup",   notelist ) ;
+        Patient.buttonSub( "nOps", onum );
+        NoteList.categorize(notelist);
+        Patient.buttonSub( "nAll", notelist.rows.length );
+        Patient.buttonCalcSub( "nPreOp",      "Pre Op",     notelist ) ;
+        Patient.buttonCalcSub( "nAnesthesia", "Anesthesia", notelist ) ;
+        Patient.buttonCalcSub( "nOpNote",     "Op Note",    notelist ) ;
+        Patient.buttonCalcSub( "nPostOp",     "Post Op",    notelist ) ;
+        Patient.buttonCalcSub( "nFollowup",   "Followup",   notelist ) ;
     }
 
-	static buttonCalcSub( id, cat, notelist ) {
-		Patient.buttonSub( id, notelist.rows.filter( r=>r.doc.category==cat ).length );
-	}
+    static buttonCalcSub( id, cat, notelist ) {
+        Patient.buttonSub( id, notelist.rows.filter( r=>r.doc.category==cat ).length );
+    }
 
-	static buttonSub( id, num ) {
-		let d=document.getElementById(id);
-		d.innerText=d.innerText.replace( /\(.*\)/ , `(${num})` );
-	}
-	
+    static buttonSub( id, num ) {
+        let d=document.getElementById(id);
+        d.innerText=d.innerText.replace( /\(.*\)/ , `(${num})` );
+    }
+    
     static printCard() {
         if ( patientId == null ) {
             return objectPage.show( "InvalidPatient" );
@@ -1848,19 +1848,19 @@ class Note { // convenience class
                     .then( () => Note.getRecordsId() ) // refresh the list
                     .catch( err => console.log(err) )
                     .finally( () => {
-						if (objectNoteList.category=='Uncategorized') {
-							objectPage.show( "NoteList" );
-						} else {
-							objectPage.show( "NoteListCategory",objectNoteList.category );
-						}
-						});
+                        if (objectNoteList.category=='Uncategorized') {
+                            objectPage.show( "NoteList" );
+                        } else {
+                            objectPage.show( "NoteListCategory",objectNoteList.category );
+                        }
+                        });
             });
     }
 
     static template(category=objectNoteList.category) {
-		if ( category=='' ) {
-			category = 'Uncategorized' ;
-		}
+        if ( category=='' ) {
+            category = 'Uncategorized' ;
+        }
         return {
             _id: Note.makeId(),
             text: "",
@@ -1987,24 +1987,18 @@ class Operation { // convenience class
         return db.allDocs(doc);
     }
 
-	static getAllIdDocCurated() {
-		// only real cases or placeholder if no others for that paitent
-		let last_pid = "" ;
-		return Operation.getAllIdDoc()
-		.then( doclist =>  
-				doclist.rows.
-				filter( r=> { 
-					if ( r.doc.patient_id !== last_pid ) {
-						// different patient
-						last_pid = r.doc.patient_id;
-						return true ;
-					} else {
-						// test for null op
-						return r.doc.Procedure !== "Enter new procedure";
-					}
-					}) 
-			);
-	}
+    static getAllIdDocCurated() {
+        // only real cases or placeholder if no others for that paitent
+        return Operation.getAllIdDoc()
+        .then( doclist => { 
+            const pids = new Set() ;
+            doclist.rows
+            .filter( r => r.doc.Procedure !== "Enter new procedure" )
+            .forEach( r => pids.add( r.doc.patient_id ) ) ;
+            return doclist.rows
+                   .filter( r => (r.doc.Procedure !== "Enter new procedure") || !pids.has( r.doc.patient_id ) ) ;
+            });
+    }
 
     static getRecordsId(pid=patientId) {
         let pspl = Patient.splitId(pid);
@@ -2027,7 +2021,7 @@ class Operation { // convenience class
         };
         return db.allDocs(doc) ;
     }
-	static getRecordsIdDoc( pid=patientId ) {
+    static getRecordsIdDoc( pid=patientId ) {
         let pspl = Patient.splitId(pid);
         let doc = {
             startkey: [
@@ -2047,39 +2041,39 @@ class Operation { // convenience class
             include_docs: true,
         };
 
-		// Adds a single "blank"
-		// also purges excess "blanks"
-		//console.log(doc);
-		return db.allDocs(doc)
-		.then( (doclist) => {
-			//console.log(doclist);
-			let newlist = doclist.rows
-				.filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
-				.map( row => row.doc );
-			//console.log(newlist);
-			switch ( newlist.length ) {
-				case 0 :
-					throw null;
-				case 1 :
-					return Promise.resolve( doclist );
-				default:
-					throw newlist.slice(1);
-				}
-			})
-		.catch( (dlist) => {
-			if ( dlist == null ) {
-				// needs an empty
-				throw null;
-			}
-			// too many empties
-			//console.log("Remove", dlist.length,"entries");
-			return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-				.then( ()=> Operation.getRecordsIdDoc( pid )
-				);
-			})
-		.catch( () => {
-			return Operation.create().then( () => db.allDocs(doc) );
-			});
+        // Adds a single "blank"
+        // also purges excess "blanks"
+        //console.log(doc);
+        return db.allDocs(doc)
+        .then( (doclist) => {
+            //console.log(doclist);
+            let newlist = doclist.rows
+                .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
+                .map( row => row.doc );
+            //console.log(newlist);
+            switch ( newlist.length ) {
+                case 0 :
+                    throw null;
+                case 1 :
+                    return Promise.resolve( doclist );
+                default:
+                    throw newlist.slice(1);
+                }
+            })
+        .catch( (dlist) => {
+            if ( dlist == null ) {
+                // needs an empty
+                throw null;
+            }
+            // too many empties
+            //console.log("Remove", dlist.length,"entries");
+            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
+                .then( ()=> Operation.getRecordsIdDoc( pid )
+                );
+            })
+        .catch( () => {
+            return Operation.create().then( () => db.allDocs(doc) );
+            });
     }
 
 }
@@ -2683,16 +2677,16 @@ class Page { // singleton class
                 let o2pid = {} ;
                 Operation.getAllIdDocCurated()
                 .then( doclist => {
-					doclist.forEach( r => o2pid[r.doc.patient_id] = ({
-						"Procedure": r.doc["Procedure"],
-						"Date-Time": r.doc["Date-Time"],
-						"Surgeon": r.doc["Surgeon"],
-						})) ;
-					console.log(o2pid);
-					return Patient.getAllIdDoc() ;
-					})
+                    doclist.forEach( r => o2pid[r.doc.patient_id] = ({
+                        "Procedure": r.doc["Procedure"],
+                        "Date-Time": r.doc["Date-Time"],
+                        "Surgeon": r.doc["Surgeon"],
+                        })) ;
+                    console.log(o2pid);
+                    return Patient.getAllIdDoc() ;
+                    })
                 .then( (docs) => {
-					docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
+                    docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
                     objectTable.fill(docs.rows );
                     if ( Patient.isSelected() ) {
                         Patient.select( patientId );
@@ -2739,13 +2733,13 @@ class Page { // singleton class
                     return db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),});
                     })  
                 .then( nlist => {
-					const n2id = {} ;
-					// create an pid -> name dict
-					nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
-					// Assign names, filter out empties
-					olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
+                    const n2id = {} ;
+                    // create an pid -> name dict
+                    nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
+                    // Assign names, filter out empties
+                    olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Name", "Date-Time" ]  );
-					// Default value
+                    // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
                     })
                 .catch( err=>console.log("AllOperations",err) )
@@ -2801,14 +2795,14 @@ class Page { // singleton class
                     let onum ;
                     Patient.getRecordIdPix()
                     .then( (doc) => {
-						pdoc = doc;
-						return Operation.getRecordsIdDoc(); 
-						})
-					.then ( (doclist) => {
-						onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-						console.log("onum",onum);
-						return Note.getRecordsIdDoc(); 
-						})
+                        pdoc = doc;
+                        return Operation.getRecordsIdDoc(); 
+                        })
+                    .then ( (doclist) => {
+                        onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
+                        console.log("onum",onum);
+                        return Note.getRecordsIdDoc(); 
+                        })
                     .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
                     .catch( (err) => {
                         console.log("PatientPhoto",err);
@@ -2890,8 +2884,8 @@ class Page { // singleton class
                 break;
                 
             case "NoteList":
-				extra = 'Uncategorized';
-				// Fall through
+                extra = 'Uncategorized';
+                // Fall through
             case "NoteListCategory":
                 if ( Patient.isSelected() ) {
                     Patient.getRecordId()
@@ -3432,38 +3426,38 @@ function cloneClass( fromClass, target ) {
 
 class NoteList {
     constructor( notelist, category="Uncategorized" ) {
-		this.category = category;
-		if ( category == "" ) {
-			this.category = "Uncategorized" ;
-		}
-		NoteList.categorize(notelist);
+        this.category = category;
+        if ( category == "" ) {
+            this.category = "Uncategorized" ;
+        }
+        NoteList.categorize(notelist);
 
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
-		// Default sort order
+        // Default sort order
         if ( NoteList.sortOrder == undefined ) {
             NoteList.sortOrder="date";
         }
 
-		// Filter or sort
-		if ( this.category == 'Uncategorized' ) {
-			// All, can sort -- and relabel top button
-			switch( NoteList.sortOrder ) {
-				case "date":
-					document.querySelector(".sortOrder").innerText="by Type";
-					break ;
-				case "type":
-					document.querySelector(".sortOrder").innerText="by Date";
-					notelist.rows.sort( (a,b)=> (a.doc.category).localeCompare(b.doc.category) );
-					break ;
-			}
-		} else {
-			// category selected, must filter
+        // Filter or sort
+        if ( this.category == 'Uncategorized' ) {
+            // All, can sort -- and relabel top button
+            switch( NoteList.sortOrder ) {
+                case "date":
+                    document.querySelector(".sortOrder").innerText="by Type";
+                    break ;
+                case "type":
+                    document.querySelector(".sortOrder").innerText="by Date";
+                    notelist.rows.sort( (a,b)=> (a.doc.category).localeCompare(b.doc.category) );
+                    break ;
+            }
+        } else {
+            // category selected, must filter
             NoteList.sortOrder="date";
-			notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
-		}
-		
+            notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
+        }
+        
         // show notes
         if ( notelist.rows.length == 0 ) {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
@@ -3503,11 +3497,11 @@ class NoteList {
         objectPage.show("NoteList");
     }
 
-	static categorize( notelist ) {
-		// place categories (if none exist)
+    static categorize( notelist ) {
+        // place categories (if none exist)
         notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
         notelist.rows.forEach(r=> { if (r.doc.category=='') r.doc.category = "Uncategorized" ; } ); 
-	}
+    }
 
 
     liLabel( note ) {
