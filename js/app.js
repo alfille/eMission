@@ -1233,7 +1233,7 @@ class PatientData extends PatientDataRaw {
 }
 
 class PatientDataEditMode extends PatientDataRaw {
-    // starts withg "EDIT" clicked
+    // starts with "EDIT" clicked
     constructor(...args) {
         super(true,...args); // clicked = true
         this.clickEditButtons() ;
@@ -3127,10 +3127,12 @@ class SortTable {
             let row = tbody.insertRow(-1);
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
+            /*
             row.addEventListener( 'click', () => {
                 this.selectFunc( record._id );
             });
-            ['dblclick','swiped-right','swiped-left'].forEach( (e) =>
+            * */
+            ['click','dblclick','swiped-right','swiped-left'].forEach( (e) =>
                 row.addEventListener( e, () => {
                     this.selectFunc( record._id );
                     this.editpage();
