@@ -807,8 +807,9 @@ class ImageDrop extends Image { // can only save(doc)
 // except for Noteslist and some html entries, this is the main type
 class PatientDataRaw { // singleton class
     constructor(click,...args) {
+        // args is a list of "docs" to update"
         this.parent = document.getElementById("PatientDataContent");
-        let fieldset = document.getElementById("templates").querySelector("fieldset");
+        let fieldset = document.getElementById("templates").querySelector(".dataFieldset");
         
         this.doc = [];
         this.struct = [];
