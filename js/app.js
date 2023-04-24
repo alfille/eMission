@@ -518,6 +518,7 @@ class Search { // singleton class
     }
 
     fill() {
+        // adds docs to index
         return db.allDocs( { include_docs: true, } )
         .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
     }
@@ -566,6 +567,7 @@ class Search { // singleton class
     }
 
     setTable() {
+        console.log( this.result );
         objectTable.fill(this.result);
     }
 }
@@ -2759,25 +2761,27 @@ class Page { // singleton class
                 break;
             
             case "OperationEdit":
-                if ( Patient.isSelected() ) {
-                    if ( operationId ) {
-                        db.get( operationId )
-                        .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
-                        .catch( (err) => {
-                            console.log("OperationEdit",err);
-                            this.show( "InvalidPatient" );
-                            });
-                    } else {
-                        objectPatientData = new OperationData(
-                        {
-                            _id: Operation.makeId(),
-                            type: "operation",
-                            patient_id: patientId,
-                            author: remoteCouch.username,
-                        } , structOperation );
-                    }
-                } else {
+                if ( operationId ) {
+                    db.get( operationId )
+                    .then ( doc => {
+                        Patient.select( doc.patient_id ); // async set title
+                        return doc ;
+                        })
+                    .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
+                    .catch( (err) => {
+                        console.log("OperationEdit",err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else if ( ! Patient.isSelected() ) {
                     this.show( "AllPatients" );
+                } else {
+                    objectPatientData = new OperationData(
+                    {
+                        _id: Operation.makeId(),
+                        type: "operation",
+                        patient_id: patientId,
+                        author: remoteCouch.username,
+                    } , structOperation );
                 }
                 break;
                 
@@ -2889,8 +2893,7 @@ class Page { // singleton class
                 // Fall through
             case "NoteListCategory":
                 if ( Patient.isSelected() ) {
-                    Patient.getRecordId()
-                    .then( () => Note.getRecordsIdPix() )
+                    Note.getRecordsIdPix()
                     .then( notelist => objectNoteList = new NoteList(notelist,extra) )
                     .catch( (err) => {
                         console.log("NoteList",extra,err);
@@ -3333,10 +3336,13 @@ class OperationTable extends SortTable {
     }
 
     selectFunc(id) {
+        console.log("Optab",id,operationId)
         Operation.select(id) ;
+        console.log("Optab",id,operationId)
     }
 
     editpage() {
+        console.log("OpTab",operationId);
         objectPage.show("OperationEdit");
     }
 }
