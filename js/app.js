@@ -1499,6 +1499,7 @@ class Patient { // convenience class
             objectNoteList.category = 'Uncategorized' ;
         }
 
+        patientId = pid ;
         if ( pid == missionId ) {
             Mission.select() ;
         } else {
@@ -1510,7 +1511,6 @@ class Patient { // convenience class
                 if ( objectPage.test('AllPatients') ) {
                     objectTable.highlight();
                 }
-                document.getElementById("editreviewpatient").disabled = false;
                 document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
                 })
             .catch( (err) => {
@@ -1567,7 +1567,6 @@ class Patient { // convenience class
                 }
             }
         }
-        document.getElementById("editreviewpatient").disabled = true;
         document.getElementById( "titlebox" ).innerHTML = "";
     }
 
@@ -1897,6 +1896,7 @@ class Note { // convenience class
 class Operation { // convenience class
     static select( oid=operationId ) {
         // Check patient existence
+        operationId=oid ;
         db.get(oid)
         .then( doc => {
             if ( doc.patient_id != patientId ) {
@@ -1907,9 +1907,11 @@ class Operation { // convenience class
             if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
                 objectTable.highlight();
             }
-            document.getElementById("editreviewoperation").disabled = false;
             })
-        .catch( err => console.log("OperationSelect",err.message));             
+        .catch( err => {
+            Operation.unselect();
+            console.log("OperationSelect",err.message)
+            });             
     }
 
     static unselect() {
@@ -1924,7 +1926,6 @@ class Operation { // convenience class
                 }
             }
         }
-        document.getElementById("editreviewoperation").disabled = true;
     }
 
     static makeId() {
@@ -2801,7 +2802,6 @@ class Page { // singleton class
                         })
                     .then ( (doclist) => {
                         onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-                        console.log("onum",onum);
                         return Note.getRecordsIdDoc(); 
                         })
                     .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
@@ -3128,17 +3128,9 @@ class SortTable {
             let row = tbody.insertRow(-1);
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
-            /*
-            row.addEventListener( 'click', () => {
-                this.selectFunc( record._id );
-            });
-            * */
-            ['click','dblclick','swiped-right','swiped-left'].forEach( (e) =>
-                row.addEventListener( e, () => {
-                    this.selectFunc( record._id );
-                    this.editpage();
-                    })
-                );
+            /* Select and edit -- need to make sure selection is complete*/
+            ['click','dblclick','swiped-right','swiped-left']
+            .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
             collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
                 if ( colname in record ) {
@@ -3149,6 +3141,11 @@ class SortTable {
             });
         });
         this.highlight();
+    }
+    
+    selectandedit( id ) {
+        this.selectFunc( id );
+        this.editpage() ;
     }
   
     allClick(e) {
