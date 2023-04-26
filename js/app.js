@@ -2686,7 +2686,6 @@ class Page { // singleton class
                         "Date-Time": r.doc["Date-Time"],
                         "Surgeon": r.doc["Surgeon"],
                         })) ;
-                    console.log(o2pid);
                     return Patient.getAllIdDoc() ;
                     })
                 .then( (docs) => {
@@ -3292,7 +3291,7 @@ class DatabaseTable extends SortTable {
             // change database
             this.unselect();
         }
-
+        this.databaseId = did ;
         objectCollation.db.get(did)
         .then( (doc) => {
             this.databaseId = did;
@@ -3315,7 +3314,7 @@ class DatabaseTable extends SortTable {
                 remoteCouch.database = doc.dbname ;
                 Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
                 })
-            .catch( (err) => console.log("Database not found",err) )
+            .catch( (err) => console.log("Database not found",err.message) )
             .finally( () => {
                 objectPage.reset();
                 location.reload(); // force reload
@@ -3368,7 +3367,6 @@ class UserTable extends SortTable {
 class SearchTable extends SortTable {
     constructor( collist ) {
         super( collist, "SearchList");
-        document.getElementById("editreviewsearch").disabled=true;
     }
 
     selectId() {
@@ -3377,7 +3375,6 @@ class SearchTable extends SortTable {
 
     selectFunc(id) {
         objectSearch.select_id = id ;
-        document.getElementById("editreviewsearch").disabled=false;
         objectTable.highlight();
     }
     
