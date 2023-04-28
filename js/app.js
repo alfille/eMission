@@ -2604,127 +2604,6 @@ class Page { // singleton class
                 // Pure menus
                 break;
                 
-            case "FirstTime":
-                if ( db !== null ) {
-                    this.show("MainMenu");
-                }
-                break;
-                
-            case "RemoteDatabaseInput":
-                objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
-                break;
-                
-            case "SuperUser":
-                remoteUser.address = remoteCouch.address;
-                objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
-                break;
-                
-            case "UserList":
-                if ( User.db == null ) {
-                    this.show( "SuperUser" );
-                } else {
-                    objectTable = new UserTable( ["name", "roles", "email", "type", ] );
-                    User.getAllIdDoc()
-                    .then( docs => objectTable.fill(docs.rows ) )
-                    .catch( (err) => {
-                        console.log("UserList",err.message) ;
-                        this.show ( "SuperUser" );
-                        });
-                }
-                break;
-
-            case "UserNew":
-                if ( User.db == null ) {
-                    this.show( "SuperUser" );
-                } else {
-                    User.unselect();
-                    objectPatientData = new NewUserData( {}, structNewUser );
-                }
-                break;
-
-            case "UserEdit":
-                if ( User.db == null ) {
-                    this.show( "SuperUser" );
-                } else if ( User.id == null ) {
-                    this.show( "UserList" );
-                } else {
-                    User.db.get( User.id )
-                    .then( doc => {
-                        doc.roles = doc.roles[0]; // unarray
-                        objectPatientData = new EditUserData( doc, structEditUser );
-                        })
-                    .catch( err => {
-                        console.log( "UserEdit",err );
-                        User.unselect();
-                        this.show( "UserList" );
-                        });
-                }
-                break;
-                
-            case "SendUser":
-                if ( User.db == null ) {
-                    this.show( "SuperUser" );
-                } else if ( User.id == null || !(User.id in User.password) ) {
-                    this.show( "UserList" );
-                } else {
-                    User.db.get( User.id )
-                    .then( doc => User.send( doc ) )
-                    .catch( err => {
-                        console.log( "SendUser",err );
-                        this.show( "UserList" );
-                        });
-                }
-                break;
-                
-            case "AllPatients":
-                objectTable = new PatientTable( ["LastName", "FirstName", "Procedure","Date-Time","Surgeon" ] );
-                let o2pid = {} ;
-                Operation.getAllIdDocCurated()
-                .then( doclist => {
-                    doclist.forEach( r => o2pid[r.doc.patient_id] = ({
-                        "Procedure": r.doc["Procedure"],
-                        "Date-Time": r.doc["Date-Time"],
-                        "Surgeon": r.doc["Surgeon"],
-                        })) ;
-                    return Patient.getAllIdDoc() ;
-                    })
-                .then( (docs) => {
-                    docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
-                    objectTable.fill(docs.rows );
-                    if ( Patient.isSelected() ) {
-                        Patient.select( patientId );
-                    } else {
-                        Patient.unselect();
-                    }
-                    })
-                .catch( (err) => console.log("AllPatients",err) );
-                break;
-
-            case "DBTable":
-                objectTable = new DatabaseTable( ["Name","Organization","Location","StartDate"] );
-                Collation.getAllIdDoc()
-                .then( (docs) => {
-                    objectTable.fill(docs.rows) ;
-                    })
-                .catch( (err) => console.log("DBTable",err) );
-                break ;
-
-            case "SearchList":
-                objectTable = new SearchTable( ["Name","Type","Text"] ) ;
-                objectSearch.setTable();
-                break ;
-                
-            case "OperationList":
-                if ( Patient.isSelected() ) {
-                    objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Date-Time", "Duration", "Equipment" ]  );
-                    Operation.getRecordsIdDoc()
-                    .then( (docs) => objectTable.fill(docs.rows ) )
-                    .catch( (err) => console.log("OperationList",err) );
-                } else {
-                    this.show( "AllPatients" ) ;
-                }
-                break;
-                
             case "AllOperations":
             {
                 Patient.unselect();
@@ -2750,73 +2629,57 @@ class Page { // singleton class
                 break;
             }
                 
-            case "OperationNew":
-                if ( Patient.isSelected() ) {
-                    Operation.unselect();
-                    this.show( "OperationEdit" );
-                } else {
-                    this.show( "AllPatients" ) ;
-                }
+            case "AllPatients":
+                objectTable = new PatientTable( ["LastName", "FirstName", "Procedure","Date-Time","Surgeon" ] );
+                let o2pid = {} ;
+                Operation.getAllIdDocCurated()
+                .then( doclist => {
+                    doclist.forEach( r => o2pid[r.doc.patient_id] = ({
+                        "Procedure": r.doc["Procedure"],
+                        "Date-Time": r.doc["Date-Time"],
+                        "Surgeon": r.doc["Surgeon"],
+                        })) ;
+                    return Patient.getAllIdDoc() ;
+                    })
+                .then( (docs) => {
+                    docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
+                    objectTable.fill(docs.rows );
+                    if ( Patient.isSelected() ) {
+                        Patient.select( patientId );
+                    } else {
+                        Patient.unselect();
+                    }
+                    })
+                .catch( (err) => console.log("AllPatients",err) );
                 break;
-            
-            case "OperationEdit":
-                if ( operationId ) {
-                    db.get( operationId )
-                    .then ( doc => {
-                        Patient.select( doc.patient_id ); // async set title
-                        return doc ;
-                        })
-                    .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
-                    .catch( (err) => {
-                        console.log("OperationEdit",err);
-                        this.show( "InvalidPatient" );
-                        });
-                } else if ( ! Patient.isSelected() ) {
-                    this.show( "AllPatients" );
-                } else {
-                    objectPatientData = new OperationData(
-                    {
-                        _id: Operation.makeId(),
-                        type: "operation",
-                        patient_id: patientId,
-                        author: remoteCouch.username,
-                    } , structOperation );
+
+            case "DatabaseInfo":
+                db.info()
+                .then( doc => {
+                    objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
+                    })
+                .catch( err => console.log("DatabaseInfo",err) );
+                break;
+
+            case "DBTable":
+                objectTable = new DatabaseTable( ["Name","Organization","Location","StartDate"] );
+                Collation.getAllIdDoc()
+                .then( (docs) => {
+                    objectTable.fill(docs.rows) ;
+                    })
+                .catch( (err) => console.log("DBTable",err) );
+                break ;
+
+            case "FirstTime":
+                if ( db !== null ) {
+                    this.show("MainMenu");
                 }
                 break;
                 
-            case "PatientNew":
+            case "InvalidPatient":
                 Patient.unselect();
-                objectPatientData = new NewPatientData(
-                    {
-                        author: remoteCouch.username,
-                        type:"patient"
-                    }, structNewPatient );
                 break;
-                
-            case "PatientPhoto":
-                if ( Patient.isSelected() ) {
-                    Patient.select( patientId );
-                    let pdoc;
-                    let onum ;
-                    Patient.getRecordIdPix()
-                    .then( (doc) => {
-                        pdoc = doc;
-                        return Operation.getRecordsIdDoc(); 
-                        })
-                    .then ( (doclist) => {
-                        onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-                        return Note.getRecordsIdDoc(); 
-                        })
-                    .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
-                    .catch( (err) => {
-                        console.log("PatientPhoto",err);
-                        this.show( "InvalidPatient" );
-                        });
-                } else {
-                    this.show( "AllPatients" );
-                }
-                break;
-                
+
             case "MissionInfo":
                 Mission.select();
                 Patient.getRecordIdPix()
@@ -2833,52 +2696,6 @@ class Page { // singleton class
                 .finally( () => Mission.link() );
                 break;
                 
-            case "PatientDemographics":
-                if ( Patient.isSelected() ) {
-                    Patient.getRecordIdPix()
-                    .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
-                    .catch( (err) => {
-                        console.log("PatientDemographics",err);
-                        this.show( "InvalidPatient" );
-                        });
-                } else {
-                    this.show( "AllPatients" );
-                }
-                break;
-                
-            case "PatientMedical":
-                if ( Patient.isSelected() ) {
-                    let args;
-                    Patient.getRecordId()
-                    .then( (doc) => {
-                        args = [doc,structMedical];
-                        return Operation.getRecordsIdDoc();
-                        })
-                    .then( ( olist ) => {
-                        olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-                        objectPatientData = new PatientData( ...args );
-                        })
-                    .catch( (err) => {
-                        console.log("PatientMedical",err);
-                        this.show( "InvalidPatient" );
-                        });
-                } else {
-                    this.show( "AllPatients" );
-                }
-                break;
-                
-            case "DatabaseInfo":
-                db.info()
-                .then( doc => {
-                    objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
-                    })
-                .catch( err => console.log("DatabaseInfo",err) );
-                break;
-
-            case "InvalidPatient":
-                Patient.unselect();
-                break;
-
             case "MissionList":
                 Mission.select() ;
                 db.get( missionId )
@@ -2915,6 +2732,118 @@ class Page { // singleton class
                 }
                 break;
                 
+            case "OperationEdit":
+                if ( operationId ) {
+                    db.get( operationId )
+                    .then ( doc => {
+                        Patient.select( doc.patient_id ); // async set title
+                        return doc ;
+                        })
+                    .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
+                    .catch( (err) => {
+                        console.log("OperationEdit",err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else if ( ! Patient.isSelected() ) {
+                    this.show( "AllPatients" );
+                } else {
+                    objectPatientData = new OperationData(
+                    {
+                        _id: Operation.makeId(),
+                        type: "operation",
+                        patient_id: patientId,
+                        author: remoteCouch.username,
+                    } , structOperation );
+                }
+                break;
+                
+            case "OperationList":
+                if ( Patient.isSelected() ) {
+                    objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Date-Time", "Duration", "Equipment" ]  );
+                    Operation.getRecordsIdDoc()
+                    .then( (docs) => objectTable.fill(docs.rows ) )
+                    .catch( (err) => console.log("OperationList",err) );
+                } else {
+                    this.show( "AllPatients" ) ;
+                }
+                break;
+                
+            case "OperationNew":
+                if ( Patient.isSelected() ) {
+                    Operation.unselect();
+                    this.show( "OperationEdit" );
+                } else {
+                    this.show( "AllPatients" ) ;
+                }
+                break;
+            
+            case "PatientDemographics":
+                if ( Patient.isSelected() ) {
+                    Patient.getRecordIdPix()
+                    .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
+                    .catch( (err) => {
+                        console.log("PatientDemographics",err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "AllPatients" );
+                }
+                break;
+                
+            case "PatientMedical":
+                if ( Patient.isSelected() ) {
+                    let args;
+                    Patient.getRecordId()
+                    .then( (doc) => {
+                        args = [doc,structMedical];
+                        return Operation.getRecordsIdDoc();
+                        })
+                    .then( ( olist ) => {
+                        olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
+                        objectPatientData = new PatientData( ...args );
+                        })
+                    .catch( (err) => {
+                        console.log("PatientMedical",err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "AllPatients" );
+                }
+                break;
+                
+            case "PatientNew":
+                Patient.unselect();
+                objectPatientData = new NewPatientData(
+                    {
+                        author: remoteCouch.username,
+                        type:"patient"
+                    }, structNewPatient );
+                break;
+                
+            case "PatientPhoto":
+                if ( Patient.isSelected() ) {
+                    Patient.select( patientId );
+                    let pdoc;
+                    let onum ;
+                    Patient.getRecordIdPix()
+                    .then( (doc) => {
+                        pdoc = doc;
+                        return Operation.getRecordsIdDoc(); 
+                        })
+                    .then ( (doclist) => {
+                        onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
+                        return Note.getRecordsIdDoc(); 
+                        })
+                    .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
+                    .catch( (err) => {
+                        console.log("PatientPhoto",err);
+                        this.show( "InvalidPatient" );
+                        });
+                } else {
+                    this.show( "AllPatients" );
+                }
+                break;
+                
            case "QuickPhoto":
                 this.forget(); // don't return here!
                 if ( patientId ) { // patient or Mission!
@@ -2924,6 +2853,77 @@ class Page { // singleton class
                 }
                 break;
                 
+            case "RemoteDatabaseInput":
+                objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
+                break;
+                
+            case "SearchList":
+                objectTable = new SearchTable( ["Name","Type","Text"] ) ;
+                objectSearch.setTable();
+                break ;
+                
+            case "SendUser":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else if ( User.id == null || !(User.id in User.password) ) {
+                    this.show( "UserList" );
+                } else {
+                    User.db.get( User.id )
+                    .then( doc => User.send( doc ) )
+                    .catch( err => {
+                        console.log( "SendUser",err );
+                        this.show( "UserList" );
+                        });
+                }
+                break;
+                
+            case "SuperUser":
+                remoteUser.address = remoteCouch.address;
+                objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
+                break;
+                
+            case "UserEdit":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else if ( User.id == null ) {
+                    this.show( "UserList" );
+                } else {
+                    User.db.get( User.id )
+                    .then( doc => {
+                        doc.roles = doc.roles[0]; // unarray
+                        objectPatientData = new EditUserData( doc, structEditUser );
+                        })
+                    .catch( err => {
+                        console.log( "UserEdit",err );
+                        User.unselect();
+                        this.show( "UserList" );
+                        });
+                }
+                break;
+                
+            case "UserList":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else {
+                    objectTable = new UserTable( ["name", "roles", "email", "type", ] );
+                    User.getAllIdDoc()
+                    .then( docs => objectTable.fill(docs.rows ) )
+                    .catch( (err) => {
+                        console.log("UserList",err.message) ;
+                        this.show ( "SuperUser" );
+                        });
+                }
+                break;
+
+            case "UserNew":
+                if ( User.db == null ) {
+                    this.show( "SuperUser" );
+                } else {
+                    User.unselect();
+                    objectPatientData = new NewUserData( {}, structNewUser );
+                }
+                break;
+
             default:
                 this.show( "AllPatients" );
                 break;
