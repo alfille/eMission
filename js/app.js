@@ -3460,11 +3460,34 @@ class NoteList {
             NoteList.sortOrder="date";
             notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
         }
+
+		// Separate rows into groups by year (and "Undated")
+		this.year={};
+		notelist.rows
+		.forEach( r => {
+			let y = this.yearTitle(r);
+			if ( y in this.year) {
+				this.year[y].rows.push(r);
+			} else {
+				this.year[y] = { open:false, rows:[] } ;
+			}
+		});
+		this.yearKeys = Object.keys(this.year).sort() ;
+		//console.log(this.yearKeys);
+		
+		let fieldset = document.getElementById("templates").querySelector(".noteFieldset");
+		console.log(fieldset);
         
         // show notes
         if ( notelist.rows.length == 0 ) {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
         } else {
+			this.yearKeys.forEach( y => {
+				let fs = fieldset.cloneNode( true ) ;
+				fs.querySelector("span").innerText = y ;
+				this.year[y]["fs"] = fs ;
+				parent.appendChild(fs);
+				});
             this.ul = document.createElement('ul');
             this.ul.id = "NoteList" ;
             parent.appendChild(this.ul);
@@ -3486,7 +3509,7 @@ class NoteList {
         
         Note.dropPictureinNote( parent );        
     }
-
+    
     static by() {
         switch ( NoteList.sortOrder ) {
             case "date":
@@ -3506,7 +3529,15 @@ class NoteList {
         notelist.rows.forEach(r=> { if (r.doc.category=='') r.doc.category = "Uncategorized" ; } ); 
     }
 
-
+    yearTitle(row) {
+		if ( row.doc.date==undefined ) {
+			return "Undated" ;
+		} else {
+			const d = new Date(row.doc.date);
+			return d.getFullYear() ;
+		}
+	}
+		
     liLabel( note ) {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );
