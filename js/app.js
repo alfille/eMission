@@ -3432,26 +3432,9 @@ class NoteList {
         let parent = document.getElementById("NoteListContent") ;
         parent.innerHTML = "" ;
 
-        // Default sort order
-        if ( NoteList.sortOrder == undefined ) {
-            NoteList.sortOrder="date";
-        }
-
         // Filter or sort
-        if ( this.category == 'Uncategorized' ) {
-            // All, can sort -- and relabel top button
-            switch( NoteList.sortOrder ) {
-                case "date":
-                    document.querySelector(".sortOrder").innerText="by Type";
-                    break ;
-                case "type":
-                    document.querySelector(".sortOrder").innerText="by Date";
-                    notelist.rows.sort( (a,b)=> (a.doc.category).localeCompare(b.doc.category) );
-                    break ;
-            }
-        } else {
+        if ( this.category !== 'Uncategorized' ) {
             // category selected, must filter
-            NoteList.sortOrder="date";
             notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
         }
 
@@ -3500,19 +3483,6 @@ class NoteList {
         Note.dropPictureinNote( parent );        
     }
     
-    static by() {
-        switch ( NoteList.sortOrder ) {
-            case "date":
-                NoteList.sortOrder="type";
-                break ;
-            case "type":
-            default:
-                NoteList.sortOrder="date";
-                break ;
-        }
-        objectPage.show("NoteList");
-    }
-
     static categorize( notelist ) {
         // place categories (if none exist)
         notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
