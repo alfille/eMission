@@ -1786,28 +1786,22 @@ class Note { // convenience class
               
         if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
             // highlight the list row
-            let li = document.getElementById("NoteList").getElementsByTagName("li");
-            if ( li && (li.length > 0) ) {
-                for ( let l of li ) {
-                    if ( l.getAttribute("data-id") == nid ) {
-                        l.classList.add('choice');
-                    } else {
-                        l.classList.remove('choice');
-                    }
+            document.getElementById("NoteListContent").querySelectorAll("li")
+            .forEach( l => {
+                if ( l.getAttribute("data-id") == nid ) {
+                    l.classList.add('choice');
+                } else {
+                    l.classList.remove('choice');
                 }
-            }
+                });
         }
     }
 
     static unselect() {
         Cookie.del ( "noteId" );
-        if ( objectPage.test("NoteList") ) {
-            let li = document.getElementById("NoteList").li;
-            if ( li && (li.length > 0) ) {
-                for ( let l of li ) {
-                    l.classList.remove('choice');
-                }
-            }
+        if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
+            document.getElementById("NoteListContent").querySelectorAll("li")
+            .forEach( l => l.classList.remove('choice') );
         }
     }
 
@@ -3461,43 +3455,39 @@ class NoteList {
             notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
         }
 
-		// Separate rows into groups by year (and "Undated")
-		this.year={};
-		notelist.rows
-		.forEach( r => {
-			let y = this.yearTitle(r);
-			if ( y in this.year) {
-				this.year[y].rows.push(r);
-			} else {
-				this.year[y] = { open:false, rows:[] } ;
-			}
-		});
-		this.yearKeys = Object.keys(this.year).sort() ;
-		//console.log(this.yearKeys);
-		
-		let fieldset = document.getElementById("templates").querySelector(".noteFieldset");
-		console.log(fieldset);
+        // Separate rows into groups by year (and "Undated")
+        this.year={};
+        notelist.rows
+        .forEach( r => {
+            let y = this.yearTitle(r);
+            if ( y in this.year ) {
+                this.year[y].rows.push(r);
+            } else {
+                this.year[y] = { open:false, rows:[r] } ;
+            }
+        });
+        this.yearKeys = Object.keys(this.year).sort() ;
+        
+        let fieldset = document.getElementById("templates").querySelector(".noteFieldset");
         
         // show notes
         if ( notelist.rows.length == 0 ) {
             parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
         } else {
-			this.yearKeys.forEach( y => {
-				let fs = fieldset.cloneNode( true ) ;
-				fs.querySelector("span").innerText = y ;
-				this.year[y]["fs"] = fs ;
-				parent.appendChild(fs);
-				});
-            this.ul = document.createElement('ul');
-            this.ul.id = "NoteList" ;
-            parent.appendChild(this.ul);
-            notelist.rows.forEach( note => {
-                let li1 = this.liLabel(note);
-                this.ul.appendChild( li1 );
-                let li2 = this.liNote(note,li1);
-                this.ul.appendChild( li2 );
+            this.yearKeys.forEach( y => {
+                let fs = fieldset.cloneNode( true ) ;
+                fs.querySelector(".yearspan").innerText = y ;
+                fs.querySelector(".yearnumber").innerText = `(${this.year[y].rows.length})` ;
+                parent.appendChild(fs);
+                let ul = document.createElement('ul');
+                fs.appendChild(ul);
+                this.year[y].rows.forEach( note => {
+                    let li1 = this.liLabel(note);
+                    ul.appendChild( li1 );
+                    let li2 = this.liNote(note,li1);
+                    ul.appendChild( li2 );
+                    });
                 });
-            this.li = this.ul.getElementsByTagName('li');
         }
 
         if ( noteId ) {
@@ -3530,14 +3520,31 @@ class NoteList {
     }
 
     yearTitle(row) {
-		if ( row.doc.date==undefined ) {
-			return "Undated" ;
-		} else {
-			const d = new Date(row.doc.date);
-			return d.getFullYear() ;
-		}
-	}
-		
+        if ( row.doc.date==undefined ) {
+            return "Undated" ;
+        } else {
+            const d = new Date(row.doc.date);
+            return d.getFullYear().toString() ;
+        }
+    }
+        
+    fsclick( target ) {
+        if ( this.yearKeys.length > 1 ) {
+            let ul = target.parentNode.parentNode.querySelector("ul");
+            if ( target.value === "show" ) {
+                // hide
+                target.innerHTML = "&#10133;";
+                ul.style.display = "none";
+                target.value = "hide";
+            } else {
+                // show
+                target.innerHTML = "&#10134;";
+                ul.style.display = "";
+                target.value = "show";
+            }
+        }
+    }
+    
     liLabel( note ) {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );

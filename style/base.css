@@ -164,7 +164,18 @@ ul {
   font-weight: bold;
   display: inline-block;
 }
-  
+
+.yearspan {
+  font-weight: bold;
+  color: black;
+  display: inline-block;
+}
+    
+.yearnumber {
+  font-weight: normal;
+  display: inline-block;
+}
+    
 body {
   font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.4em;
