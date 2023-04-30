@@ -1781,20 +1781,11 @@ class Note { // convenience class
                 Patient.select( doc.patient_id);
             }
             Cookie.set( "noteId", nid );
+            if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
+                objectNoteList.select() ;
+            }
             })
         .catch( err => console.log(err.message));
-              
-        if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
-            // highlight the list row
-            document.getElementById("NoteListContent").querySelectorAll("li")
-            .forEach( l => {
-                if ( l.getAttribute("data-id") == nid ) {
-                    l.classList.add('choice');
-                } else {
-                    l.classList.remove('choice');
-                }
-                });
-        }
     }
 
     static unselect() {
@@ -3470,17 +3461,43 @@ class NoteList {
                     let li2 = this.liNote(note,li1);
                     ul.appendChild( li2 );
                     });
+                this.close(fs);
                 });
         }
 
-        if ( noteId ) {
-            let el = Array.from(this.li).filter( li => li.getAttribute("data-id")==noteId )[0] ;
-            if ( el ) {
-                el.scrollIntoView();
-            }
-        }
+        this.select() ;
         
         Note.dropPictureinNote( parent );        
+    }
+    
+    open( fs ) {
+        fs.querySelector("ul").style.display=""; // show
+        fs.querySelector(".triggerbutton").innerHTML="&#10134;";
+        fs.querySelector(".triggerbutton").onclick = () => this.close(fs) ;
+    }
+    
+    close( fs ) {
+        console.log(fs);
+        fs.querySelector("ul").style.display="none"; // show
+        fs.querySelector(".triggerbutton").innerHTML="&#10133;";
+        fs.querySelector(".triggerbutton").onclick = () => this.open(fs) ;
+    }
+    
+    select() {
+        // select noteId in list and highlight (if there)
+        document.getElementById("NoteListContent")
+        .querySelectorAll("fieldset")
+        .forEach( fs => fs.querySelectorAll("li")
+            .forEach(li=>{
+                if ( li.getAttribute("data-id") == noteId ) {
+                    li.classList.add('choice');
+                    this.open(fs);
+                    li.scrollIntoView();
+                } else {
+                    li.classList.remove('choice');
+                }
+                })
+            ) ;
     }
     
     static categorize( notelist ) {
@@ -3508,7 +3525,7 @@ class NoteList {
                 target.value = "hide";
             } else {
                 // show
-                target.innerHTML = "&#10134;";
+                target.innerHTML = "&#10134;"; 
                 ul.style.display = "";
                 target.value = "show";
             }
