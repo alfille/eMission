@@ -3082,15 +3082,22 @@ class Swipe {
 var objectSwipe = new Swipe() ;
 
 class SortTable {
-    constructor( collist, tableId ) {
+    constructor( collist, tableId, aliaslist=[] ) {
         this.tbl = document.getElementById(tableId);
         this.tbl.innerHTML = "";
+        
+        // alias-list is a list in form (list of lists):
+        //[ [fieldname, aliasname, transformfunction],...]
+        
+        this.aliases={};
+        this.aliases = collist.forEach( f => this.aliasAdd(f) ) ; // default aliases
+        aliaslist.forEach( a => this.aliasAdd(a[0],a[1],a[2]) );
 
         // Table Head
         let header = this.tbl.createTHead();
         let row = header.insertRow(0);
         row.classList.add('head');
-        collist.forEach( (v,i) => row.insertCell(i).outerHTML='<th>'+v+'</th>' );
+        collist.forEach( (f,i) => row.insertCell(i).outerHTML=`'<th>'${this.aliases[f].name}'</th>'` );
 
         // Table Body
         let tbody = document.createElement('tbody');
@@ -3102,22 +3109,31 @@ class SortTable {
         this.tbl.onclick = this.allClick.bind(this);
     }
 
+    aliasAdd( fieldname, aliasname=null, transformfunction=null ) {
+        if ( !(fieldname in this.aliases) ) {
+            this.aliases[fieldname] = {} ;
+        }
+        this.aliases[fieldname]["name"] = aliasname ?? fieldname ;
+        this.aliases[fieldname]["value"] = transformfunction ?? ((v)=>v) ;
+        console.log(fieldname,aliasname,transformfunction);
+    }
+
     fill( doclist ) {
         // typically called with doc.rows from allDocs
         let tbody = this.tbl.querySelector('tbody');
         tbody.innerHTML = "";
-        let collist = this.collist;
+        //let collist = this.collist;
         doclist.forEach( (doc) => {
             let row = tbody.insertRow(-1);
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
             /* Select and edit -- need to make sure selection is complete*/
-            ['click','dblclick','swiped-right','swiped-left']
+            ['click','swiped-right','swiped-left']
             .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
-            collist.forEach( (colname,i) => {
+            this.collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
                 if ( colname in record ) {
-                    c.innerText = record[colname];
+                    c.innerText = this.aliases[colname].value(record[colname]);
                 } else {
                     c.innerText = "";
                 }
