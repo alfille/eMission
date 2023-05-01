@@ -476,7 +476,7 @@ function createQueries() {
             return db.put( ddoc );
             });
         }))
-    .catch( (err) => console.log(err ) );
+    .catch( (err) => Page.err(err) );
 }
 
 class Search { // singleton class
@@ -558,16 +558,14 @@ class Search { // singleton class
         .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} )) // associated patient Id for each
         .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value[0] )) // associate patient name
         .then( () => this.result = result.map( r=>({doc:r}))) // encode as list of doc objects
-//        .then( () => console.log(this.result))
         .then( ()=>this.setTable()) // fill the table
         .catch(err=> {
-            console.log(err);
+            Page.err(err);
             this.resetTable();
             });
     }
 
     setTable() {
-        console.log( this.result );
         objectTable.fill(this.result);
     }
 }
@@ -743,7 +741,7 @@ class ImageNote extends ImagePlus {
             Note.select( resp.id );
             return Note.getAllIdDoc(); // to prime list
             })
-        .catch( err => console.log(err) )
+        .catch( err => Page.err(err) )
         .finally( () => this.leave() );
     }
 
@@ -784,7 +782,7 @@ class ImageNote extends ImagePlus {
             })
         .then( (doc) => db.remove(doc) )
         .then( () => Note.unselect() )
-        .catch( (err) => console.log(err) )
+        .catch( (err) => Page.err(err) )
         .finally( () => this.leave() );
     }
 }
@@ -1220,7 +1218,7 @@ class PatientDataRaw { // singleton class
     saveChanged ( state ) {
         let changed = this.loadDocData();
         Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
-            .catch( (err) => console.log(err.message) )
+            .catch( (err) => Page.err(err) )
             .finally( () => objectPage.show( state ) );
     }
     
@@ -1262,9 +1260,6 @@ class DatabaseInfoData extends PatientData {
 class DatabaseData extends PatientDataEditMode {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-            //console.log(this.doc);
-            //console.log(this.doc[0]);
-            //console.log(this.doc[0].address);
             this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
@@ -1292,7 +1287,7 @@ class NewPatientData extends PatientDataEditMode {
                 Patient.select(response.id);
                 objectPage.show( "PatientPhoto" );
                 })
-            .catch( (err) => console.log("NewPatientData",err) );
+            .catch( (err) => Page.err(err) );
         }
     }
 }
@@ -1336,7 +1331,7 @@ class NewUserData extends PatientDataEditMode {
             objectPage.show( "SendUser" );
             })
         .catch( err => {
-            console.log(err);
+            Page.err(err);
             objectPage.show( "UserList" );
             });
     }
@@ -1350,7 +1345,7 @@ class EditUserData extends PatientData {
             User.db.put( this.doc[0] )
             .then( () => objectPage.show( "SendUser" ) )
             .catch( err => {
-                console.log(err);
+                Page.err(err);
                 objectPage.show( "UserList" );
                 });
         } else if ( User.id in User.password ) {
@@ -1367,7 +1362,7 @@ class AccessData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             security_db.put( this.doc[0] )
-                .catch( err => console.log(err) )
+                .catch( err => Page.err(err) )
                 .finally( () => objectPage.show( "UserList" ) );
         } else {
             objectPage.show( "UserList" ) ;
@@ -1450,7 +1445,7 @@ class Patient { // convenience class
             .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
             .then( () => db.remove(pdoc) )
             .then( () => Patient.unselect() )
-            .catch( (err) => console.log(err) ) 
+            .catch( (err) => Page.err(err) ) 
             .finally( () => objectPage.show( "AllPatients" ) );
         }
     }
@@ -1516,7 +1511,7 @@ class Patient { // convenience class
                 document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
                 })
             .catch( (err) => {
-                console.log("PatientId not in name list",err);
+                Page.err(err,"patient select");
                 Patient.unselect();
                 });
         }
@@ -1610,7 +1605,6 @@ class Patient { // convenience class
             img.display();
             let link = new URL(window.location.href);
             link.searchParams.append( "patientId", patientId );
-            console.log(link);
             new QR(
                 card.querySelector(".qrCard"),
                 link.href,
@@ -1657,7 +1651,7 @@ class Patient { // convenience class
             objectPage.show("PatientPhoto");
             })
         .catch( (err) => {
-            console.log(err);
+            Page.err(err);
             objectPage.show( "InvalidPatient" );
             });
     }
@@ -1785,7 +1779,7 @@ class Note { // convenience class
                 objectNoteList.select() ;
             }
             })
-        .catch( err => console.log(err.message));
+        .catch( err => Page.err(err,"note select"));
     }
 
     static unselect() {
@@ -1833,7 +1827,7 @@ class Note { // convenience class
                     reader.readAsDataURL(file); // start reading the file data.
                     }))
                     .then( () => Note.getRecordsId() ) // refresh the list
-                    .catch( err => console.log(err) )
+                    .catch( err => Page.err(err,"Photo drop") )
                     .finally( () => {
                         if (objectNoteList.category=='Uncategorized') {
                             objectPage.show( "NoteList" );
@@ -1870,7 +1864,7 @@ class Note { // convenience class
             img.save(doc);
             db.put(doc)
             .then( () => Note.getRecordsId() ) // to try to prime the list
-            .catch( err => console.log("QuickPhoto",err) )
+            .catch( err => Page.err(err) )
             .finally( objectPage.show( null ) );
         }
         img.display();
@@ -1896,8 +1890,8 @@ class Operation { // convenience class
             }
             })
         .catch( err => {
+            Page.err(err,"operation select");
             Operation.unselect();
-            console.log("OperationSelect",err.message)
             });             
     }
 
@@ -1961,7 +1955,7 @@ class Operation { // convenience class
                 })
             .then( (doc) =>db.remove(doc) )
             .then( () => Operation.unselect() )
-            .catch( (err) => console.log("OperationDelete",err) )
+            .catch( (err) => Page.err(err) )
             .finally( () => objectPage.show( "OperationList" ) );
         }
         return true;
@@ -2032,14 +2026,11 @@ class Operation { // convenience class
 
         // Adds a single "blank"
         // also purges excess "blanks"
-        //console.log(doc);
         return db.allDocs(doc)
         .then( (doclist) => {
-            //console.log(doclist);
             let newlist = doclist.rows
                 .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
                 .map( row => row.doc );
-            //console.log(newlist);
             switch ( newlist.length ) {
                 case 0 :
                     throw null;
@@ -2055,7 +2046,6 @@ class Operation { // convenience class
                 throw null;
             }
             // too many empties
-            //console.log("Remove", dlist.length,"entries");
             return Promise.all(dlist.map( (doc) => db.remove(doc) ))
                 .then( ()=> Operation.getRecordsIdDoc( pid )
                 );
@@ -2082,7 +2072,7 @@ class User { // convenience class
                 }
                 })              
             .then( () => User.unselect() )
-            .catch( (err) => console.log("User",err) )
+            .catch( (err) => Page.err(err) )
             .finally( () => objectPage.show( "UserList" ) );
         }
         return true;
@@ -2184,7 +2174,10 @@ class Mission { // convenience class
         patientId = missionId;
         db.query("Pid2Name", {key:missionId,})
         .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1] )
-        .catch( () => document.getElementById( "titlebox" ).innerHTML = "" ) ;
+        .catch( (err) => {
+            Page.err(err,"mission select");
+            document.getElementById( "titlebox" ).innerHTML = "";
+            }) ;
     }
 
     static link() {
@@ -2204,7 +2197,7 @@ class Mission { // convenience class
             document.querySelectorAll(".missionButtonImage")
             .forEach( logo => logo.src=src );
             })
-        .catch( err => console.log("Mission",err.message) ) ;
+        .catch( err => Page.err(err) ) ;
     }
 }
 
@@ -2264,9 +2257,9 @@ class Remote { // convenience class
                     .on('change', ()       => synctext.value = "changed" )
                     .on('paused', ()       => synctext.value = "resting" )
                     .on('active', ()       => synctext.value = "active" )
-                    .on('denied', (err)    => { synctext.value = "denied"; console.log("Sync denied",err); } )
+                    .on('denied', (err)    => { synctext.value = "denied"; Page.err(err,"Sync denied"); } )
                     .on('complete', ()     => synctext.value = "stopped" )
-                    .on('error', (err)     => { synctext.value = err.reason ; console.log("Sync error",err); } );
+                    .on('error', (err)     => { synctext.value = err.reason ; Page.err(err,"Sync error"); } );
                 });
         }
     }
@@ -2283,7 +2276,7 @@ class Remote { // convenience class
                         doc._id == id :
                         doc._id.indexOf('_design') !== 0,
                 } )
-            .catch( err => id ? console.log( id,err ) : console.log("Replicate",err) )
+            .catch( err => Page.err(err,`Replication ${id??""}`))
             .finally( () => this.foreverSync() );
         }
     }
@@ -2341,7 +2334,6 @@ class Cookie { //convenience class
     static set( cname, value ) {
       // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
         window[cname] = value;
-        //console.log(cname,"value",value);
         let date = new Date();
         date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
         document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
@@ -2364,7 +2356,6 @@ class Cookie { //convenience class
                 }
         });
         window[cname] = ret;
-        //console.log("getcookie",cname,ret);
         return ret;
     }
 
@@ -2556,10 +2547,15 @@ class Page { // singleton class
     link() {
         window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
+    
+    static err( err, title=null ) {
+        // generic console.log of error
+        console.log( title ?? objectPage.current(), err.message ?? err ) ;
+    }
         
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         Page.show_screen( "screen" );
-        this.next(state) ;
+        this.next(state) ; // update reversal list
 
         document.querySelector(".patientDataEdit").style.display="none"; 
         document.querySelectorAll(".topButtons")
@@ -2609,7 +2605,7 @@ class Page { // singleton class
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
                     })
-                .catch( err=>console.log("AllOperations",err) )
+                .catch( err=>Page.err(err) )
                     ;
                 break;
             }
@@ -2635,7 +2631,7 @@ class Page { // singleton class
                         Patient.unselect();
                     }
                     })
-                .catch( (err) => console.log("AllPatients",err) );
+                .catch( (err) => Page.err(err) );
                 break;
 
             case "DatabaseInfo":
@@ -2643,7 +2639,7 @@ class Page { // singleton class
                 .then( doc => {
                     objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
                     })
-                .catch( err => console.log("DatabaseInfo",err) );
+                .catch( err => Page.err(err) );
                 break;
 
             case "DBTable":
@@ -2652,7 +2648,7 @@ class Page { // singleton class
                 .then( (docs) => {
                     objectTable.fill(docs.rows) ;
                     })
-                .catch( (err) => console.log("DBTable",err) );
+                .catch( (err) => Page.err(err) );
                 break ;
 
             case "FirstTime":
@@ -2697,7 +2693,7 @@ class Page { // singleton class
                     Note.getRecordsIdPix()
                     .then( notelist => objectNoteList = new NoteList(notelist,extra) )
                     .catch( (err) => {
-                        console.log("NoteList",extra,err);
+                        Page.err(err,`Notelist (${extra})`);
                         this.show( "InvalidPatient" );
                         });
                 } else {
@@ -2726,7 +2722,7 @@ class Page { // singleton class
                         })
                     .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
                     .catch( (err) => {
-                        console.log("OperationEdit",err);
+                        Page.err(err);
                         this.show( "InvalidPatient" );
                         });
                 } else if ( ! Patient.isSelected() ) {
@@ -2747,7 +2743,7 @@ class Page { // singleton class
                     objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Date-Time", "Duration", "Equipment" ]  );
                     Operation.getRecordsIdDoc()
                     .then( (docs) => objectTable.fill(docs.rows ) )
-                    .catch( (err) => console.log("OperationList",err) );
+                    .catch( (err) => Page.err(err) );
                 } else {
                     this.show( "AllPatients" ) ;
                 }
@@ -2767,7 +2763,7 @@ class Page { // singleton class
                     Patient.getRecordIdPix()
                     .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
                     .catch( (err) => {
-                        console.log("PatientDemographics",err);
+                        Page.err(err);
                         this.show( "InvalidPatient" );
                         });
                 } else {
@@ -2788,7 +2784,7 @@ class Page { // singleton class
                         objectPatientData = new PatientData( ...args );
                         })
                     .catch( (err) => {
-                        console.log("PatientMedical",err);
+                        Page.err(err);
                         this.show( "InvalidPatient" );
                         });
                 } else {
@@ -2821,7 +2817,7 @@ class Page { // singleton class
                         })
                     .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
                     .catch( (err) => {
-                        console.log("PatientPhoto",err);
+                        Page.err(err);
                         this.show( "InvalidPatient" );
                         });
                 } else {
@@ -2856,7 +2852,7 @@ class Page { // singleton class
                     User.db.get( User.id )
                     .then( doc => User.send( doc ) )
                     .catch( err => {
-                        console.log( "SendUser",err );
+                        Page.err(err);
                         this.show( "UserList" );
                         });
                 }
@@ -2879,7 +2875,7 @@ class Page { // singleton class
                         objectPatientData = new EditUserData( doc, structEditUser );
                         })
                     .catch( err => {
-                        console.log( "UserEdit",err );
+                        Page.err(err);
                         User.unselect();
                         this.show( "UserList" );
                         });
@@ -2894,7 +2890,7 @@ class Page { // singleton class
                     User.getAllIdDoc()
                     .then( docs => objectTable.fill(docs.rows ) )
                     .catch( (err) => {
-                        console.log("UserList",err.message) ;
+                        Page.err(err);
                         this.show ( "SuperUser" );
                         });
                 }
@@ -3299,7 +3295,7 @@ class DatabaseTable extends SortTable {
                 remoteCouch.database = doc.dbname ;
                 Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
                 })
-            .catch( (err) => console.log("Database not found",err.message) )
+            .catch( (err) => Page.err(err,"Loading patient database") )
             .finally( () => {
                 objectPage.reset();
                 location.reload(); // force reload
@@ -3320,13 +3316,10 @@ class OperationTable extends SortTable {
     }
 
     selectFunc(id) {
-        console.log("Optab",id,operationId)
         Operation.select(id) ;
-        console.log("Optab",id,operationId)
     }
 
     editpage() {
-        console.log("OpTab",operationId);
         objectPage.show("OperationEdit");
     }
 }
@@ -3399,7 +3392,7 @@ class SearchTable extends SortTable {
                     }
             })
             .catch( err => {
-                console.log("Get search record",err);
+                Page.err(err);
                 objectPage.show(null);
                 });
         }
@@ -3465,7 +3458,15 @@ class NoteList {
                 });
         }
 
+        // Highlight (and open fieldset) selected note
+        // this includes recently edited or created
         this.select() ;
+        
+        // if only one year open fieldset
+        if ( this.yearKeys.length == 1 ) {
+            this.open(parent.querySelector("fieldset"));
+        }
+        
         
         Note.dropPictureinNote( parent );        
     }
@@ -3477,7 +3478,6 @@ class NoteList {
     }
     
     close( fs ) {
-        console.log(fs);
         fs.querySelector("ul").style.display="none"; // show
         fs.querySelector(".triggerbutton").innerHTML="&#10133;";
         fs.querySelector(".triggerbutton").onclick = () => this.open(fs) ;
@@ -3672,7 +3672,7 @@ window.onload = () => {
     if ( 'serviceWorker' in navigator ) {
         navigator.serviceWorker
         .register('/sw.js')
-        .catch( err => console.log("Service worker",err) );
+        .catch( err => Page.err(err,"Service worker registration") );
     }
     
     Page.setButtons() ;
@@ -3723,7 +3723,7 @@ window.onload = () => {
                 }
                 })
             )
-        .catch( err => console.log("Search initial fill",err) );
+        .catch( err => Page.err(err,"Initial search database") );
 
             // start sync with remote database
             objectRemote.foreverSync();
@@ -3734,7 +3734,7 @@ window.onload = () => {
             // Secondary indexes
             createQueries();
             db.viewCleanup()
-            .catch( err => console.log("View cleanup",err) );
+            .catch( err => Page.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;
