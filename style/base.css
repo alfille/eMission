@@ -175,12 +175,16 @@ ul {
   font-weight: normal;
   display: inline-block;
 }
+
+.noteFieldset {
+  background-color: #949ddf;
+}
     
 body {
   font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.4em;
   background: #172bae;
-  color: #4d4d4d;
+  color: #250f0f;
   width: 100%;
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
@@ -191,8 +195,7 @@ body {
 }
 
 #emissionbody {
-  background: #fff;
-  background: rgba(255, 255, 255, 0.9);
+  background: #949ddf;
   margin: 0 0 0 0;
   border: 1px solid #ccc;
   position: relative;

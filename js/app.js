@@ -3439,7 +3439,7 @@ class NoteList {
         
         // show notes
         if ( notelist.rows.length == 0 ) {
-            parent.appendChild( document.createTextNode("Add a note, picture, or drag an image here") ) ;
+            parent.appendChild( document.querySelector(".emptynotelist").cloneNode(true) );
         } else {
             this.yearKeys.forEach( y => {
                 let fs = fieldset.cloneNode( true ) ;
