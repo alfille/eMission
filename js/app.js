@@ -2601,7 +2601,7 @@ class Page { // singleton class
                     nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
                     // Assign names, filter out empties
                     olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
-                    objectTable = new OperationTable( [ "Procedure", "Surgeon", "Name", "Date-Time" ]  );
+                    objectTable = new OperationTable();
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
                     })
@@ -2611,7 +2611,7 @@ class Page { // singleton class
             }
                 
             case "AllPatients":
-                objectTable = new PatientTable( ["LastName", "FirstName", "Procedure","Date-Time","Surgeon" ] );
+                objectTable = new PatientTable();
                 let o2pid = {} ;
                 Operation.getAllIdDocCurated()
                 .then( doclist => {
@@ -2643,7 +2643,7 @@ class Page { // singleton class
                 break;
 
             case "DBTable":
-                objectTable = new DatabaseTable( ["Name","Organization","Location","StartDate"] );
+                objectTable = new DatabaseTable();
                 Collation.getAllIdDoc()
                 .then( (docs) => {
                     objectTable.fill(docs.rows) ;
@@ -2740,7 +2740,7 @@ class Page { // singleton class
                 
             case "OperationList":
                 if ( Patient.isSelected() ) {
-                    objectTable = new OperationTable( [ "Procedure", "Surgeon", "Status", "Date-Time", "Duration", "Equipment" ]  );
+                    objectTable = new OperationTable();
                     Operation.getRecordsIdDoc()
                     .then( (docs) => objectTable.fill(docs.rows ) )
                     .catch( (err) => Page.err(err) );
@@ -2839,7 +2839,7 @@ class Page { // singleton class
                 break;
                 
             case "SearchList":
-                objectTable = new SearchTable( ["Name","Type","Text"] ) ;
+                objectTable = new SearchTable() ;
                 objectSearch.setTable();
                 break ;
                 
@@ -2886,7 +2886,7 @@ class Page { // singleton class
                 if ( User.db == null ) {
                     this.show( "SuperUser" );
                 } else {
-                    objectTable = new UserTable( ["name", "roles", "email", "type", ] );
+                    objectTable = new UserTable();
                     User.getAllIdDoc()
                     .then( docs => objectTable.fill(docs.rows ) )
                     .catch( (err) => {
@@ -3082,45 +3082,67 @@ class Swipe {
 var objectSwipe = new Swipe() ;
 
 class SortTable {
-    constructor( collist, tableId ) {
+    constructor( collist, tableId, aliaslist=[] ) {
         this.tbl = document.getElementById(tableId);
         this.tbl.innerHTML = "";
+        this.collist = collist;
+        
+        // alias-list is a list in form (list of lists):
+        //[ [fieldname, aliasname, transformfunction],...]
+        
+        this.aliases={};
+        this.collist.forEach( f => this.aliasAdd(f) ) ; // default aliases
+        aliaslist.forEach( a => this.aliasAdd(a[0],a[1],a[2]) );
 
         // Table Head
         let header = this.tbl.createTHead();
         let row = header.insertRow(0);
         row.classList.add('head');
-        collist.forEach( (v,i) => row.insertCell(i).outerHTML='<th>'+v+'</th>' );
+        this.collist.forEach( (f,i) => row.insertCell(i).outerHTML=`<th>${this.aliases[f].name}</th>` );
 
         // Table Body
         let tbody = document.createElement('tbody');
         this.tbl.appendChild(tbody);
-        this.collist = collist;
 
         this.dir = 1;
         this.lastth = -1;
         this.tbl.onclick = this.allClick.bind(this);
     }
 
+    aliasAdd( fieldname, aliasname=null, transformfunction=null ) {
+        if ( !(fieldname in this.aliases) ) {
+            this.aliases[fieldname] = {} ;
+        }
+        this.aliases[fieldname]["name"] = aliasname ?? fieldname ;
+        this.aliases[fieldname]["value"] = ((record)=>{
+            try {
+                if ( transformfunction==null ) {
+                    return record[fieldname];
+                } else {
+                    return transformfunction(record) ;
+                }
+            } catch(e) {
+                console.log(e);
+                return "";
+            }
+            }) ;
+    }
+
     fill( doclist ) {
         // typically called with doc.rows from allDocs
         let tbody = this.tbl.querySelector('tbody');
         tbody.innerHTML = "";
-        let collist = this.collist;
+        //let collist = this.collist;
         doclist.forEach( (doc) => {
             let row = tbody.insertRow(-1);
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
             /* Select and edit -- need to make sure selection is complete*/
-            ['click','dblclick','swiped-right','swiped-left']
+            ['click','swiped-right','swiped-left']
             .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
-            collist.forEach( (colname,i) => {
+            this.collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
-                if ( colname in record ) {
-                    c.innerText = record[colname];
-                } else {
-                    c.innerText = "";
-                }
+                c.innerText=(this.aliases[colname].value)(record) ;
             });
         });
         this.highlight();
@@ -3216,8 +3238,15 @@ class SortTable {
 }
 
 class PatientTable extends SortTable {
-    constructor( collist ) {
-        super( collist, "AllPatients" );
+    constructor() {
+        super( 
+            ["LastName", "Procedure","Date-Time","Surgeon" ], 
+            "AllPatients",
+            [
+                ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
+                ['Date-Time','Date',(doc)=>doc["Date-Time"].substring(0,10)],
+            ] 
+            );
     }
 
     selectId() {
@@ -3234,8 +3263,11 @@ class PatientTable extends SortTable {
 }
 
 class DatabaseTable extends SortTable {
-    constructor( collist ) {
-        super( collist, "DBTable" );
+    constructor() {
+        super( 
+            ["Name","Organization","Location","StartDate"], 
+            "DBTable" 
+            );
         // starting databaseId
         this.databaseId = this.makeId( remoteCouch.database ) ;
         this.loadedId = this.databaseId ;
@@ -3307,8 +3339,14 @@ class DatabaseTable extends SortTable {
 }
 
 class OperationTable extends SortTable {
-    constructor( collist ) {
-        super( collist, "OperationsList");
+    constructor() {
+        super( 
+        [ "Procedure", "Surgeon", "Name", "Date-Time" ], 
+        "OperationsList",
+        [
+            ["Date-Time","Date",(doc)=>doc["Date-Time"].substring(0,10)]
+        ]
+        );
     }
 
     selectId() {
@@ -3325,8 +3363,11 @@ class OperationTable extends SortTable {
 }
 
 class UserTable extends SortTable {
-    constructor( collist ) {
-        super( collist, "UserList");
+    constructor() {
+        super(
+            ["name", "roles", "email", "type", ], 
+            "UserList"
+            );
     }
 
     selectId() {
@@ -3343,8 +3384,11 @@ class UserTable extends SortTable {
 }
 
 class SearchTable extends SortTable {
-    constructor( collist ) {
-        super( collist, "SearchList");
+    constructor() {
+        super( 
+        ["Name","Type","Text"], 
+        "SearchList"
+        );
     }
 
     selectId() {
