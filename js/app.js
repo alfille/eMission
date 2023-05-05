@@ -2601,7 +2601,7 @@ class Page { // singleton class
                     nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
                     // Assign names, filter out empties
                     olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
-                    objectTable = new OperationTable();
+                    objectTable = new AllOperationTable();
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
                     })
@@ -3338,10 +3338,34 @@ class DatabaseTable extends SortTable {
     }
 }
 
+class AllOperationTable extends SortTable {
+    constructor() {
+        super( 
+        [ "Date-Time","Name","Procedure","Surgeon" ], 
+        "OperationsList",
+        [
+            ["Date-Time","Date",(doc)=>doc["Date-Time"].substring(0,10)]
+        ]
+        );
+    }
+
+    selectId() {
+        return operationId;
+    }
+
+    selectFunc(id) {
+        Operation.select(id) ;
+    }
+
+    editpage() {
+        objectPage.show("OperationEdit");
+    }
+}
+
 class OperationTable extends SortTable {
     constructor() {
         super( 
-        [ "Procedure", "Surgeon", "Name", "Date-Time" ], 
+        [ "Date-Time","Procedure", "Surgeon" ], 
         "OperationsList",
         [
             ["Date-Time","Date",(doc)=>doc["Date-Time"].substring(0,10)]
