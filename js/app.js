@@ -3138,7 +3138,7 @@ class SortTable {
             let record = doc.doc;
             row.setAttribute("data-id",record._id);
             /* Select and edit -- need to make sure selection is complete*/
-            ['click','swiped-right','swiped-left']
+            ['click']
             .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
             this.collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);

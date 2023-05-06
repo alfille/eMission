@@ -18,7 +18,7 @@ Arrive here from the *__All Operations__* button on the [Main Menu](/help/MainMe
   * A placeholder operation if no operations have yet been entered
   
 
-Clicking on an operation will take you to the [view/edit](/help/OperationEdit.md) page.
+Clicking anywhere on an operation will take you to the [Operation Edit](/help/OperationEdit.md) page.
 
 Press *__Return__* to return to the [Main Menu](/help/MainMenu.md).
 

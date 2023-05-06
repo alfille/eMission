@@ -9,9 +9,15 @@
 
 Arrive here from the *__All Patients__* button on [Main Menu](/help/MainMenu.md).
 
-*This is a sortable list of all the patients. It is a common starting point for your work, allowing you to select a particular patient and chart data or plan operations.*
+*This is a sortable list of all the patients. It is a common starting point for your work, allowing you to select a particular patient and record information or plan operations.*
 
-Note that currently, no patient is selected and so the *__Review/Edit Patient__* button is not active.
+Columns include:
+* Name
+* Operation
+  * Most recent operation
+  * *Enter new procedure* is a placeholder if no operation yet
+* Date of most recent operation (if any)
+* Surgeon
 
 ___
 
@@ -22,18 +28,15 @@ This table is *sortable*:
 * Column headings are active
 * Click (or touch) a heading to sort on that field
 * Click again to reverse the sort order
-* Click on a row to *select* that patient
 
 ___
 
 ![](/images/PatientList_select.png)
 
-Selected operation:
+Most recent patient record used is *highlighted*
 
-* Patient row is highlighted in yellow
-* the [*__Review/Edit Patient__*](/help/PatientPhoto.md) button is now enabled
-* To use this patient you can either:
-  * Click [*__Review/Edit Patient__*](/help/PatientPhoto.md)
-  * Double-click the row
-  * Swipe the row left or right
+Click any patient row to [open patient's chart](/help/PatientPhoto.md)
 
+Click *__Add Patient__* button on top to [add a new patient](/help/PatientNew.md)
+
+Click *__Return__* to go to the [Main Menu](/help/MainMenu.md).
