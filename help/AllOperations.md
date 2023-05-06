@@ -11,14 +11,17 @@ Arrive here from the *__All Operations__* button on the [Main Menu](/help/MainMe
 
 *This is a sortable list of operations for all patients. You can use this as a convenient way to see your units's activity*
 
+Clicking anywhere on an operation will take you to that procedure's [Operation Edit](/help/OperationEdit.md) page.
+
+----
+![](/images/AllOperations_sort.png)
+
 * Sort the list by clicking one of the column headers
 * Reverse the sort by clicking again
 * All patients will get at least one entry
   * An entry for each scheduled or completed operation
-  * A placeholder operation if no operations have yet been entered
+  * A placeholder operation if no operations has yet been entered
   
-
-Clicking anywhere on an operation will take you to the [Operation Edit](/help/OperationEdit.md) page.
 
 Press *__Return__* to return to the [Main Menu](/help/MainMenu.md).
 
