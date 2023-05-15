@@ -2099,13 +2099,6 @@ class User { // convenience class
             binary: true,
             attachments: true,
         } ;
-        if (attachments) {
-            doc.include_docs = true;
-            doc.binary = true;
-            doc.attachments = true;
-        } else {
-            doc.limit = 0;
-        }
         return User.db.allDocs(doc);
     }
 
