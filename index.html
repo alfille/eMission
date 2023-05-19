@@ -110,6 +110,11 @@
                     <div class="InvalidPatient topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'AllPatients' )">Return</button>
                     </div>
+                    <!-- top: ErrorLog -->
+                    <div class="ErrorLog topButtons pageOverlay">
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton delete" onclick="objectLog.clear()">Erase Log</button>
+                    </div>
                     <!-- top: NoteList -->
                     <div class="NoteList topButtons pageOverlay">
                         <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
@@ -181,7 +186,9 @@
                     <button type="button" class="divbutton" onclick="objectPage.show( 'Administration' )">Privileged operations</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Remote Database Setup</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton delete" onclick="clearLocal()">Clear local data</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
+                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
+                    <button type="button" class="divbutton delete" onclick="clearLocal()">Erase local data</button>
                 </div>
             </div>
             <!-- body: Administration -->
@@ -305,6 +312,10 @@
             <!-- body: NoteNew (quick note) -->
             <div class="NoteNew pageOverlay">
                 <div id="NoteNewContent"></div>
+            </div>
+            <!-- body: ErrorLog -->
+            <div class="ErrorLog pageOverlay">
+                <div id="ErrorLogContent"></div>
             </div>
             <!-- body: QuickPhoto (quick photo) -->
             <div class="QuickPhoto pageOverlay">

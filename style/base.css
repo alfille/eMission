@@ -74,6 +74,14 @@ tr:nth-child(odd):hover, li:nth-child(even):hover {
   background: #CCCCFF ;
 }
 
+#ErrorLogContent li {
+  background: #ff6C53;
+}
+
+#ErrorLogContent li:nth-child(even) {
+  background: #ebff53;
+}
+
 ul {
   list-style-type: none;
   margin: 0;
