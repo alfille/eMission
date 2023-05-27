@@ -2569,7 +2569,6 @@ class Page { // singleton class
         switch( objectPage.current() ) {  
             case "MainMenu":
             case "Administration":
-            case "Download":
             case "Settings":
                 // Pure menus
                 break;
@@ -2640,6 +2639,11 @@ class Page { // singleton class
                 .catch( (err) => objectLog.err(err) );
                 break ;
                 
+            case "Download":
+                objectPage.forget();
+                window.location.href="/download.html" ;
+                break ;
+
             case "ErrorLog":
                 objectLog.show() ;
                 break ;
