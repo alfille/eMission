@@ -9,6 +9,7 @@ const cacheName = "eMission";
 const cacheList = [
     "/",
     "/index.html",
+    "/download.html",
     "/sw.js",
     "/images/DCTOHC11.jpg",
     "/images/emission11-web-white.jpg",
@@ -18,10 +19,13 @@ const cacheList = [
     "/style/base.css",
     "/style/print.css",
     "/js/app.js",
+    "/js/app2.js",
     "/js/flatpickr.min.js",
     "/js/qrenc-4.0.0.min.js",
     "/js/pouchdb-8.0.1.min.js",
     "/js/elasticlunr.min.js",
+    "/js/jszip.min.js",
+    "/js/pptxgen.min.js",
     ];
 
 // preload cache
