@@ -3241,7 +3241,7 @@ class PatientTable extends SortTable {
             "AllPatients",
             [
                 ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
-                ['Date-Time','Date',(doc)=>doc["Date-Time"].substring(0,10)],
+                ['Date-Time','Date',(doc)=>(doc["Date-Time"]??"").substring(0,10)],
             ] 
             );
     }
