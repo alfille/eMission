@@ -18,7 +18,7 @@ var noteId;
 var operationId;
 var remoteCouch;
 var NoPhoto = "style/NoPhoto.png";
-var DCTOHClogo = "style/DCTOHC11.jpg";
+var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
@@ -1015,32 +1015,29 @@ class Mission { // convenience class
     static select() {
         Patient.unselect();
         patientId = missionId;
-        db.query("Pid2Name", {key:missionId,})
-        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1] )
-        .catch( (err) => {
-            objectLog.err(err,"mission select");
-            document.getElementById( "titlebox" ).innerHTML = "";
-            }) ;
+        Mission.getRecordId()
+        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.Name ) ;
     }
+    
 
     static getRecordId() {
-		// return the Mission record, or a dummy
-		return db.get( missionId, { attachments: true, binary: true } )
-		.then( doc => Promise.resolve(doc) )
-		.catch( () => Promise.resolve({
-			EndDate:"",
-			Link:"",
-			LocalContact:"",
-			Location:"",
-			Mission:remoteCouch.database,
-			Name:remoteCouch.database,
-			Organization:"",
-			StartDate:"",
-			type:"mission",
-			_id:missionId,
-			})
-			);
-	}
+        // return the Mission record, or a dummy
+        return db.get( missionId, { attachments: true, binary: true } )
+        .then( doc => Promise.resolve(doc) )
+        .catch( () => Promise.resolve({
+            EndDate:null,
+            Link:"",
+            LocalContact:"",
+            Location:"",
+            Mission:remoteCouch.database,
+            Name:remoteCouch.database,
+            Organization:"",
+            StartDate:null,
+            type:"mission",
+            _id:missionId,
+            })
+            );
+    }
 
     static link() {
         Mission.getRecordId()
@@ -1048,7 +1045,7 @@ class Mission { // convenience class
             let src = new Image( null,doc).source();
             document.querySelectorAll(".missionLogo")
             .forEach( logo => {
-                logo.src=src;
+                logo.src=src??"images/Null.png";
                 logo.addEventListener( 'click', () => window.open(doc.Link) );
                 });
             document.querySelectorAll(".missionButton")
@@ -1057,7 +1054,7 @@ class Mission { // convenience class
                 logo.title = `Open ${doc.Mission} website`;
                 });
             document.querySelectorAll(".missionButtonImage")
-            .forEach( logo => logo.src=src );
+            .forEach( logo => logo.src=src??"images/Null.png" );
             })
         .catch( err => objectLog.err(err,"Mission info") ) ;
     }
@@ -1442,7 +1439,7 @@ class Page { // singleton class
                 break;
 
             default:
-				// jump back to main menu
+                // jump back to main menu
                 window.location.href="/index.html" ;
                 break;
         }

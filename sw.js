@@ -12,6 +12,7 @@ const cacheList = [
     "/download.html",
     "/sw.js",
     "/images/DCTOHC11.jpg",
+    "/images/Null.png",
     "/images/emission11-web-white.jpg",
     "/images/emission_64x64.png",
     "/images/emission_t_square.png",
