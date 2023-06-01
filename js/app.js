@@ -372,7 +372,7 @@ const structMission = [
         type: "textarea",
     },
     {
-        name: "Energency",
+        name: "Emergency",
         hint: "Emergency contact",
         type: "textarea",
     },
@@ -2173,9 +2173,28 @@ class Mission { // convenience class
             document.getElementById( "titlebox" ).innerHTML = "";
             }) ;
     }
+    
+    static getRecordId() {
+		// return the Mission record, or a dummy
+		return db.get( missionId, { attachments: true, binary: true } )
+		.then( doc => Promise.resolve(doc) )
+		.catch( () => Promise.resolve({
+			EndDate:"",
+			Link:"",
+			LocalContact:"",
+			Location:"",
+			Mission:remoteCouch.database,
+			Name:remoteCouch.database,
+			Organization:"",
+			StartDate:"",
+			type:"mission",
+			_id:missionId,
+			})
+			);
+	}
 
     static link() {
-        db.get( missionId, { attachments: true, binary: true } )
+        Mission.getRecordId()
         .then( doc => {
             let src = new Image( null,doc).source();
             document.querySelectorAll(".missionLogo")
@@ -2676,7 +2695,7 @@ class Page { // singleton class
                 
             case "MissionList":
                 Mission.select() ;
-                db.get( missionId )
+                Mission.getRecordId()
                 .then( () => Note.getRecordsIdPix() )
                 .then( notelist => objectNoteList = new NoteList(notelist,'Uncategorized') )
                 .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
