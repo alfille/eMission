@@ -1119,6 +1119,51 @@ class Log{
 
 objectLog = new Log() ;
 
+// Create pouchdb indexes.
+// Used for links between records and getting list of choices
+// change version number to force a new version
+function createQueries() {
+    let ddoclist = [
+    {
+        _id: "_design/Pid2Name" ,
+        version: 2,
+        views: {
+            Pid2Name: {
+                map: function( doc ) {
+                    if ( doc.type=="patient" ) {
+                        emit( doc._id, [
+                            `${doc.FirstName} ${doc.LastName}`,
+                            `Patient: <B>${doc.FirstName} ${doc.LastName}</B> DOB: <B>${doc.DOB}</B>`
+                            ]);
+                    } else if ( doc.type=="mission" ) {
+                        emit( doc._id, [
+                            `${doc.Organization??""} ${doc.Name??doc._id}`,
+                            `Mission: <B>${doc.Organization??""}: ${doc.Name??""}</B> to <B>${doc.Location??"?"}</B> on <B>${[doc.StartDate,doc.EndDate].join("-")}</B>`
+                            ]);
+                    }
+                }.toString(),
+            },
+        },
+    }, 
+    ];
+    Promise.all( ddoclist.map( (ddoc) => {
+        db.get( ddoc._id )
+        .then( doc => {
+            if ( ddoc.version !== doc.version ) {
+                ddoc._rev = doc._rev;
+                return db.put( ddoc );
+            } else {
+                return Promise.resolve(true);
+            }
+            })
+        .catch( () => {
+            // assume because this is first time and cannot "get"
+            return db.put( ddoc );
+            });
+        }))
+    .catch( (err) => objectLog.err(err) );
+}
+
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -1132,10 +1177,9 @@ function parseQuery() {
 
 function cookies_n_query() {
     Cookie.get ( "patientId" );
-    Cookie.get ( "commentId" );
+    Cookie.get ( "noteId" );
     objectPage = new Page();
     Cookie.get ( "operationId" );
-
     
     // need to establish remote db and credentials
     // first try the search field
@@ -1174,6 +1218,14 @@ window.onload = () => {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
 
+
+		// start sync with remote database
+		objectRemote.foreverSync();
+
+		// Secondary indexes
+		createQueries();
+		db.viewCleanup()
+		.catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;

@@ -3755,7 +3755,7 @@ function clearLocal() {
         Cookie.del( "patientId" );
         Cookie.del("remoteCouch");
         Cookie.del("operationId");
-        Cookie.del( "commentId" );
+        Cookie.del( "noteId" );
         db.destroy().finally( ()=>objectPage.reset() );
     }
     objectPage.show( "MainMenu" );
@@ -3763,7 +3763,7 @@ function clearLocal() {
 
 function cookies_n_query() {
     Cookie.get ( "patientId" );
-    Cookie.get ( "commentId" );
+    Cookie.get ( "noteId" );
     objectPage = new Page();
     Cookie.get ( "operationId" );
 
@@ -3845,16 +3845,16 @@ window.onload = () => {
             )
         .catch( err => objectLog.err(err,"Initial search database") );
 
-            // start sync with remote database
-            objectRemote.foreverSync();
+		// start sync with remote database
+		objectRemote.foreverSync();
 
-            // set link for mission
-            Mission.link();
+		// set link for mission
+		Mission.link();
 
-            // Secondary indexes
-            createQueries();
-            db.viewCleanup()
-            .catch( err => objectLog.err(err,"View cleanup") );
+		// Secondary indexes
+		createQueries();
+		db.viewCleanup()
+		.catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;
