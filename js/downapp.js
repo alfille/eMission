@@ -191,26 +191,6 @@ class ImageNote extends ImagePlus {
         this.buttonsdisabled( false );
     }
     
-    leave() {
-        this.buttonsdisabled( false );
-        if ( objectNoteList.category == 'Uncategorized' ) {
-            objectPage.show( 'NoteList');
-        } else {
-            objectPage.show( 'NoteListCategory', objectNoteList.category);
-        }
-    }
-
-    store() {
-        this.save( this.doc );
-        db.put( this.doc )
-        .then( resp => {
-            Note.select( resp.id );
-            return Note.getAllIdDoc(); // to prime list
-            })
-        .catch( err => objectLog.err(err) )
-        .finally( () => this.leave() );
-    }
-
     edit() {
         this.addListen();
         this.buttonsdisabled( true );
@@ -219,12 +199,6 @@ class ImageNote extends ImagePlus {
 
     addListen() {
         super.addListen();
-        try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
-            catch {}
-        try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
-            catch {}
-        try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
-            catch {}
     }
 
     buttonsdisabled( bool ) {
@@ -232,25 +206,6 @@ class ImageNote extends ImagePlus {
         document.querySelectorAll(".divbutton").forEach( b => b.disabled=bool );
     }
 
-    delete() {
-        let pdoc;
-        Patient.getRecordId()
-        .then( (doc) => {
-            pdoc = doc;
-            return db.get( noteId );
-            })
-        .then( (doc) => {
-            if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
-                return doc;
-            } else {
-                throw "No delete";
-            }           
-            })
-        .then( (doc) => db.remove(doc) )
-        .then( () => Note.unselect() )
-        .catch( (err) => objectLog.err(err) )
-        .finally( () => this.leave() );
-    }
 }
 
 class Patient { // convenience class
@@ -294,12 +249,6 @@ class Patient { // convenience class
     }
 
     static select( pid = patientId ) {
-        if ( patientId != pid ) {
-            // change patient -- notes dont apply
-            Note.unselect();
-            objectNoteList.category = 'Uncategorized' ;
-        }
-
         patientId = pid ;
         if ( pid == missionId ) {
             Mission.select() ;
@@ -1232,12 +1181,6 @@ window.onload = () => {
         // Set patient, operation and note -- need page shown first
         if ( Patient.isSelected() ) { // mission too
             Patient.select() ;
-        }
-        if ( operationId ) {
-            Operation.select(operationId) ;
-        }
-        if ( noteId ) {
-            Note.select() ;
         }
 
     } else {
