@@ -2656,7 +2656,6 @@ class Page { // singleton class
                 break ;
                 
             case "Download":
-                objectPage.forget();
                 window.location.href="/download.html" ;
                 break ;
 

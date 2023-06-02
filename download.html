@@ -42,6 +42,28 @@
             <!-- body: Download -->
             <div class="Download pageOverlay">
                 <div id="DownloadContent" >
+                    <h3>Choose file type</h3>
+                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()" title="CSV file">Spreadsheet (text only)</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadAll()" title="PPTX (Powerpoint) file">Presentation</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadAll()" title="JSON file">Backup</button>
+                </div>
+            </div>
+            <div class="DownloadCSV pageOverlay">
+                <div id="DownloadContent" >
+                    <h3>Download Spreadsheet file</h3>
+                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
+                </div>
+            </div>
+            <div class="DownloadPPTX pageOverlay">
+                <div id="DownloadContent" >
+                    <h3>Download Spreadsheet file</h3>
+                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
+                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
+                </div>
+            </div>
+            <div class="DownloadJSON pageOverlay">
+                <div id="DownloadContent" >
                     <h3>Download Spreadsheet file</h3>
                     <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
                     <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>

@@ -6,7 +6,6 @@
 var objectPatientData;
 var objectNoteList={};
     objectNoteList.category = 'Uncategorized' ;
-var objectTable = null;
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
@@ -262,7 +261,6 @@ class Patient { // convenience class
                 })
             .catch( (err) => {
                 objectLog.err(err,"patient select");
-                Patient.unselect();
                 });
         }
     }
@@ -489,7 +487,6 @@ class Operation { // convenience class
 
 class Mission { // convenience class
     static select() {
-        Patient.unselect();
         patientId = missionId;
         Mission.getRecordId()
         .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.Name ) ;
@@ -862,10 +859,6 @@ class Page { // singleton class
         return this.current()==page ;
     }
 
-    forget() {
-        this.back();
-    }
-
     link() {
         window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
@@ -881,7 +874,6 @@ class Page { // singleton class
             .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
 
         objectPatientData = null;
-        objectTable = null;
 
         // clear old image urls
         Image.clearSrc() ;
@@ -895,6 +887,7 @@ class Page { // singleton class
 
         switch( objectPage.current() ) {  
             case "Download":
+                Mission.select();
                 // Pure menus
                 break;
                 
@@ -948,11 +941,6 @@ class Page { // singleton class
             e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
 
-        // set save details for PatientData save pages
-        document.querySelectorAll(".savedata").forEach( s => {
-            s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>objectPatientData.savePatientData());
-            });
         // remove redundant mission buttons
         [...document.querySelectorAll(".topButtons")]
         .filter(d => d.querySelector(".missionLogo"))
@@ -1219,13 +1207,13 @@ window.onload = () => {
         document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
 
 
-		// start sync with remote database
-		objectRemote.foreverSync();
-
-		// Secondary indexes
-		createQueries();
-		db.viewCleanup()
-		.catch( err => objectLog.err(err,"View cleanup") );
+        // start sync with remote database
+        objectRemote.foreverSync();
+        
+        // Secondary indexes
+        createQueries();
+        db.viewCleanup()
+        .catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;
