@@ -607,8 +607,9 @@ class Cookie { //convenience class
 
 class CSV { // convenience class
     static downloadCSV(csv, filename) {
+		// csv holds formatted content
         let csvFile;
-        let downloadLink;
+        let downloadLink; // invisible download button
        
         //define the file type to text/csv
         csvFile = new Blob([csv], {type: 'text/csv'});
@@ -618,22 +619,64 @@ class CSV { // convenience class
         downloadLink.style.display = "none";
 
         document.body.appendChild(downloadLink);
-        downloadLink.click();
+        downloadLink.click(); // press invisible button
+        
+        // clean up
+        // Add "delay" see: https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
+        setTimeout( () => {
+			window.URL.revokeObjectURL(downloadLink.href) ;
+			document.body.removeChild(downloadLink) ;
+		});
     }
 
     static downloadPatients() {
-        const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
+		// Just Patient records
+        const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ];
+        // First line titles 
         let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
+        // Add data
         Patient.getAllIdDoc()
-        .then( doclist => {
+        .then( doclist => { // full list of patients
             csv += doclist.rows
-                .map( row => fields
-                    .map( f => row.doc[f] || "" )
-                    .map( v => typeof(v) == "number" ? v : `"${v}"` )
+                .map( row => fields // per wanted field
+                    .map( f => row.doc[f] ?? "" ) // get data
+                    .map( v => typeof(v) == "number" ? v : `"${v}"` ) // data formatted
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.downloadCSV( csv, `${remoteCouch.database}Patient.csv` );
+            CSV.downloadCSV( csv, `${remoteCouch.database}Patients.csv` ); // Send to download file
+            });
+    }
+
+    static downloadOperations() {
+		// Just real operation records
+		// Add Patient name too
+        const fields = [ "Procedure", "Surgeon", "Date-Time", "Status", "Equipment", "Complaint", "Duration", "Lateratility" ]; 
+        // First line titles 
+        let csv = ['"Patient"'].concat(fields.map( f => '"'+f+'"' )).join(',')+'\n';
+        // Add data
+        db.query("Pid2Name").then(x=>console.log(x));
+        let olist = null;
+        Operation.getAllIdDoc()
+        .then( doclist => {
+			olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
+			console.log(olist);
+			return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
+			})
+		.then ( nlist => {
+			console.log(nlist);
+			const names = {};
+			nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
+			console.log(nlist);
+            csv += olist
+                .map( row => [`"${names[row.doc.patient_id]}"`].concat(
+						fields // per wanted field
+						.map( f => row.doc[f] ?? "" ) // get data
+						.map( v => typeof(v) == "number" ? v : `"${v}"` )) // data formatted
+                    .join(',')
+                    )
+                .join( '\n' );
+            CSV.downloadCSV( csv, `${remoteCouch.database}Operations.csv` ); // Send to download file
             });
     }
 
@@ -794,8 +837,9 @@ class Page { // singleton class
                 this.next("RemoteDatabaseInput");
             }
         }
-console.log(objectPage.current());
-alert(objectPage.current());
+		
+		console.log("Page: ",objectPage.current());
+
         switch( objectPage.current() ) {  
             case "Download":
 			case "DownloadCSV":
