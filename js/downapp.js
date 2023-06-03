@@ -108,26 +108,6 @@ class Image {
         }
     }
         
-    revert() {
-        this.fromDoc();
-        this.display();
-    }
-
-    addListen() {
-        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
-            catch {}
-        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
-            catch {}
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
-            catch {}
-    }
-
-    remove() {
-        this.upload="remove";
-        this.src=this.backup ?? null ;
-        this.display();
-    }
-
     handle() {
         const files = this.parent.querySelector('.imageBar') ;
         this.upload = files.files[0];
@@ -137,74 +117,6 @@ class Image {
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{}
     }
-
-    save(doc) {
-        if ( this.upload == null ) {
-        } else if ( this.upload == "remove" ) {
-            if ( "_attachments" in doc ) {
-                delete doc._attachments;
-            }
-        } else {
-            Object.assign(
-                doc,
-                { _attachments: {
-                    image: {
-                        content_type: this.upload.type,
-                        data: this.upload,
-                        }
-                }} );
-        }
-    }
-
-    changed() {
-        return this.upload != null;
-    }
-}
-
-class ImagePlus extends Image {
-    constructor(...args) {
-        super(...args);
-        this.text = this.doc?.text ?? "";
-        this.title = this.doc?.title ?? "";
-        this.category = this.doc?.category ?? "";
-    }
-
-    display() {
-        super.display();
-        this.parent.querySelector(".entryfield_text").innerText = this.text;
-        this.parent.querySelector(".entryfield_title").innerText = this.title;
-        this.parent.querySelector("select").value = this.category;
-    }
-
-    save(doc) {
-        super.save(doc);
-        doc.text = this.parent.querySelector(".entryfield_text").innerText;
-        doc.title = this.parent.querySelector(".entryfield_title").innerText;
-        doc.category = this.parent.querySelector("select").value;
-    }
-}
-
-class ImageNote extends ImagePlus {
-    constructor( ...args ) {
-        super( ...args );
-        this.buttonsdisabled( false );
-    }
-    
-    edit() {
-        this.addListen();
-        this.buttonsdisabled( true );
-        this.display();
-    }
-
-    addListen() {
-        super.addListen();
-    }
-
-    buttonsdisabled( bool ) {
-        document.querySelectorAll(".libutton" ).forEach( b => b.disabled=bool );
-        document.querySelectorAll(".divbutton").forEach( b => b.disabled=bool );
-    }
-
 }
 
 class Patient { // convenience class
@@ -774,8 +686,6 @@ class CSV { // convenience class
 class Page { // singleton class
     constructor() {
         this.safeLanding = [
-            "MainMenu",
-            "Administration",
             "Download",
             "Settings",
             "DBTable",
@@ -884,9 +794,13 @@ class Page { // singleton class
                 this.next("RemoteDatabaseInput");
             }
         }
-
+console.log(objectPage.current());
+alert(objectPage.current());
         switch( objectPage.current() ) {  
             case "Download":
+			case "DownloadCSV":
+			case "DownloadPPTX":
+			case "DownloadJSON":
                 Mission.select();
                 // Pure menus
                 break;
@@ -951,123 +865,6 @@ class Page { // singleton class
 function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
-
-/*!
- * swiped-events.js - v@version@
- * Pure JavaScript swipe events
- * https://github.com/john-doherty/swiped-events
- * @inspiration https://stackoverflow.com/questions/16348031/disable-scrolling-when-touch-moving-certain-element
- * @author John Doherty <www.johndoherty.info>
- * @license MIT
- * Modified By Paul Alfille -- class format use only default settings
- */
-
-class Swipe {
-    constructor() {
-        document.addEventListener('touchstart', (e) => this.handleTouchStart(e), false);
-        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), false);
-        document.addEventListener('touchend', (e) => this.handleTouchEnd(e), false);
-        this.reset();
-    }
-
-    reset() {
-        this.xDown = null;
-        this.yDown = null;
-        this.xDiff = null;
-        this.yDiff = null;
-        this.timeDown = null;
-        this.startEl = null;
-    }
-
-    /**
-     * Fires swiped event if swipe detected on touchend
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchEnd(e) {
-        // if the user released on a different target, cancel!
-        if (this.startEl !== e.target) {
-            this.reset() ;
-            return ;
-        }
-
-        let timeDiff = Date.now() - this.timeDown;
-        if ( timeDiff > 500 ) {    // default 500ms
-            this.reset() ;
-            return ;
-        }
-
-        let eventType = '';
-
-        if (Math.abs(this.xDiff) > Math.abs(this.yDiff)) { // most significant
-            if (Math.abs(this.xDiff) > 20) { // default 20px
-                eventType = (this.xDiff > 0)?'swiped-left':'swiped-right';
-            }
-        }
-        else if (Math.abs(this.yDiff) > 20) { // default 20px
-            eventType = (this.yDiff > 0)?'swiped-up':'swiped-down';
-        } else {
-            this.reset() ;
-            return ;
-        }
-
-        let changedTouches = e.changedTouches || e.touches || [];
-        let eventData = {
-            dir: eventType.replace(/swiped-/, ''),
-            touchType: (changedTouches[0] || {}).touchType || 'direct',
-            xStart: parseInt(this.xDown, 10),
-            xEnd: parseInt((changedTouches[0] || {}).clientX || -1, 10),
-            yStart: parseInt(this.yDown, 10),
-            yEnd: parseInt((changedTouches[0] || {}).clientY || -1, 10)
-        };
-
-        // fire `swiped` event event on the element that started the swipe
-        //this.startEl.dispatchEvent(new CustomEvent('swiped', { bubbles: true, cancelable: true, detail: eventData }));
-
-        // fire `swiped-dir` event on the element that started the swipe
-        this.startEl.dispatchEvent(new CustomEvent(eventType, { bubbles: true, cancelable: true, detail: eventData }));
-
-        this.reset() ;
-    }
-
-    /**
-     * Records current location on touchstart event
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchStart(e) {
-        // if the element has data-swipe-ignore="true" we stop listening for swipe events
-        if (e.target.getAttribute('data-swipe-ignore') === 'true') return;
-
-        this.startEl = e.target;
-
-        this.timeDown = Date.now();
-        this.xDown = e.touches[0].clientX;
-        this.yDown = e.touches[0].clientY;
-        this.xDiff = 0;
-        this.yDiff = 0;
-    }
-
-    /**
-     * Records location diff in px on touchmove event
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchMove(e) {
-        if (!this.xDown || !this.yDown) return;
-
-        this.xDiff = this.xDown - e.touches[0].clientX;
-        this.yDiff = this.yDown - e.touches[0].clientY;
-    }
-
-}
-var objectSwipe = new Swipe() ;
-
-function cloneClass( fromClass, target ) {
-    let c = document.getElementById("templates").querySelector(fromClass);
-    target.innerHTML = "";
-    c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
-}    
 
 class Log{
     constructor() {

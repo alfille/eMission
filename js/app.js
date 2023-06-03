@@ -2656,6 +2656,9 @@ class Page { // singleton class
                 break ;
                 
             case "Download":
+            case "DownloadCSV":
+            case "DownloadPPTX":
+            case "DownloadJSON":
                 window.location.href="/download.html" ;
                 break ;
 
