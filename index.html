@@ -151,7 +151,7 @@
         <div id="emissionbody" class="work_screen">
             <!-- body: MainMenu -->
             <div class="MainMenu pageOverlay">
-                <div id="MainMenuContent" >
+                <div id="MainMenuContent" class="buttonmenu" >
                     <button type="button" class="divbutton" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">This Mission</button>
@@ -164,7 +164,7 @@
             </div>
             <!-- body: FirstTime -->
             <div class="FirstTime pageOverlay">
-                <div id="FirstTimeContent">
+                <div id="FirstTimeContent" class="buttonmenu">
                     <h2>
                         Welcome to eMission Medical Mission Database
                     </h2>
@@ -181,7 +181,7 @@
             </div>
             <!-- body: Settings -->
             <div class="Settings pageOverlay">
-                <div id="SettingsContent">
+                <div id="SettingsContent" class="buttonmenu">
                     <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">Mission Info</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
@@ -195,7 +195,7 @@
             </div>
             <!-- body: Administration -->
             <div class="Administration pageOverlay">
-                <div id="AdministrationContent" >
+                <div id="AdministrationContent" class="buttonmenu" >
                     <button type="button" class="divbutton" onclick="objectPage.show( 'SuperUser' )">User Management</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
@@ -205,11 +205,6 @@
             </div>
             <!-- body: Download -->
             <div class="Download pageOverlay">
-                <div id="DownloadContent" >
-                    <h3>Download Spreadsheet file</h3>
-                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
-                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
-                </div>
             </div>
             <!-- body: AllPatients -->
             <div class="AllPatients pageOverlay">
@@ -291,7 +286,7 @@
             </div>
             <!-- body: SendUser -->
             <div class="SendUser pageOverlay">
-                <div id="SendUserContent" >
+                <div id="SendUserContent" class="buttonmenu" >
                     <div><canvas id="SendUserQR" height=180 width=180>QR code</canvas></div>
                     <div><laMarkbel>User email:<input type=text readonly=true id="SendUserEmail"></label></div>
                     <div><label>User eMission link:<input type=text readonly=true id="SendUserLink"></label></div>

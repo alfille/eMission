@@ -125,7 +125,7 @@ class Patient { // convenience class
     }
 
     static getRecordIdPix(id=patientId ) {
-        return db.get( id, { attachments:true, binary:true } );
+        return db.get( id, { attachments:true, binary:false } );
     }
 
     static getAllId() {
@@ -142,17 +142,20 @@ class Patient { // convenience class
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
             include_docs: true,
+            attachments: true,
+            binary: false,
         };
 
         return db.allDocs(doc);
     }
         
     static getAllIdDocPix() {
+		// Note: using base64 here
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
             include_docs: true,
-            binary: true,
+            binary: false,
             attachments: true,
         };
 
@@ -255,8 +258,9 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix() {
-        let pspl = Patient.splitId();
+    static getRecordsIdPix( pid = patientId) {
+		// Bse64 encoding
+        let pspl = Patient.splitId(pid);
         let doc = {
             startkey: [
                 RecordFormat.type.note,
@@ -273,7 +277,7 @@ class Note { // convenience class
                 pspl.dob,
                 "\\fff0"].join(";"),
             include_docs: true,
-            binary: true,
+            binary: false,
             attachments: true,
         };
         return db.allDocs(doc) ;
@@ -605,17 +609,13 @@ class Cookie { //convenience class
 
 }
 
-class CSV { // convenience class
-    static downloadCSV(csv, filename) {
-		// csv holds formatted content
-        let csvFile;
-        let downloadLink; // invisible download button
-       
-        //define the file type to text/csv
-        csvFile = new Blob([csv], {type: 'text/csv'});
-        downloadLink = document.createElement("a");
+class DownloadFile { // convenience class
+    static download(contents, filename, htype ) {
+        //htype the file type i.e. text/csv
+        let downloadFile = new Blob([contents], {type: htype});
+        let downloadLink = document.createElement("a");
         downloadLink.download = filename;
-        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.href = window.URL.createObjectURL(downloadFile);
         downloadLink.style.display = "none";
 
         document.body.appendChild(downloadLink);
@@ -628,8 +628,14 @@ class CSV { // convenience class
 			document.body.removeChild(downloadLink) ;
 		});
     }
+}
 
-    static downloadPatients() {
+class CSV { // convenience class
+    static download(csv, filename) {
+		DownloadFile.download( csv, filename, 'text/csv' ) ;
+    }
+
+    static patients() {
 		// Just Patient records
         const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ];
         // First line titles 
@@ -644,18 +650,17 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.downloadCSV( csv, `${remoteCouch.database}Patients.csv` ); // Send to download file
+            CSV.download( csv, `${remoteCouch.database}Patients.csv` ); // Send to download file
             });
     }
 
-    static downloadOperations() {
+    static operations() {
 		// Just real operation records
 		// Add Patient name too
         const fields = [ "Procedure", "Surgeon", "Date-Time", "Status", "Equipment", "Complaint", "Duration", "Lateratility" ]; 
         // First line titles 
         let csv = ['"Patient"'].concat(fields.map( f => '"'+f+'"' )).join(',')+'\n';
         // Add data
-        db.query("Pid2Name").then(x=>console.log(x));
         let olist = null;
         Operation.getAllIdDoc()
         .then( doclist => {
@@ -676,11 +681,11 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.downloadCSV( csv, `${remoteCouch.database}Operations.csv` ); // Send to download file
+            CSV.download( csv, `${remoteCouch.database}Operations.csv` ); // Send to download file
             });
     }
 
-    static downloadAll() {
+    static all() {
         const pfields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ]; 
         const ofields = [ "Complaint", "Procedure", "Surgeon", "Equipment", "Status", "Date-Time", "Duration", "Lateratility" ]; 
         let csv = pfields
@@ -720,11 +725,86 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.downloadCSV( csv, `${remoteCouch.database}AllData.csv` );
+            CSV.download( csv, `${remoteCouch.database}AllData.csv` );
             });
     }
-
 }
+
+class Backup {
+	static download( j, filename ) {
+		DownloadFile.download( j, filename, 'application/json' ) ;
+	}
+	
+	static all() {
+		db.allDocs({
+			include_docs: true,
+			attachments: true,
+			binary: false,
+			})
+		.then( doclist => 
+			Backup.download(
+				JSON.stringify(doclist.rows.map(({doc}) => doc)),
+				`${remoteCouch.database}.json`
+				)
+			);
+	};
+}
+
+class PPTX {
+	static download( p, filename ) {
+		console.log(p);
+		DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
+	}
+	
+	static all() {
+		let add_notes = document.getElementById("notesPPTX").checked ;
+		let add_ops = document.getElementById("opsPPTX").checked ;
+		let pname = null;
+
+		// powerpoint object
+		let pptx = new PptxGenJS();
+		PPTX.mission(pptx) ;
+		Patient.getAllIdDocPix()
+		.then( doclist => {
+			// For each patient:
+			doclist.rows.forEach( pt => {
+				PPTX.patient( pt.doc ) ;
+				// Get pretty name
+				db.query( "Pid2Name", {key:pt.id} )
+				.then( q => {
+					pname = q.rows[0].value[0] ;
+					return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:{}}) ) ;
+					})
+				// Get operations
+				.then( ops => {
+					console.log(ops) ;
+					ops.rows
+					.filter( r => (r.doc.Procedure !== "Enter new procedure"))
+					.forEach( r => PPTX.operation( pptx, pname, r.doc ));
+					return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:{}}) ) ;
+					})
+				// Get notes
+				.then( notes => {
+					console.log(notes) ;
+					notes.rows
+					.forEach( r => PPTX.note( pptx, pname, r.doc ));
+					});
+				});
+			});
+	}
+	
+	static mission( pptx ) {
+	}
+
+	static patient( pptx, doc ) {
+	}
+
+	static note( pptx, pname, doc ) {
+	}
+
+	static operation( pptx, pname, doc ) {
+	}
+}	
 
 class Page { // singleton class
     constructor() {

@@ -315,12 +315,22 @@ legend {
 	font-weight: bold;
 }
 
-#MainMenuContent, #DownloadContent, #AdministrationContent, #SendUserContent, #SettingsContent, #FirstTimeContent {
+.buttonmenu {
   display: flex ;
   background: #bcbce9 ;
   justify-content: center;
   align-items: center;
   flex-direction: column ; 
+  padding: 1em;
+}
+#DownloadPPTXContent {
+	font-size: 20px;
+	line-height: 2em;
+	font=weight: bold;
+}
+#DownloadPPTXContent input[type="checkbox"] {
+	height: 2em;
+	width: 2em;
 }
 #FirstTimeContent p {
   margin-left: 5px;

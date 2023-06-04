@@ -14,8 +14,8 @@
             <div id="headerbox">
                 <div id="headerboxlink"><img src="images/emission11-web-white.jpg"></div>
                 <div id="buttonheader">
-                    <!-- top: Settings SuperUser Download DownloadCSV DowloadPPTX DownloadJSON DatabaseInfo -->
-                    <div class= "Download DownloadCSV DownloadPPTX DownloadJSON topButtons pageOverlay">
+                    <!-- top: Settings SuperUser Download DownloadCSV DowloadPPTX DatabaseInfo -->
+                    <div class= "Download DownloadCSV DownloadPPTX topButtons pageOverlay">
                         <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
@@ -27,36 +27,35 @@
         <div id="emissionbody" class="work_screen">
             <!-- body: Download -->
             <div class="Download pageOverlay">
-                <div id="DownloadContent" >
+                <div id="DownloadContent" class="buttonmenu" >
                     <h3>Choose file type</h3>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadCSV' )" title="CSV file">Spreadsheet (text only)</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadPPTX' )" title="PPTX (Powerpoint) file">Presentation</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadJSON' )" title="JSON file">Backup</button>
+                    <button type="button" class="divbutton" onclick="Backup.all()" title="JSON file">Backup</button>
                 </div>
             </div>
             <!-- body: DownloadCSV -->
             <div class="DownloadCSV pageOverlay">
-                <div id="DownloadCSVContent" >
+                <div id="DownloadCSVContent" class="buttonmenu" >
                     <h3>Download Spreadsheet file</h3>
-                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
-                    <button type="button" class="divbutton" onclick="CSV.downloadOperations()">Operation List</button>
-                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
+                    <button type="button" class="divbutton" onclick="CSV.patients()">Patient List</button>
+                    <button type="button" class="divbutton" onclick="CSV.operations()">Operation List</button>
+                    <button type="button" class="divbutton" onclick="CSV.all()">All data</button>
                 </div>
             </div>
             <!-- body: DownloadPPTX -->
             <div class="DownloadPPTX pageOverlay">
-                <div id="DownloadPPTXContent" >
+                <div id="DownloadPPTXContent" class="buttonmenu" >
                     <h3>Download Presentation file</h3>
-                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
-                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
-                </div>
-            </div>
-            <!-- body: DownloadJSON -->
-            <div class="DownloadJSON pageOverlay">
-                <div id="DownloadJSONContent" >
-                    <h3>Download Backup file</h3>
-                    <button type="button" class="divbutton" onclick="CSV.downloadPatients()">Patient List</button>
-                    <button type="button" class="divbutton" onclick="CSV.downloadAll()">All data</button>
+                    <label>
+						Include Operations
+						<input type="checkbox" id="opsPPTX" checked>
+                    </label>
+                    <label>
+						Include Notes
+						<input type="checkbox" id="notesPPTX" checked>
+                    </label>
+                    <button type="button" class="divbutton" onclick="PPTX.all()">Create presentation</button>
                 </div>
             </div>
         </div>
