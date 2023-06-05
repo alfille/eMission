@@ -150,7 +150,7 @@ class Patient { // convenience class
     }
         
     static getAllIdDocPix() {
-		// Note: using base64 here
+        // Note: using base64 here
         let doc = {
             startkey: [ RecordFormat.type.patient, ""].join(";"),
             endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
@@ -259,7 +259,7 @@ class Note { // convenience class
     }
 
     static getRecordsIdPix( pid = patientId) {
-		// Bse64 encoding
+        // Bse64 encoding
         let pspl = Patient.splitId(pid);
         let doc = {
             startkey: [
@@ -411,7 +411,7 @@ class Mission { // convenience class
 
     static getRecordId() {
         // return the Mission record, or a dummy
-        return db.get( missionId, { attachments: true, binary: true } )
+        return db.get( missionId, { attachments: true, binary: false } )
         .then( doc => Promise.resolve(doc) )
         .catch( () => Promise.resolve({
             EndDate:null,
@@ -624,19 +624,19 @@ class DownloadFile { // convenience class
         // clean up
         // Add "delay" see: https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
         setTimeout( () => {
-			window.URL.revokeObjectURL(downloadLink.href) ;
-			document.body.removeChild(downloadLink) ;
-		});
+            window.URL.revokeObjectURL(downloadLink.href) ;
+            document.body.removeChild(downloadLink) ;
+        });
     }
 }
 
 class CSV { // convenience class
     static download(csv, filename) {
-		DownloadFile.download( csv, filename, 'text/csv' ) ;
+        DownloadFile.download( csv, filename, 'text/csv' ) ;
     }
 
     static patients() {
-		// Just Patient records
+        // Just Patient records
         const fields = [ "LastName", "FirstName", "DOB", "Dx", "Weight", "Height", "Sex", "Allergies", "Meds", "ASA" ];
         // First line titles 
         let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
@@ -655,8 +655,8 @@ class CSV { // convenience class
     }
 
     static operations() {
-		// Just real operation records
-		// Add Patient name too
+        // Just real operation records
+        // Add Patient name too
         const fields = [ "Procedure", "Surgeon", "Date-Time", "Status", "Equipment", "Complaint", "Duration", "Lateratility" ]; 
         // First line titles 
         let csv = ['"Patient"'].concat(fields.map( f => '"'+f+'"' )).join(',')+'\n';
@@ -664,20 +664,20 @@ class CSV { // convenience class
         let olist = null;
         Operation.getAllIdDoc()
         .then( doclist => {
-			olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
-			console.log(olist);
-			return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
-			})
-		.then ( nlist => {
-			console.log(nlist);
-			const names = {};
-			nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
-			console.log(nlist);
+            olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
+            console.log(olist);
+            return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
+            })
+        .then ( nlist => {
+            console.log(nlist);
+            const names = {};
+            nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
+            console.log(nlist);
             csv += olist
                 .map( row => [`"${names[row.doc.patient_id]}"`].concat(
-						fields // per wanted field
-						.map( f => row.doc[f] ?? "" ) // get data
-						.map( v => typeof(v) == "number" ? v : `"${v}"` )) // data formatted
+                        fields // per wanted field
+                        .map( f => row.doc[f] ?? "" ) // get data
+                        .map( v => typeof(v) == "number" ? v : `"${v}"` )) // data formatted
                     .join(',')
                     )
                 .join( '\n' );
@@ -731,80 +731,103 @@ class CSV { // convenience class
 }
 
 class Backup {
-	static download( j, filename ) {
-		DownloadFile.download( j, filename, 'application/json' ) ;
-	}
-	
-	static all() {
-		db.allDocs({
-			include_docs: true,
-			attachments: true,
-			binary: false,
-			})
-		.then( doclist => 
-			Backup.download(
-				JSON.stringify(doclist.rows.map(({doc}) => doc)),
-				`${remoteCouch.database}.json`
-				)
-			);
-	};
+    static download( j, filename ) {
+        DownloadFile.download( j, filename, 'application/json' ) ;
+    }
+    
+    static all() {
+        db.allDocs({
+            include_docs: true,
+            attachments: true,
+            binary: false,
+            })
+        .then( doclist => 
+            Backup.download(
+                JSON.stringify(doclist.rows.map(({doc}) => doc)),
+                `${remoteCouch.database}.json`
+                )
+            );
+    };
 }
 
 class PPTX {
-	static download( p, filename ) {
-		console.log(p);
-		DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
-	}
-	
-	static all() {
-		let add_notes = document.getElementById("notesPPTX").checked ;
-		let add_ops = document.getElementById("opsPPTX").checked ;
-		let pname = null;
+    static download( p, filename ) {
+        console.log(p);
+        DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
+    }
+    
+    static all() {
+        let add_notes = document.getElementById("notesPPTX").checked ;
+        let add_ops = document.getElementById("opsPPTX").checked ;
+        let pname = null;
 
-		// powerpoint object
-		let pptx = new PptxGenJS();
-		PPTX.mission(pptx) ;
-		Patient.getAllIdDocPix()
-		.then( doclist => {
-			// For each patient:
-			doclist.rows.forEach( pt => {
-				PPTX.patient( pt.doc ) ;
-				// Get pretty name
-				db.query( "Pid2Name", {key:pt.id} )
-				.then( q => {
-					pname = q.rows[0].value[0] ;
-					return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:{}}) ) ;
-					})
-				// Get operations
-				.then( ops => {
-					console.log(ops) ;
-					ops.rows
-					.filter( r => (r.doc.Procedure !== "Enter new procedure"))
-					.forEach( r => PPTX.operation( pptx, pname, r.doc ));
-					return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:{}}) ) ;
-					})
-				// Get notes
-				.then( notes => {
-					console.log(notes) ;
-					notes.rows
-					.forEach( r => PPTX.note( pptx, pname, r.doc ));
-					});
-				});
-			});
-	}
-	
-	static mission( pptx ) {
-	}
+        // powerpoint object
+        let pptx = new PptxGenJS();
+        Mission.getRecordId()
+        .then( doc => {
+            PPTX.mission( pptx, doc ) ;
+            pptx.author=remoteCouch.username;
+            pptx.company=doc.Organization;
+            pptx.subject=doc.Location;
+            pptx.title=doc.Mission;
+            pptx.layout='LAYOUT_16x9' ;
+            pptx.defineSlideMaster({
+                title:"Template",
+                background: {color:"bbccff"},
+                objects:[
+//                    {image: {x:"95%",y:0,w:"5%",data:doc?._attachments?.image}},
+                    ],
+            });
+            pptx.addSlide({masterName:"Template"}).addText("doc.Mission,{x:"40%",y:"45%",fontSize:48});
+            return add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
+            })
+        .then( notes => {
+            notes.rows
+            .forEach( r => PPTX.note( pptx, "Mission", r.doc ) );            
+            return Patient.getAllIdDocPix()
+            })
+        .then( doclist => {
+            // For each patient:
+            doclist.rows.forEach( pt => {
+                PPTX.patient( pt.doc ) ;
+                // Get pretty name
+                db.query( "Pid2Name", {key:pt.id} )
+                .then( q => {
+                    pname = q.rows[0].value[0] ;
+                    return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+                    })
+                // Get operations
+                .then( ops => {
+                    console.log(ops) ;
+                    ops.rows
+                    .filter( r => (r.doc.Procedure !== "Enter new procedure"))
+                    .forEach( r => PPTX.operation( pptx, pname, r.doc ));
+                    return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+                    })
+                // Get notes
+                .then( notes => {
+                    console.log(notes) ;
+                    notes.rows
+                    .forEach( r => PPTX.note( pptx, pname, r.doc ));
+                    })
+                });
+            return pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
+            })
+        .then( () => console.log("written"));
+    }
+    
+    static mission( pptx, doc ) {
+    }
 
-	static patient( pptx, doc ) {
-	}
+    static patient( pptx, doc ) {
+    }
 
-	static note( pptx, pname, doc ) {
-	}
+    static note( pptx, pname, doc ) {
+    }
 
-	static operation( pptx, pname, doc ) {
-	}
-}	
+    static operation( pptx, pname, doc ) {
+    }
+}   
 
 class Page { // singleton class
     constructor() {
@@ -917,14 +940,14 @@ class Page { // singleton class
                 this.next("RemoteDatabaseInput");
             }
         }
-		
-		console.log("Page: ",objectPage.current());
+        
+        console.log("Page: ",objectPage.current());
 
         switch( objectPage.current() ) {  
             case "Download":
-			case "DownloadCSV":
-			case "DownloadPPTX":
-			case "DownloadJSON":
+            case "DownloadCSV":
+            case "DownloadPPTX":
+            case "DownloadJSON":
                 Mission.select();
                 // Pure menus
                 break;
