@@ -752,14 +752,30 @@ class Backup {
 
 class PPTX {
     static download( p, filename ) {
+		// Not called -- writeFile does the same thing
         console.log(p);
         DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
     }
     
+	static image_dim( attach_img ) {
+		// returns { h:123, w:243 }
+		if ( attach_img ) {
+			let blob = new Blob([atob(attach_img.data)], { type: attach_img.content_type });
+			let img = document.createElement( "img" ) ;
+			img.src = URL.createObjectURL( blob );
+			let ret = ({h:img.naturalHeight,w:img.naturalWidth});
+			URL.revokeObjectURL(img.src);
+			return ret ;
+		}
+		return null ;
+	}
+
     static all() {
         let add_notes = document.getElementById("notesPPTX").checked ;
         let add_ops = document.getElementById("opsPPTX").checked ;
         let pname = null;
+        
+        // https://github.com/gitbrent/PptxGenJS/issues/1217
 
         // powerpoint object
         let pptx = new PptxGenJS();
@@ -775,10 +791,11 @@ class PPTX {
                 title:"Template",
                 background: {color:"bbccff"},
                 objects:[
+					{image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
 //                    {image: {x:"95%",y:0,w:"5%",data:doc?._attachments?.image}},
                     ],
             });
-            pptx.addSlide({masterName:"Template"}).addText("doc.Mission,{x:"40%",y:"45%",fontSize:48});
+            pptx.addSlide({masterName:"Template"}).addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center"});
             return add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
             })
         .then( notes => {
@@ -823,6 +840,9 @@ class PPTX {
     }
 
     static note( pptx, pname, doc ) {
+		console.log( "note", doc ) ;
+		let dim = PPTX.image_dim(doc?._attachments?.image ) ;
+		console.log( dim ? dim : "No image" ); 
     }
 
     static operation( pptx, pname, doc ) {
