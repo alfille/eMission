@@ -761,20 +761,12 @@ class PPTX {
         // returns { h:123, w:243 }
         if ( attach_img ) {
             let img = new Image();
-//            img.crossOrigin = "anonymous";
-            //console.log("cou",attach_img);
-            //let b = new Blob( [atob(attach_img.data)], {type: attach_img.content_type} );
             img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
             return img.decode()
             .then( ()=> {
-                //console.log(img.width,img.height);
-                let ret = ({h:img.height,w:img.width});
-                //console.log(ret);
-                //URL.revokeObjectURL(img.src);
                 return Promise.resolve(({h:img.height,w:img.width}));
                 })
             .catch( err =>{
-                console.log("Imaging err",err);
                 return Promise.resolve(null);
                 });
         } else {
