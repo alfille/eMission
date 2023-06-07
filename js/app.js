@@ -571,7 +571,7 @@ class Search { // singleton class
     }
 }
 
-class Image {
+class ImageImbedded {
     static srcList = [] ;
     
     constructor( parent, doc, backup ) {
@@ -593,12 +593,12 @@ class Image {
     }
 
     addSrc() {
-        Image.srcList.push( this.src ) ;
+        ImageImbedded.srcList.push( this.src ) ;
     }
 
     static clearSrc() {
-        Image.srcList.forEach( s => URL.revokeObjectURL( s ) );
-        Image.srcList = [] ;
+        ImageImbedded.srcList.forEach( s => URL.revokeObjectURL( s ) );
+        ImageImbedded.srcList = [] ;
     }
 
     source() {
@@ -619,7 +619,7 @@ class Image {
     display() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
-            img.addEventListener( 'click', () => Image.showBigPicture(img) );
+            img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
             if ( this.src ) {
                 img.src = this.src;
                 img.style.display = "block";
@@ -695,7 +695,7 @@ class Image {
     }
 }
 
-class ImagePlus extends Image {
+class ImagePlus extends ImageImbedded {
     constructor(...args) {
         super(...args);
         this.text = this.doc?.text ?? "";
@@ -788,7 +788,7 @@ class ImageNote extends ImagePlus {
     }
 }
 
-class ImageQuick extends Image {
+class ImageQuick extends ImageImbedded {
     addListen(hfunc) {
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
             catch {}
@@ -797,7 +797,7 @@ class ImageQuick extends Image {
     }
 }
 
-class ImageDrop extends Image { // can only save(doc)
+class ImageDrop extends ImageImbedded { // can only save(doc)
     constructor( upload ) {
         super( null, null );
         this.upload = upload;
@@ -879,7 +879,7 @@ class PatientDataRaw { // singleton class
                 case "image":
                     inp = document.createElement("div");
                     cloneClass( ".imagetemplate", inp ) ;
-                    this.images[localname] = new Image( inp, doc, item?.none ) ;
+                    this.images[localname] = new ImageImbedded( inp, doc, item?.none ) ;
                     this.images[localname].display() ;
                     lab.appendChild(inp);
                     if ( click ) {
@@ -1570,7 +1570,7 @@ class Patient { // convenience class
 
     static menu( doc, notelist, onum=0 ) {
         let d = document.getElementById("PatientPhotoContent2");
-        let inp = new Image( d, doc, NoPhoto );
+        let inp = new ImageImbedded( d, doc, NoPhoto );
 
         cloneClass( ".imagetemplate", d );
         inp.display();
@@ -1602,7 +1602,7 @@ class Patient { // convenience class
         Patient.getRecordIdPix()
         .then( (doc) => {
             Page.show_screen( "patient" );
-            let img = new Image( card, doc, NoPhoto ) ;
+            let img = new ImageImbedded( card, doc, NoPhoto ) ;
             img.display();
             let link = new URL(window.location.href);
             link.searchParams.append( "patientId", patientId );
@@ -2193,7 +2193,7 @@ class Mission { // convenience class
     static link() {
         Mission.getRecordId()
         .then( doc => {
-            let src = new Image( null,doc).source();
+            let src = new ImageImbedded( null,doc).source();
             document.querySelectorAll(".missionLogo")
             .forEach( logo => {
                 logo.src=src??"images/Null.png";
@@ -2495,7 +2495,8 @@ class Page { // singleton class
         objectTable = null;
 
         // clear old image urls
-        Image.clearSrc() ;
+        ImageImbedded.clearSrc() ;
+        ImageImbedded.clearSrc() ;
 
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists

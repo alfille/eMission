@@ -49,7 +49,7 @@ var missionId = [
         ].join(";");
 
 
-class Image {
+class ImageImbedded {
     static srcList = [] ;
     
     constructor( parent, doc, backup ) {
@@ -71,12 +71,12 @@ class Image {
     }
 
     addSrc() {
-        Image.srcList.push( this.src ) ;
+        ImageImbedded.srcList.push( this.src ) ;
     }
 
     static clearSrc() {
-        Image.srcList.forEach( s => URL.revokeObjectURL( s ) );
-        Image.srcList = [] ;
+        ImageImbedded.srcList.forEach( s => URL.revokeObjectURL( s ) );
+        ImageImbedded.srcList = [] ;
     }
 
     source() {
@@ -97,7 +97,7 @@ class Image {
     display() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
-            img.addEventListener( 'click', () => Image.showBigPicture(img) );
+            img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
             if ( this.src ) {
                 img.src = this.src;
                 img.style.display = "block";
@@ -431,7 +431,7 @@ class Mission { // convenience class
     static link() {
         Mission.getRecordId()
         .then( doc => {
-            let src = new Image( null,doc).source();
+            let src = new ImageImbedded( null,doc).source();
             document.querySelectorAll(".missionLogo")
             .forEach( logo => {
                 logo.src=src??"images/Null.png";
@@ -752,23 +752,35 @@ class Backup {
 
 class PPTX {
     static download( p, filename ) {
-		// Not called -- writeFile does the same thing
+        // Not called -- writeFile does the same thing
         console.log(p);
         DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
     }
     
-	static image_dim( attach_img ) {
-		// returns { h:123, w:243 }
-		if ( attach_img ) {
-			let blob = new Blob([atob(attach_img.data)], { type: attach_img.content_type });
-			let img = document.createElement( "img" ) ;
-			img.src = URL.createObjectURL( blob );
-			let ret = ({h:img.naturalHeight,w:img.naturalWidth});
-			URL.revokeObjectURL(img.src);
-			return ret ;
-		}
-		return null ;
-	}
+    static image_dim( attach_img ) {
+        // returns { h:123, w:243 }
+        if ( attach_img ) {
+            let img = new Image();
+//            img.crossOrigin = "anonymous";
+            //console.log("cou",attach_img);
+            //let b = new Blob( [atob(attach_img.data)], {type: attach_img.content_type} );
+            img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
+            return img.decode()
+            .then( ()=> {
+                //console.log(img.width,img.height);
+                let ret = ({h:img.height,w:img.width});
+                //console.log(ret);
+                //URL.revokeObjectURL(img.src);
+                return Promise.resolve(({h:img.height,w:img.width}));
+                })
+            .catch( err =>{
+                console.log("Imaging err",err);
+                return Promise.resolve(null);
+                });
+        } else {
+            return Promise.resolve(null) ;
+        }
+    }
 
     static all() {
         let add_notes = document.getElementById("notesPPTX").checked ;
@@ -791,7 +803,7 @@ class PPTX {
                 title:"Template",
                 background: {color:"bbccff"},
                 objects:[
-					{image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
+                    {image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
 //                    {image: {x:"95%",y:0,w:"5%",data:doc?._attachments?.image}},
                     ],
             });
@@ -840,9 +852,11 @@ class PPTX {
     }
 
     static note( pptx, pname, doc ) {
-		console.log( "note", doc ) ;
-		let dim = PPTX.image_dim(doc?._attachments?.image ) ;
-		console.log( dim ? dim : "No image" ); 
+        //console.log( "note", doc ) ;
+        PPTX.image_dim(doc?._attachments?.image )
+        .then( (dim) => {
+            console.log( dim ); 
+        });
     }
 
     static operation( pptx, pname, doc ) {
@@ -952,7 +966,7 @@ class Page { // singleton class
         objectPatientData = null;
 
         // clear old image urls
-        Image.clearSrc() ;
+        ImageImbedded.clearSrc() ;
 
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
