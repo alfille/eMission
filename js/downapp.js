@@ -9,6 +9,7 @@ var objectNoteList={};
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
+var objectPPTX = null;
 
 // globals cookie backed
 var objectPage ;
@@ -751,13 +752,37 @@ class Backup {
 }
 
 class PPTX {
-    static download( p, filename ) {
-        // Not called -- writeFile does the same thing
-        console.log(p);
-        DownloadFile.download( j, filename, 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ) ;
+    constructor() {
+        this.pptx = new PptxGenJS() ;
+        this.pname = "mission notes";
     }
-    
-    static image_dim( attach_img ) {
+        
+    master( mission_doc ) {
+        this.pptx.author=remoteCouch.username;
+        this.pptx.company=mission_doc.Organization;
+        this.pptx.subject=mission_doc.Location;
+        this.pptx.title=mission_doc.Mission;
+        this.pptx.layout='LAYOUT_16x9' ;
+        let slMa = {
+            title:"Template",
+            background: {color:"172bae"},
+            objects:[
+                { placeholder: { 
+                    options: {name:"title",type:"title",x:2.3,y:.1,w:5.4,h:.5,autofit:true,color:"e4e444"},
+                }}, 
+                {image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
+                ],
+            };
+        let img = mission_doc?._attachments?.image ;
+        console.log(img);
+        if ( img ) {
+            slMa.objects.push({image:{x:8,y:0,h:.5,w:2,data:`${img.content_type};base64,${img.data}`}});
+        }
+        this.pptx.defineSlideMaster(slMa);
+        // 
+    }       
+
+    image_dim( attach_img ) {
         // returns { h:123, w:243 }
         if ( attach_img ) {
             let img = new Image();
@@ -773,124 +798,114 @@ class PPTX {
             return Promise.resolve(null) ;
         }
     }
-    
-    static master( pptx, mission_doc ) {
-		console.log(mission_doc);
-		pptx.author=remoteCouch.username;
-		pptx.company=mission_doc.Organization;
-		pptx.subject=mission_doc.Location;
-		pptx.title=mission_doc.Mission;
-		pptx.layout='LAYOUT_16x9' ;
-		let slMa = {
-			title:"Template",
-			background: {color:"172bae"},
-			objects:[
-				{ placeholder: { 
-					options: {name:"title",type:"title",x:2.3,y:.1,w:5.4,h:1,color:"e4e444"},
-				}}, 
-				{image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
-				],
-			};
-		let img = mission_doc?._attachments?.image ;
-		console.log(img);
-		if ( img ) {
-			slMa.objects.push({image:{x:8,y:0,h:.5,w:2,data:`${img.content_type};base64,${img.data}`}});
-		}
-		console.log(slMa);
-		pptx.defineSlideMaster(slMa);
-	}		
 
-    static all() {
-        let add_notes = document.getElementById("notesPPTX").checked ;
-        let add_ops = document.getElementById("opsPPTX").checked ;
-        let pname = null;
+    big_picture( dim, attach_img ) {
+        console.log("big",dim,attach_img,`{x:0,y:1.5,w:6,h:5,sizing:{type:"contain",w:${dim.w},h:${dim.h}},data:${attach_img.content_type};base64,${attach_img.data}`);
+//        return `{x:0,y:1.5,w:6,h:5,sizing:{type:"contain",w:${dim.w},h:${dim.h}},data:${attach_img.content_type};base64,${attach_img.data}}`;
+        return `{x:0,y:1.5,w:6,h:5,data:${attach_img.content_type};base64,${attach_img.data}}`;
+    }
+    
+    print() {
+        this.add_notes = document.getElementById("notesPPTX").checked ;
+        this.add_ops = document.getElementById("opsPPTX").checked ;
         
         // https://github.com/gitbrent/PptxGenJS/issues/1217
 
         // powerpoint object
-        let pptx = new PptxGenJS();
         Mission.getRecordId()
         .then( doc => {
-			PPTX.master( pptx, doc ) ;
-            PPTX.mission( pptx, doc ) ;
-            return add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
+            this.master( doc ) ;
+            this.mission( doc ) ;
+            return this.add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
             })
         .then( notes => {
             notes.rows
-            .forEach( r => PPTX.note( pptx, "Mission", r.doc ) );            
+            .forEach( r => this.note( r.doc ) );            
             return Patient.getAllIdDocPix()
             })
         .then( doclist => {
             // For each patient:
             return Promise.all(
-				doclist.rows.map( pt => {
-					// Get pretty name
-					return db.query( "Pid2Name", {key:pt.id} )
-					.then( q => {
-						pname = q.rows[0].value[0] ;
-						PPTX.patient( pptx, pname, pt.doc ) ;
-						return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
-						})
-					// Get operations
-					.then( ops => {
-						return Promise.all(
-						ops.rows
-						.filter( r => (r.doc.Procedure !== "Enter new procedure"))
-						.map( r => {
-							return PPTX.operation( pptx, pname, r.doc );
-							})
-						)})
-					.then( () => {
-							return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
-						})
-					// Get notes
-					.then( notes => {
-						return Promise.all(
-						notes.rows
-						.map( r => {
-							return PPTX.note( pptx, pname, r.doc );
-							})
-						)});
-					}));
-				})
-		.then( () => {
-			return pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
-			})
+                doclist.rows.map( pt => {
+                    // Get pretty name
+                    return db.query( "Pid2Name", {key:pt.id} )
+                    .then( q => {
+                        this.pname = q.rows[0].value[0] ;
+                        this.patient( pt.doc ) ;
+                        return this.add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+                        })
+                    // Get operations
+                    .then( ops => {
+                        return Promise.all(
+                        ops.rows
+                        .filter( r => (r.doc.Procedure !== "Enter new procedure"))
+                        .map( r => {
+                            return this.operation( r.doc );
+                            })
+                        )})
+                    .then( () => {
+                            return this.add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+                        })
+                    // Get notes
+                    .then( notes => {
+                        return Promise.all(
+                        notes.rows
+                        .map( r => {
+                            return this.note( r.doc );
+                            })
+                        )});
+                    }));
+                })
+        .then( () => {
+            return this.pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
+            })
         .then( () => console.log("written"));
     }
     
-    static mission( pptx, doc ) {
-		pptx
-		.addSlide({masterName:"Template"})
-		.addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center", color:"FFFFFF"});
+    mission( doc ) {
+        this.pptx
+        .addSlide({masterName:"Template"})
+        .addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center", color:"FFFFFF"})
+        .addText(doc._id,{color:"dddddd"})
+        ;
     }
 
-    static patient( pptx, pname, doc ) {
-		console.log(pname,doc);
-		pptx
-		.addSlide({masterName:"Template"})
-		.addText(pname,{placeholder:"title",color:"e4e444"});
-		return Promise.resolve(true);
+    patient( doc ) {
+        this.pptx
+        .addSlide({masterName:"Template"})
+        .addText(this.pname,{placeholder:"title",color:"e4e444"})
+        .addText(doc._id,{color:"dddddd"})
+        ;
+        return Promise.resolve(true);
     }
 
-    static note( pptx, pname, doc ) {
+    note( doc ) {
         //console.log( "note", doc ) ;
-        return PPTX.image_dim(doc?._attachments?.image )
+        let att = doc?._attachments?.image ;
+        return this.image_dim( att )
         .then( (dim) => {
-			if (dim) {
-				pptx
-				.addSlide({masterName:"Template"})
-				.addText(pname,{placeholder:"title",color:"e4e444"});
-				
-            console.log( dim ); 
+            let slide = this.pptx
+                .addSlide({masterName:"Template"})
+                .addText(this.pname,{placeholder:"title",color:"e4e444"})
+                .addText(doc._id,{color:"dddddd"})
+                ;
+
+            if (dim) {
+                slide.addImage(this.big_picture(dim,att));
+            } else {
+                slide;
+            }
+            Promise.resolve(true);
         });
     }
 
-    static operation( pptx, pname, doc ) {
-		pptx
-		.addSlide({masterName:"Template"})
-		.addText(pname,{placeholder:"title",color:"e4e444"});
-		return Promise.resolve(true);
+    operation( doc ) {
+        this.pptx
+        .addSlide({masterName:"Template"})
+        .addText(this.pname,{placeholder:"title",color:"e4e444"})
+        .addText(doc._id,{color:"dddddd"})
+        ;
+        return Promise.resolve(true);
     }
 }   
 
@@ -1011,9 +1026,14 @@ class Page { // singleton class
         switch( objectPage.current() ) {  
             case "Download":
             case "DownloadCSV":
-            case "DownloadPPTX":
             case "DownloadJSON":
                 Mission.select();
+                // Pure menus
+                break;
+                
+            case "DownloadPPTX":
+                Mission.select();
+                objectPPTX = new PPTX() ;
                 // Pure menus
                 break;
                 
@@ -1072,10 +1092,6 @@ class Page { // singleton class
         .filter(d => d.querySelector(".missionLogo"))
         .forEach( d => d.removeChild(d.querySelector(".missionButton")));
     }
-}
-
-function isAndroid() {
-    return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
 
 class Log{
