@@ -773,6 +773,32 @@ class PPTX {
             return Promise.resolve(null) ;
         }
     }
+    
+    static master( pptx, mission_doc ) {
+		console.log(mission_doc);
+		pptx.author=remoteCouch.username;
+		pptx.company=mission_doc.Organization;
+		pptx.subject=mission_doc.Location;
+		pptx.title=mission_doc.Mission;
+		pptx.layout='LAYOUT_16x9' ;
+		let slMa = {
+			title:"Template",
+			background: {color:"172bae"},
+			objects:[
+				{ placeholder: { 
+					options: {name:"title",type:"title",x:2.3,y:.1,w:5.4,h:1,color:"e4e444"},
+				}}, 
+				{image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
+				],
+			};
+		let img = mission_doc?._attachments?.image ;
+		console.log(img);
+		if ( img ) {
+			slMa.objects.push({image:{x:8,y:0,h:.5,w:2,data:`${img.content_type};base64,${img.data}`}});
+		}
+		console.log(slMa);
+		pptx.defineSlideMaster(slMa);
+	}		
 
     static all() {
         let add_notes = document.getElementById("notesPPTX").checked ;
@@ -785,21 +811,8 @@ class PPTX {
         let pptx = new PptxGenJS();
         Mission.getRecordId()
         .then( doc => {
+			PPTX.master( pptx, doc ) ;
             PPTX.mission( pptx, doc ) ;
-            pptx.author=remoteCouch.username;
-            pptx.company=doc.Organization;
-            pptx.subject=doc.Location;
-            pptx.title=doc.Mission;
-            pptx.layout='LAYOUT_16x9' ;
-            pptx.defineSlideMaster({
-                title:"Template",
-                background: {color:"bbccff"},
-                objects:[
-                    {image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
-//                    {image: {x:"95%",y:0,w:"5%",data:doc?._attachments?.image}},
-                    ],
-            });
-            pptx.addSlide({masterName:"Template"}).addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center"});
             return add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
             })
         .then( notes => {
@@ -809,49 +822,75 @@ class PPTX {
             })
         .then( doclist => {
             // For each patient:
-            doclist.rows.forEach( pt => {
-                PPTX.patient( pt.doc ) ;
-                // Get pretty name
-                db.query( "Pid2Name", {key:pt.id} )
-                .then( q => {
-                    pname = q.rows[0].value[0] ;
-                    return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
-                    })
-                // Get operations
-                .then( ops => {
-                    console.log(ops) ;
-                    ops.rows
-                    .filter( r => (r.doc.Procedure !== "Enter new procedure"))
-                    .forEach( r => PPTX.operation( pptx, pname, r.doc ));
-                    return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
-                    })
-                // Get notes
-                .then( notes => {
-                    console.log(notes) ;
-                    notes.rows
-                    .forEach( r => PPTX.note( pptx, pname, r.doc ));
-                    })
-                });
-            return pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
-            })
+            return Promise.all(
+				doclist.rows.map( pt => {
+					// Get pretty name
+					return db.query( "Pid2Name", {key:pt.id} )
+					.then( q => {
+						pname = q.rows[0].value[0] ;
+						PPTX.patient( pptx, pname, pt.doc ) ;
+						return add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+						})
+					// Get operations
+					.then( ops => {
+						return Promise.all(
+						ops.rows
+						.filter( r => (r.doc.Procedure !== "Enter new procedure"))
+						.map( r => {
+							return PPTX.operation( pptx, pname, r.doc );
+							})
+						)})
+					.then( () => {
+							return add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
+						})
+					// Get notes
+					.then( notes => {
+						return Promise.all(
+						notes.rows
+						.map( r => {
+							return PPTX.note( pptx, pname, r.doc );
+							})
+						)});
+					}));
+				})
+		.then( () => {
+			return pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
+			})
         .then( () => console.log("written"));
     }
     
     static mission( pptx, doc ) {
+		pptx
+		.addSlide({masterName:"Template"})
+		.addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center", color:"FFFFFF"});
     }
 
-    static patient( pptx, doc ) {
+    static patient( pptx, pname, doc ) {
+		console.log(pname,doc);
+		pptx
+		.addSlide({masterName:"Template"})
+		.addText(pname,{placeholder:"title",color:"e4e444"});
+		return Promise.resolve(true);
     }
 
     static note( pptx, pname, doc ) {
         //console.log( "note", doc ) ;
-        PPTX.image_dim(doc?._attachments?.image )
+        return PPTX.image_dim(doc?._attachments?.image )
         .then( (dim) => {
+			if (dim) {
+				pptx
+				.addSlide({masterName:"Template"})
+				.addText(pname,{placeholder:"title",color:"e4e444"});
+				
             console.log( dim ); 
         });
     }
 
     static operation( pptx, pname, doc ) {
+		pptx
+		.addSlide({masterName:"Template"})
+		.addText(pname,{placeholder:"title",color:"e4e444"});
+		return Promise.resolve(true);
     }
 }   
 
