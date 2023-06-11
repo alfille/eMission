@@ -782,14 +782,22 @@ class PPTX {
         // 
     }       
 
-    image_dim( attach_img ) {
+    image_dim( width, height, attach_img ) {
         // returns { h:123, w:243 }
         if ( attach_img ) {
             let img = new Image();
             img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
             return img.decode()
             .then( ()=> {
-                return Promise.resolve(({h:img.height,w:img.width}));
+				let i_ratio = img.naturalWidth/img.naturalHeight;
+				let h = height ;
+				let w = h * img.naturalWidth / img.naturalHeight ;
+				if ( w > width ) {
+					w = width ;
+					h = h * img.naturalHeight / img.naturalWidth ;
+				}
+                return Promise.resolve(({h:h,w:w,data:`${attach_img.content_type};base64,${attach_img.data}`,sizing:{type:"contain",h:h,w:w}}));
+//                return Promise.resolve(({data:`${attach_img.content_type};base64,${attach_img.data}`}));
                 })
             .catch( err =>{
                 return Promise.resolve(null);
@@ -798,13 +806,28 @@ class PPTX {
             return Promise.resolve(null) ;
         }
     }
-
-    big_picture( dim, attach_img ) {
-        console.log("big",dim,attach_img,`{x:0,y:1.5,w:6,h:5,sizing:{type:"contain",w:${dim.w},h:${dim.h}},data:${attach_img.content_type};base64,${attach_img.data}`);
-//        return `{x:0,y:1.5,w:6,h:5,sizing:{type:"contain",w:${dim.w},h:${dim.h}},data:${attach_img.content_type};base64,${attach_img.data}}`;
-        return `{x:0,y:1.5,w:6,h:5,data:${attach_img.content_type};base64,${attach_img.data}}`;
-    }
     
+    image( attachment ) {
+		if ( attachment ) {
+			let img = new Image() ;
+			img.src = `data:${attachment.content_type};base64,${attachment.data}` ;
+			return img.decode()
+			.then( () => {
+				let cvs = document.createElement("canvas");
+				cvs.height = img.height;
+				cvs.width = img.width ;
+				cvs.getContext('2d').drawImage(img,0,0,cvs.width,cvs.height);
+				let b64 = cvs.toDataURL();
+				cvs.remove();
+				//console.log(b64);
+//				return Promise.resolve(({data:b64.substring(5),sizing:{type:"contain",w:img.width,h:img.height}}));
+				return Promise.resolve(({data:b64.substring(5)}));
+			});
+        } else {
+            return Promise.resolve(null) ;
+        }
+	}
+		    
     print() {
         this.add_notes = document.getElementById("notesPPTX").checked ;
         this.add_ops = document.getElementById("opsPPTX").checked ;
@@ -882,20 +905,21 @@ class PPTX {
     note( doc ) {
         //console.log( "note", doc ) ;
         let att = doc?._attachments?.image ;
-        return this.image_dim( att )
-        .then( (dim) => {
+        return this.image_dim( 6,5,att )
+        .then( (img) => {
+			console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
                 .addText(this.pname,{placeholder:"title",color:"e4e444"})
                 .addText(doc._id,{color:"dddddd"})
                 ;
 
-            if (dim) {
-                slide.addImage(this.big_picture(dim,att));
+            if (img) {
+                slide.addImage(Object.assign({x:0,y:1.5},img));
             } else {
                 slide;
             }
-            Promise.resolve(true);
+            return Promise.resolve(true);
         });
     }
 
