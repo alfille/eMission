@@ -751,6 +751,15 @@ class Backup {
     };
 }
 
+// From https://dev.to/doctolib/using-promises-as-a-queue-co5
+class PromiseQueue {
+  queue = Promise.resolve()
+
+  add(operation) {
+    this.queue = this.queue.then(operation).catch(() => {})
+  }
+}
+
 class PPTX {
     constructor() {
         this.pptx = new PptxGenJS() ;
@@ -758,6 +767,7 @@ class PPTX {
     }
         
     master( mission_doc ) {
+		// Synchonous
         this.pptx.author=remoteCouch.username;
         this.pptx.company=mission_doc.Organization;
         this.pptx.subject=mission_doc.Location;
@@ -774,7 +784,6 @@ class PPTX {
                 ],
             };
         let img = mission_doc?._attachments?.image ;
-        console.log(img);
         if ( img ) {
             slMa.objects.push({image:{x:8,y:0,h:.5,w:2,data:`${img.content_type};base64,${img.data}`}});
         }
@@ -783,7 +792,8 @@ class PPTX {
     }       
 
     image_dim( width, height, attach_img ) {
-        // returns { h:123, w:243 }
+		// Assynchronous
+        // returns { data:, h:, w: sizing:{} } adjusted for aspect ratio
         if ( attach_img ) {
             let img = new Image();
             img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
@@ -797,7 +807,6 @@ class PPTX {
 					h = h * img.naturalHeight / img.naturalWidth ;
 				}
                 return Promise.resolve(({h:h,w:w,data:`${attach_img.content_type};base64,${attach_img.data}`,sizing:{type:"contain",h:h,w:w}}));
-//                return Promise.resolve(({data:`${attach_img.content_type};base64,${attach_img.data}`}));
                 })
             .catch( err =>{
                 return Promise.resolve(null);
@@ -807,28 +816,8 @@ class PPTX {
         }
     }
     
-    image( attachment ) {
-		if ( attachment ) {
-			let img = new Image() ;
-			img.src = `data:${attachment.content_type};base64,${attachment.data}` ;
-			return img.decode()
-			.then( () => {
-				let cvs = document.createElement("canvas");
-				cvs.height = img.height;
-				cvs.width = img.width ;
-				cvs.getContext('2d').drawImage(img,0,0,cvs.width,cvs.height);
-				let b64 = cvs.toDataURL();
-				cvs.remove();
-				//console.log(b64);
-//				return Promise.resolve(({data:b64.substring(5),sizing:{type:"contain",w:img.width,h:img.height}}));
-				return Promise.resolve(({data:b64.substring(5)}));
-			});
-        } else {
-            return Promise.resolve(null) ;
-        }
-	}
-		    
     print() {
+		// Synchronous -- creates presentation
         this.add_notes = document.getElementById("notesPPTX").checked ;
         this.add_ops = document.getElementById("opsPPTX").checked ;
         
@@ -886,6 +875,7 @@ class PPTX {
     }
     
     mission( doc ) {
+		// Synchronous -- creates title slide
         this.pptx
         .addSlide({masterName:"Template"})
         .addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center", color:"FFFFFF"})
