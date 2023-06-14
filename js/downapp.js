@@ -694,15 +694,15 @@ class Backup {
 
 // From https://bigcodenerd.org/resolving-promises-sequentially-javascript/
 function PromiseSeq( promiseArray ) {
-	return promiseArray
-	.reduce( (prev, task) => {
-		return prev
-		.then( task )
-		.catch( err => console.log(err) )
-		} , 
-		Promise.resolve(true) ) ;
+    return promiseArray
+    .reduce( (prev, task) => {
+        return prev
+        .then( task )
+        .catch( err => console.log(err) )
+        } , 
+        Promise.resolve(true) ) ;
 }
-		
+        
 class PPTX {
     constructor() {
         this.pptx = new PptxGenJS() ;
@@ -710,7 +710,7 @@ class PPTX {
     }
         
     master( mission_doc ) {
-		// Synchonous
+        // Synchonous
         this.pptx.author=remoteCouch.username;
         this.pptx.company=mission_doc.Organization;
         this.pptx.subject=mission_doc.Location;
@@ -736,20 +736,20 @@ class PPTX {
     }       
 
     image_dim( width, height, attach_img ) {
-		// Assynchronous
+        // Assynchronous
         // returns { data:, h:, w: sizing:{} } adjusted for aspect ratio
         if ( attach_img ) {
             let img = new Image();
             img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
             return img.decode()
             .then( ()=> {
-				let i_ratio = img.naturalWidth/img.naturalHeight;
-				let h = height ;
-				let w = h * img.naturalWidth / img.naturalHeight ;
-				if ( w > width ) {
-					w = width ;
-					h = h * img.naturalHeight / img.naturalWidth ;
-				}
+                let i_ratio = img.naturalWidth/img.naturalHeight;
+                let h = height ;
+                let w = h * img.naturalWidth / img.naturalHeight ;
+                if ( w > width ) {
+                    w = width ;
+                    h = h * img.naturalHeight / img.naturalWidth ;
+                }
                 return Promise.resolve(({h:h,w:w,data:`${attach_img.content_type};base64,${attach_img.data}`,sizing:{type:"contain",h:h,w:w}}));
                 })
             .catch( err =>{
@@ -761,7 +761,7 @@ class PPTX {
     }
     
     print() {
-		// Synchronous -- creates presentation
+        // Synchronous -- creates presentation
         this.add_notes = document.getElementById("notesPPTX").checked ;
         this.add_ops = document.getElementById("opsPPTX").checked ;
         
@@ -805,7 +805,7 @@ class PPTX {
     }
     
     mission( doc ) {
-		// Synchronous -- creates title slide
+        // Synchronous -- creates title slide
         this.pptx
         .addSlide({masterName:"Template"})
         .addText(doc.Mission,{x:"5%",y:"45%",fontSize:60, align:"center", color:"FFFFFF"})
@@ -823,46 +823,47 @@ class PPTX {
     }
 
     notelist( nlist ) {
-		//console.log("NOTELIST",nlist );
-		return PromiseSeq( 
-			nlist.rows
-			.map( r => {
-				return _ => this.note(r.doc) ;
-				})
-			) ;			
-	}
-	
-	date( doc ) {
-		["date","Date-Time"]
-		.forEach( k => {
-			if ( k in doc ) {
-				return doc[k].substring(0,10);
-			}
-		}) ;
-		return null ;
-	}
-	
-	category( doc ) {
-		let cat = doc ?. category ;
-		if ( cat ) {
-			switch ( cat ) {
-				case "Uncategorized":
-					return "General Note";
-				case "Op Note":
-					return cat ;
-				default:
-					return `${cat} Note`;
-				}
-		} else {
-			return "General Note";
-		}
-	}
+        //console.log("NOTELIST",nlist );
+        return PromiseSeq( 
+            nlist.rows
+            .map( r => {
+                return _ => this.note(r.doc) ;
+                })
+            ) ;         
+    }
+    
+    date( doc ) {
+        ["date","Date-Time"]
+        .forEach( k => {
+            if ( k in doc ) {
+                console.log(doc[k]);
+                return doc[k].substring(0,10);
+            }
+        }) ;
+        return null ;
+    }
+    
+    category( doc ) {
+        let cat = doc ?. category ;
+        if ( cat ) {
+            switch ( cat ) {
+                case "Uncategorized":
+                    return "General Note";
+                case "Op Note":
+                    return cat ;
+                default:
+                    return `${cat} Note`;
+                }
+        } else {
+            return "General Note";
+        }
+    }
 
     note( doc ) {
         let att = doc?._attachments?.image ;
         return this.image_dim( 6.5,5.5,att )
         .then( (img) => {
-			//console.log(img);
+            //console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
                 .addNotes([doc?.text,doc._id,doc?.author,doc?.date].join("\n"))
@@ -880,34 +881,34 @@ class PPTX {
                 slide
                 .addText(doc?.text,{x:.5,y:2.2,h:3.4,w:7,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
             }
-			})
-		.then( _ => Promise.resolve(true) )
-		;
+            })
+        .then( _ => Promise.resolve(true) )
+        ;
     }
 
     oplist( olist ) {
-		return PromiseSeq( 
-			olist.rows
-			.filter( r => (r.doc.Procedure !== "Enter new procedure"))
-			.map( r => {
-				return _ => this.operation(r.doc) ;
-				})
-			) ;			
-	}
+        return PromiseSeq( 
+            olist.rows
+            .filter( r => (r.doc.Procedure !== "Enter new procedure"))
+            .map( r => {
+                return _ => this.operation(r.doc) ;
+                })
+            ) ;         
+    }
 
     operation( doc ) {
-		console.log("op",doc);
+        console.log("op",doc);
         this.pptx
         .addSlide({masterName:"Template"})
-		.addNotes([doc?.Procedure,doc._id,doc?.author,doc?.date].join("\n"))
+        .addNotes([doc?.Procedure,doc._id,doc?.author,doc?.date].join("\n"))
         .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-		.addText(["Operation",this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
+        .addText(["Operation",this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
         .addTable([
-			["Procedure",doc?.Procedure],
-			["Indication",doc?.Complaint],
-			["Surgeon",doc?.Surgeon],
-			["Equipment",doc?.Equipment]
-			],{x:.5,y:1,h:4.5,w:6,fill:"114cc6",color:"ffffff",fontSize:28})
+            ["Procedure",doc?.Procedure],
+            ["Indication",doc?.Complaint],
+            ["Surgeon",doc?.Surgeon],
+            ["Equipment",doc?.Equipment]
+            ],{x:.5,y:1,h:4.5,w:6,fill:"114cc6",color:"ffffff",fontSize:28})
         ;
         return Promise.resolve(true);
     }
