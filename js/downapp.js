@@ -7,7 +7,6 @@ var objectPatientData;
 var objectNoteList={};
     objectNoteList.category = 'Uncategorized' ;
 var objectRemote = null;
-var objectCollation = null;
 var objectLog = null;
 var objectPPTX = null;
 
@@ -84,40 +83,6 @@ class ImageImbedded {
         return this.src;
     }
 
-    static showBigPicture( target ) {
-        let big = document.querySelector( ".FloatPicture" );
-        big.src = target.src;
-        big.style.display = "block";
-    }
-    
-    static hideBigPicture( target ) {
-        target.src = "";
-        target.style.display = "none";
-    }
-
-    display() {
-        let img = this.parent.querySelector( "img");
-        if ( img ) {
-            img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
-            if ( this.src ) {
-                img.src = this.src;
-                img.style.display = "block";
-            } else {
-                img.src = "//:0";
-                img.style.display = "none" ;
-            }
-        }
-    }
-        
-    handle() {
-        const files = this.parent.querySelector('.imageBar') ;
-        this.upload = files.files[0];
-        this.src = URL.createObjectURL(this.upload);
-        this.addSrc();
-        this.display();
-        try { this.parent.querySelector(".imageRemove").disabled = false; }
-            catch{}
-    }
 }
 
 class Patient { // convenience class
@@ -513,23 +478,6 @@ class Remote { // convenience class
         }
     }
     
-    forceReplicate(id=null) {
-        if (this.syncHandler) {
-            this.syncHandler.cancel();
-            this.syncHandler = null;
-        }
-        if (this.remoteDB) {
-            db.replicate.to( this.remoteDB,
-                {
-                    filter: (doc) => id ?
-                        doc._id == id :
-                        doc._id.indexOf('_design') !== 0,
-                } )
-            .catch( err => objectLog.err(err,`Replication ${id??""}`))
-            .finally( () => this.foreverSync() );
-        }
-    }
-
     openRemoteDB( DBstruct ) {
         if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
@@ -545,13 +493,6 @@ class Remote { // convenience class
         }
     }
             
-    closeRemoteDB() {
-        return Promise.all( [
-            User.db ? User.db.close() : Promise.resolve(true),
-            security_db ? security_db.close() : Promise.resolve(true),
-            ]);
-    }
-
     // Fauxton link
     link() {
         window.open( `${remoteCouch.address}/_utils`, '_blank' );
@@ -666,14 +607,14 @@ class CSV { // convenience class
         Operation.getAllIdDoc()
         .then( doclist => {
             olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
-            console.log(olist);
+            //console.log(olist);
             return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
             })
         .then ( nlist => {
-            console.log(nlist);
+            //console.log(nlist);
             const names = {};
             nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
-            console.log(nlist);
+            //console.log(nlist);
             csv += olist
                 .map( row => [`"${names[row.doc.patient_id]}"`].concat(
                         fields // per wanted field
@@ -751,15 +692,17 @@ class Backup {
     };
 }
 
-// From https://dev.to/doctolib/using-promises-as-a-queue-co5
-class PromiseQueue {
-  queue = Promise.resolve()
-
-  add(operation) {
-    this.queue = this.queue.then(operation).catch(() => {})
-  }
+// From https://bigcodenerd.org/resolving-promises-sequentially-javascript/
+function PromiseSeq( promiseArray ) {
+	return promiseArray
+	.reduce( (prev, task) => {
+		return prev
+		.then( task )
+		.catch( err => console.log(err) )
+		} , 
+		Promise.resolve(true) ) ;
 }
-
+		
 class PPTX {
     constructor() {
         this.pptx = new PptxGenJS() ;
@@ -772,13 +715,14 @@ class PPTX {
         this.pptx.company=mission_doc.Organization;
         this.pptx.subject=mission_doc.Location;
         this.pptx.title=mission_doc.Mission;
+        // w:10" h:5.625"
         this.pptx.layout='LAYOUT_16x9' ;
         let slMa = {
             title:"Template",
             background: {color:"172bae"},
             objects:[
                 { placeholder: { 
-                    options: {name:"title",type:"title",x:2.3,y:.1,w:5.4,h:.5,autofit:true,color:"e4e444"},
+                    options: {name:"title",type:"title",x:2.3,y:0,w:5.4,h:.5,autofit:true,color:"e4e444"},
                 }}, 
                 {image: {x:0,y:0,h:.5,w:2,path:"images/emission11-web-white.jpg",}},
                 ],
@@ -828,44 +772,30 @@ class PPTX {
         .then( doc => {
             this.master( doc ) ;
             this.mission( doc ) ;
-            return this.add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) );
             })
-        .then( notes => {
-            notes.rows
-            .forEach( r => this.note( r.doc ) );            
-            return Patient.getAllIdDocPix()
-            })
+        // mission notelist
+        .then( _ => this.add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) ) )
+        .then( notes => this.notelist( notes ) )
+        // patient list
+        .then( _ => Patient.getAllIdDocPix() )
         .then( doclist => {
             // For each patient:
-            return Promise.all(
+            return PromiseSeq(
                 doclist.rows.map( pt => {
                     // Get pretty name
-                    return db.query( "Pid2Name", {key:pt.id} )
+                    return _ => 
+                    db.query( "Pid2Name", {key:pt.id} )
                     .then( q => {
                         this.pname = q.rows[0].value[0] ;
                         this.patient( pt.doc ) ;
-                        return this.add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
                         })
                     // Get operations
-                    .then( ops => {
-                        return Promise.all(
-                        ops.rows
-                        .filter( r => (r.doc.Procedure !== "Enter new procedure"))
-                        .map( r => {
-                            return this.operation( r.doc );
-                            })
-                        )})
-                    .then( () => {
-                            return this.add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) ;
-                        })
+                    .then( _ => this.add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
+                    .then( ops => this.oplist( ops ) )
                     // Get notes
-                    .then( notes => {
-                        return Promise.all(
-                        notes.rows
-                        .map( r => {
-                            return this.note( r.doc );
-                            })
-                        )});
+                    .then( _ => this.add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
+                    .then( notes => this.notelist( notes ) )
+                    .catch( err => console.log(err) ) ;
                     }));
                 })
         .then( () => {
@@ -882,42 +812,102 @@ class PPTX {
         .addText(doc._id,{color:"dddddd"})
         ;
     }
-
+    
     patient( doc ) {
         this.pptx
         .addSlide({masterName:"Template"})
-        .addText(this.pname,{placeholder:"title",color:"e4e444"})
+        .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
         .addText(doc._id,{color:"dddddd"})
         ;
         return Promise.resolve(true);
     }
 
+    notelist( nlist ) {
+		//console.log("NOTELIST",nlist );
+		return PromiseSeq( 
+			nlist.rows
+			.map( r => {
+				return _ => this.note(r.doc) ;
+				})
+			) ;			
+	}
+	
+	date( doc ) {
+		["date","Date-Time"]
+		.forEach( k => {
+			if ( k in doc ) {
+				return doc[k].substring(0,10);
+			}
+		}) ;
+		return null ;
+	}
+	
+	category( doc ) {
+		let cat = doc ?. category ;
+		if ( cat ) {
+			switch ( cat ) {
+				case "Uncategorized":
+					return "General Note";
+				case "Op Note":
+					return cat ;
+				default:
+					return `${cat} Note`;
+				}
+		} else {
+			return "General Note";
+		}
+	}
+
     note( doc ) {
-        //console.log( "note", doc ) ;
         let att = doc?._attachments?.image ;
-        return this.image_dim( 6,5,att )
+        return this.image_dim( 6.5,5.5,att )
         .then( (img) => {
-			console.log(img);
+			//console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
-                .addText(this.pname,{placeholder:"title",color:"e4e444"})
-                .addText(doc._id,{color:"dddddd"})
+                .addNotes([doc?.text,doc._id,doc?.author,doc?.date].join("\n"))
+                .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
+                .addText([this.category(doc),this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
+                .addText(doc?.text,{x:6.6,y:2.2,h:3.4,w:3.3,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
                 ;
 
             if (img) {
-                slide.addImage(Object.assign({x:0,y:1.5},img));
+                slide
+                .addImage(Object.assign({x:0,y:.7},img))
+                .addText(doc?.text,{x:6.6,y:2.2,h:3.4,w:3.3,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
+                ;
             } else {
-                slide;
+                slide
+                .addText(doc?.text,{x:.5,y:2.2,h:3.4,w:7,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
             }
-            return Promise.resolve(true);
-        });
+			})
+		.then( _ => Promise.resolve(true) )
+		;
     }
 
+    oplist( olist ) {
+		return PromiseSeq( 
+			olist.rows
+			.filter( r => (r.doc.Procedure !== "Enter new procedure"))
+			.map( r => {
+				return _ => this.operation(r.doc) ;
+				})
+			) ;			
+	}
+
     operation( doc ) {
+		console.log("op",doc);
         this.pptx
         .addSlide({masterName:"Template"})
-        .addText(this.pname,{placeholder:"title",color:"e4e444"})
-        .addText(doc._id,{color:"dddddd"})
+		.addNotes([doc?.Procedure,doc._id,doc?.author,doc?.date].join("\n"))
+        .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
+		.addText(["Operation",this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
+        .addTable([
+			["Procedure",doc?.Procedure],
+			["Indication",doc?.Complaint],
+			["Surgeon",doc?.Surgeon],
+			["Equipment",doc?.Equipment]
+			],{x:.5,y:1,h:4.5,w:6,fill:"114cc6",color:"ffffff",fontSize:28})
         ;
         return Promise.resolve(true);
     }
@@ -1093,12 +1083,6 @@ class Page { // singleton class
         document.querySelectorAll(".Qphoto").forEach( q => {
             q.title = "Quick photo using camera or from gallery" ;
             q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
-            });
-
-        // set edit details for PatientData edit pages -- only for "top" portion
-        document.querySelectorAll(".edit_data").forEach( e => {
-            e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
 
         // remove redundant mission buttons
