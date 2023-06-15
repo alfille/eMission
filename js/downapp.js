@@ -707,6 +707,9 @@ class PPTX {
     constructor() {
         this.pptx = new PptxGenJS() ;
         this.pname = "mission notes";
+        this.button = document.getElementById("createPresentation");
+        this.button.innerText = "Create presentation";
+        this.numpats = 0 ;       
     }
         
     master( mission_doc ) {
@@ -735,24 +738,24 @@ class PPTX {
         // 
     }       
 
-    image_dim( width, height, attach_img ) {
+    imageWH( width, height, attach_img ) {
         // Assynchronous
         // returns { data:, h:, w: sizing:{} } adjusted for aspect ratio
         if ( attach_img ) {
             let img = new Image();
             img.src = `data:${attach_img.content_type};base64,${attach_img.data}` ;
             return img.decode()
-            .then( ()=> {
-                let i_ratio = img.naturalWidth/img.naturalHeight;
+            .then( _ => {
                 let h = height ;
-                let w = h * img.naturalWidth / img.naturalHeight ;
+                let w = img.naturalWidth * height / img.naturalHeight ;
                 if ( w > width ) {
                     w = width ;
-                    h = h * img.naturalHeight / img.naturalWidth ;
+                    h = img.naturalHeight * width / img.naturalWidth ;
                 }
                 return Promise.resolve(({h:h,w:w,data:`${attach_img.content_type};base64,${attach_img.data}`,sizing:{type:"contain",h:h,w:w}}));
                 })
             .catch( err =>{
+                console.log("Bad image format");
                 return Promise.resolve(null);
                 });
         } else {
@@ -779,6 +782,8 @@ class PPTX {
         // patient list
         .then( _ => Patient.getAllIdDocPix() )
         .then( doclist => {
+            this.numpats = doclist.rows.length ;
+            this.pat = 0 ;
             // For each patient:
             return PromiseSeq(
                 doclist.rows.map( pt => {
@@ -799,9 +804,10 @@ class PPTX {
                     }));
                 })
         .then( () => {
+            this.button.innerText = "Writing..." ;
             return this.pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
             })
-        .then( () => console.log("written"));
+        .then( () => {this.button.innerText = "Complete!";});
     }
     
     mission( doc ) {
@@ -814,12 +820,32 @@ class PPTX {
     }
     
     patient( doc ) {
-        this.pptx
-        .addSlide({masterName:"Template"})
-        .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-        .addText(doc._id,{color:"dddddd"})
+        ++this.pat ;
+        this.button.innerText = `${this.pat} of ${this.numpats}`;
+        let att = doc?._attachments?.image ;
+        return this.imageWH( 3.3,5.5,att )
+        .then( (img) => {
+            //console.log(img);
+            let slide = this.pptx
+                .addSlide({masterName:"Template"})
+                .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
+                .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
+                .addTable(
+                    this.table(doc,["DOB","Height","Weight","Sex","Meds","Allergies"]),
+                    {x:.5,y:1,w:6,fill:"114cc6",color:"ffffff",fontSize:24})
+                ;
+
+            if (img) {
+                slide
+                .addImage(Object.assign({x:6.6,y:.7},img))
+                ;
+            } else {
+                slide
+            }
+  
+            })
+        .then( _ => Promise.resolve(true) )
         ;
-        return Promise.resolve(true);
     }
 
     notelist( nlist ) {
@@ -832,15 +858,13 @@ class PPTX {
             ) ;         
     }
     
-    date( doc ) {
-        ["date","Date-Time"]
-        .forEach( k => {
-            if ( k in doc ) {
-                console.log(doc[k]);
-                return doc[k].substring(0,10);
-            }
-        }) ;
-        return null ;
+    dateString( doc ) {
+        let key = ["date","Date-Time"].find( k => k in doc );
+        if ( key ) {
+            return doc[key].substring(0,10);
+        } else {
+            return "";
+        }
     }
     
     category( doc ) {
@@ -861,15 +885,14 @@ class PPTX {
 
     note( doc ) {
         let att = doc?._attachments?.image ;
-        return this.image_dim( 6.5,5.5,att )
+        return this.imageWH( 6.5,5.5,att )
         .then( (img) => {
             //console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
-                .addNotes([doc?.text,doc._id,doc?.author,doc?.date].join("\n"))
+                .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
                 .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-                .addText([this.category(doc),this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
-                .addText(doc?.text,{x:6.6,y:2.2,h:3.4,w:3.3,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
+                .addTable([[this.category(doc)],[this.dateString(doc)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
                 ;
 
             if (img) {
@@ -896,19 +919,24 @@ class PPTX {
             ) ;         
     }
 
+    table( doc, fields ) {
+        return fields
+        .map( f => [
+                {text: `${f}:`, options: {align:"right",color:"bfbfbf"} },
+                (f in doc) ? doc[f]:""
+            ]
+            );
+    }
+
     operation( doc ) {
-        console.log("op",doc);
         this.pptx
         .addSlide({masterName:"Template"})
-        .addNotes([doc?.Procedure,doc._id,doc?.author,doc?.date].join("\n"))
+        .addNotes([doc?.Procedure,doc._id,doc?.author,this.dateString(doc)].join("\n"))
         .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-        .addText(["Operation",this.date(doc)].join("\n"),{x:6.6,y:.7,h:1,w:3.3,color:"e4e444",fontSize:28,autofit:true,isTestBox:true})
-        .addTable([
-            ["Procedure",doc?.Procedure],
-            ["Indication",doc?.Complaint],
-            ["Surgeon",doc?.Surgeon],
-            ["Equipment",doc?.Equipment]
-            ],{x:.5,y:1,h:4.5,w:6,fill:"114cc6",color:"ffffff",fontSize:28})
+        .addTable([["Operation"],[this.dateString(doc)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
+        .addTable(
+            this.table(doc,["Procedure","Complaint","Surgeon","Equipment"]),
+            {x:.5,y:1,w:6,fill:"114cc6",color:"ffffff",fontSize:24})
         ;
         return Promise.resolve(true);
     }
