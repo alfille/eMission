@@ -2645,7 +2645,8 @@ class Page { // singleton class
                     Note.unselect();
                     Note.create();
                 } else if ( patientId == missionId ) {
-                    this.show( 'MissionList' ) ;
+                    Note.unselect();
+                    Note.create();
                 } else {
                     this.show( "AllPatients" );
                 }
