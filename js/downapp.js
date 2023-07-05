@@ -783,7 +783,7 @@ class PPTX {
                     db.query( "Pid2Name", {key:pt.id} )
                     .then( q => {
                         this.pname = q.rows[0].value[0] ;
-                        this.patient( pt.doc ) ;
+                        return this.patient( pt.doc ) ;
                         })
                     // Get operations
                     .then( _ => this.add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
