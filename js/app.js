@@ -226,7 +226,7 @@ const structDatabase = [
     },
     {
         name: "database",
-        hint: 'Name of patient information database (e.g. "mdb"',
+        hint: 'Name of patient information database (e.g. "ukraine"',
         type: "text",
     },
 ];
@@ -2542,6 +2542,7 @@ class Page { // singleton class
                 let o2pid = {} ;
                 Operation.getAllIdDocCurated()
                 .then( doclist => {
+                    console.log(doclist);
                     doclist.forEach( r => o2pid[r.doc.patient_id] = ({
                         "Procedure": r.doc["Procedure"],
                         "Date-Time": r.doc["Date-Time"],
@@ -3771,16 +3772,16 @@ window.onload = () => {
             )
         .catch( err => objectLog.err(err,"Initial search database") );
 
-		// start sync with remote database
-		objectRemote.foreverSync();
+        // start sync with remote database
+        objectRemote.foreverSync();
 
-		// set link for mission
-		Mission.link();
+        // set link for mission
+        Mission.link();
 
-		// Secondary indexes
-		createQueries();
-		db.viewCleanup()
-		.catch( err => objectLog.err(err,"View cleanup") );
+        // Secondary indexes
+        createQueries();
+        db.viewCleanup()
+        .catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;

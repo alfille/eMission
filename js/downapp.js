@@ -336,33 +336,24 @@ class Operation { // convenience class
 
         // Adds a single "blank"
         // also purges excess "blanks"
-        return db.allDocs(doc)
-        .then( (doclist) => {
-            let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
-                .map( row => row.doc );
-            switch ( newlist.length ) {
-                case 0 :
-                    throw null;
-                case 1 :
-                    return Promise.resolve( doclist );
-                default:
-                    throw newlist.slice(1);
-                }
-            })
-        .catch( (dlist) => {
-            if ( dlist == null ) {
-                // needs an empty
-                throw null;
+        return db.allDocs(doc);
+    }
+    static splitId( oid=operationId ) {
+        if ( nid ) {
+            let spl = oid.split(";");
+            if ( spl.length !== 6 ) {
+                return null;
             }
-            // too many empties
-            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-                .then( ()=> Operation.getRecordsIdDoc( pid )
-                );
-            })
-        .catch( () => {
-            return Operation.create().then( () => db.allDocs(doc) );
-            });
+            return {
+                type: spl[0],
+                version: spl[1],
+                last: spl[2],
+                first: spl[3],
+                dob: spl[4],
+                key: spl[5],
+            };
+        }
+        return null;
     }
 
 }
@@ -849,9 +840,10 @@ class PPTX {
     }
 
     notelist( nlist ) {
-        //console.log("NOTELIST",nlist );
+        console.log(nlist.rows?.date);
         return PromiseSeq( 
             nlist.rows
+            .sort((a,b)=>(a.doc?.date ?? Note.splitId(a.id).key).localeCompare((b.doc?.date ?? Note.splitId(b.id).key)))
             .map( r => {
                 return _ => this.note(r.doc) ;
                 })
@@ -910,9 +902,11 @@ class PPTX {
     }
 
     oplist( olist ) {
+        console.log(olist.rows);
         return PromiseSeq( 
             olist.rows
             .filter( r => (r.doc.Procedure !== "Enter new procedure"))
+            .sort((a,b)=>(a.doc["Date-Time"]??Operation.splitId(a.id).key).localeCompare((b.doc["Date-Time"]??Operation.splitId(b.id).key)))
             .map( r => {
                 return _ => this.operation(r.doc) ;
                 })

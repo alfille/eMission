@@ -8,7 +8,7 @@ eMission is a database for medical mission work. Intentionally simple. Supports 
 ## Inspiration
 Dr. Gennadiy Fuzaylov, a pediatric anesthesiologist at Massachusetts General Hospital and veteran of over 60 medical missions to the Ukraine and  Columbia and found keeping track of patients, procedures and results was increasingly difficult. 
 
-![[Doctors Collaborating To Help Children](http://dcthc.org)](/images/dctohc.png)
+![[Doctors Collaborating To Help Children](https://dcthc.org)](/images/dctohc.png)
 
 He needed a way to:
 
