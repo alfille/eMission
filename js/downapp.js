@@ -598,14 +598,11 @@ class CSV { // convenience class
         Operation.getAllIdDoc()
         .then( doclist => {
             olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
-            //console.log(olist);
             return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
             })
         .then ( nlist => {
-            //console.log(nlist);
             const names = {};
             nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
-            //console.log(nlist);
             csv += olist
                 .map( row => [`"${names[row.doc.patient_id]}"`].concat(
                         fields // per wanted field
@@ -695,6 +692,10 @@ function PromiseSeq( promiseArray ) {
 }
         
 class PPTX {
+    layout='LAYOUT_16x9';
+    w_layout = 10;
+    h_layout = 5.625;
+    
     constructor() {
         this.pptx = new PptxGenJS() ;
         this.pname = "mission notes";
@@ -710,7 +711,7 @@ class PPTX {
         this.pptx.subject=mission_doc.Location;
         this.pptx.title=mission_doc.Mission;
         // w:10" h:5.625"
-        this.pptx.layout='LAYOUT_16x9' ;
+        this.pptx.layout=this.layout ;
         let slMa = {
             title:"Template",
             background: {color:"172bae"},
@@ -814,9 +815,8 @@ class PPTX {
         ++this.pat ;
         this.button.innerText = `${this.pat} of ${this.numpats}`;
         let att = doc?._attachments?.image ;
-        return this.imageWH( 3.3,5.5,att )
+        return this.imageWH( Math.min(3.3,this.w_layout-6.6), Math.min(5.25,this.h_layout-.7), att )
         .then( (img) => {
-            //console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
                 .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
@@ -840,7 +840,6 @@ class PPTX {
     }
 
     notelist( nlist ) {
-        console.log(nlist.rows?.date);
         return PromiseSeq( 
             nlist.rows
             .sort((a,b)=>(a.doc?.date ?? Note.splitId(a.id).key).localeCompare((b.doc?.date ?? Note.splitId(b.id).key)))
@@ -877,9 +876,8 @@ class PPTX {
 
     note( doc ) {
         let att = doc?._attachments?.image ;
-        return this.imageWH( 6.5,5.5,att )
+        return this.imageWH( Math.min(6.5,this.w_layout), Math.min(5.25,this.h_layout-.7), att )
         .then( (img) => {
-            //console.log(img);
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
                 .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
@@ -902,7 +900,6 @@ class PPTX {
     }
 
     oplist( olist ) {
-        console.log(olist.rows);
         return PromiseSeq( 
             olist.rows
             .filter( r => (r.doc.Procedure !== "Enter new procedure"))
