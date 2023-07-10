@@ -1768,6 +1768,10 @@ class Note { // convenience class
         return null;
     }
 
+
+    static dateFromRow( row ) {
+        return ((row.doc["date"] ?? "") + Note.splitId(row.id).key).substring(0,24) ;
+    }
     static select( nid=noteId ) {
         // Check patient existence
         db.get(nid)
@@ -2056,6 +2060,27 @@ class Operation { // convenience class
             });
     }
 
+    static splitId( oid=operationId ) {
+        if ( oid ) {
+            let spl = oid.split(";");
+            if ( spl.length !== 6 ) {
+                return null;
+            }
+            return {
+                type: spl[0],
+                version: spl[1],
+                last: spl[2],
+                first: spl[3],
+                dob: spl[4],
+                key: spl[5],
+            };
+        }
+        return null;
+    }
+
+    static dateFromRow( row ) {
+        return ((row.doc["Date-Time"] ?? "") + Operation.splitId(row.id).key).substring(0,24) ;
+    }
 }
 
 class User { // convenience class
@@ -2518,16 +2543,20 @@ class Page { // singleton class
                 let last_pid = "" ;
                 let olist;
                 Operation.getAllIdDocCurated()
-                .then( doclist => {
-                    olist = doclist ;
-                    return db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),});
-                    })  
+                .then( doclist => olist = doclist)
+                .then( _=> db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
                 .then( nlist => {
                     const n2id = {} ;
                     // create an pid -> name dict
                     nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
                     // Assign names, filter out empties
-                    olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
+                    //console.log(olist);
+                    olist
+                    .forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" );
+                    console.log(olist.map(r=>Operation.dateFromRow(r)));
+                    olist
+                    .forEach( r => r.doc["Date-Time"]=Operation.dateFromRow(r)) ;
+                    console.log(olist);
                     objectTable = new AllOperationTable();
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
@@ -2539,17 +2568,17 @@ class Page { // singleton class
                 
             case "AllPatients":
                 objectTable = new PatientTable();
-                let o2pid = {} ;
+                let o2pid = {} ; // oplist
                 Operation.getAllIdDocCurated()
-                .then( doclist => {
-                    console.log(doclist);
-                    doclist.forEach( r => o2pid[r.doc.patient_id] = ({
+                .then( oplist => {
+                    oplist.forEach( r => o2pid[r.doc.patient_id] = ({
                         "Procedure": r.doc["Procedure"],
-                        "Date-Time": r.doc["Date-Time"],
+                        "Date-Time": Operation.dateFromRow(r),
                         "Surgeon": r.doc["Surgeon"],
-                        })) ;
-                    return Patient.getAllIdDoc() ;
+                        }))
                     })
+                .then( _ => console.log(o2pid) )
+                .then( _ => Patient.getAllIdDoc() )
                 .then( (docs) => {
                     docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
                     objectTable.fill(docs.rows );
