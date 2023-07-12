@@ -1769,8 +1769,8 @@ class Note { // convenience class
     }
 
 
-    static dateFromRow( row ) {
-        return ((row.doc["date"] ?? "") + Note.splitId(row.id).key).substring(0,24) ;
+    static dateFromRow( doc ) {
+        return ((doc["date"] ?? "") + Note.splitId(doc._id).key).substring(0,24) ;
     }
     static select( nid=noteId ) {
         // Check patient existence
@@ -2078,8 +2078,8 @@ class Operation { // convenience class
         return null;
     }
 
-    static dateFromRow( row ) {
-        return ((row.doc["Date-Time"] ?? "") + Operation.splitId(row.id).key).substring(0,24) ;
+    static dateFromRow( doc ) {
+        return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
     }
 }
 
@@ -2550,13 +2550,10 @@ class Page { // singleton class
                     // create an pid -> name dict
                     nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
                     // Assign names, filter out empties
-                    //console.log(olist);
-                    olist
-                    .forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" );
-                    console.log(olist.map(r=>Operation.dateFromRow(r)));
-                    olist
-                    .forEach( r => r.doc["Date-Time"]=Operation.dateFromRow(r)) ;
-                    console.log(olist);
+                    olist.forEach( r => {
+						r.doc.Name         = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ;
+						r.doc["Date-Time"] = Operation.dateFromRow(r.doc) ;
+						});
                     objectTable = new AllOperationTable();
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
@@ -2573,11 +2570,10 @@ class Page { // singleton class
                 .then( oplist => {
                     oplist.forEach( r => o2pid[r.doc.patient_id] = ({
                         "Procedure": r.doc["Procedure"],
-                        "Date-Time": Operation.dateFromRow(r),
+                        "Date-Time": Operation.dateFromRow(r.doc),
                         "Surgeon": r.doc["Surgeon"],
                         }))
                     })
-                .then( _ => console.log(o2pid) )
                 .then( _ => Patient.getAllIdDoc() )
                 .then( (docs) => {
                     docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
@@ -3059,7 +3055,7 @@ class SortTable {
         // alias-list is a list in form (list of lists):
         //[ [fieldname, aliasname, transformfunction],...]
         
-        this.aliases={};
+        this.aliases={}; // Eventually will have an alias and function for all columns, either default, or specified
         this.collist.forEach( f => this.aliasAdd(f) ) ; // default aliases
         aliaslist.forEach( a => this.aliasAdd(a[0],a[1],a[2]) );
 
@@ -3080,6 +3076,7 @@ class SortTable {
 
     aliasAdd( fieldname, aliasname=null, transformfunction=null ) {
         if ( !(fieldname in this.aliases) ) {
+			// Add an entry (currently empty) for this column
             this.aliases[fieldname] = {} ;
         }
         this.aliases[fieldname]["name"] = aliasname ?? fieldname ;

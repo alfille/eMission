@@ -356,6 +356,9 @@ class Operation { // convenience class
         return null;
     }
 
+    static dateFromRow( doc ) {
+        return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
+    }
 }
 
 class Mission { // convenience class
@@ -597,10 +600,11 @@ class CSV { // convenience class
         let olist = null;
         Operation.getAllIdDoc()
         .then( doclist => {
+			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromRow(row.doc) );
             olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
-            return db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} );
             })
-        .then ( nlist => {
+        .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
+        .then( nlist => {
             const names = {};
             nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
             csv += olist
@@ -629,14 +633,13 @@ class CSV { // convenience class
         .then( doclist => {
             plist = doclist.rows;
             plist.forEach( p => nlist[p.id] = 0 );
-            return Operation.getAllIdDoc();
             })
-        .then ( doclist => {
-            doclist.rows
-            .filter( row => new Date(row.doc["Date-Time"]) != "Invalid Date" )
-            .forEach( row => olist[row.doc.patient_id] = row.doc ) ;
-            return Note.getAllIdDoc();
+        .then( _ => Operation.getAllIdDoc() )
+        .then( doclist => {
+			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromRow(row.doc) );
+            doclist.rows.forEach( row => olist[row.doc.patient_id] = row.doc ) ;
             })
+        .then( _ => Note.getAllIdDoc() )
         .then( doclist => {
             doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
             csv += plist
@@ -903,7 +906,7 @@ class PPTX {
         return PromiseSeq( 
             olist.rows
             .filter( r => (r.doc.Procedure !== "Enter new procedure"))
-            .sort((a,b)=>(a.doc["Date-Time"]??Operation.splitId(a.id).key).localeCompare((b.doc["Date-Time"]??Operation.splitId(b.id).key)))
+            .sort((a,b)=>Operation.dateFromRow(a.doc).localeCompare(Operation.dateFromRow(b.doc)))
             .map( r => {
                 return _ => this.operation(r.doc) ;
                 })
