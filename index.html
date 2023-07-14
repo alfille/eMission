@@ -324,7 +324,7 @@
         <!-- copyable parts -->
         <!-- copyable parts -->
         <div id="templates" class="pageOverlay">
-           <div class="notelabel"><button class="edit_note libutton" type="button">Edit</button> <input type="text" class="flatpickr flatpickr-input" readonly><div class="inly"></div></div>
+           <div class="notelabel"><button class="edit_note libutton" type="button">Edit</button> <input type="text" class="flatpickr flatpickr-input" name="dummy" readonly><div class="inly"></div></div>
             <!-- Image display -->
             <div class="imagetemplate">
                 <img class="entryfield_image">
@@ -353,7 +353,7 @@
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>
                     <label class="selectdiv">Type
-                        <select disabled>
+                        <select disabled name="dummy1">
                             <option>Uncategorized</option>
                             <option>Pre Op</option>
                             <option>Anesthesia</option>
@@ -380,7 +380,7 @@
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>
                     <label class="selectdiv">Type
-                        <select>
+                        <select name="dummy2">
                             <option>Uncategorized</option>
                             <option>Pre Op</option>
                             <option>Anesthesia</option>
@@ -405,7 +405,7 @@
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>
                     <label class="selectdiv">Type
-                        <select>
+                        <select name="dummy3">
                             <option>Uncategorized</option>
                             <option>Pre Op</option>
                             <option>Anesthesia</option>
@@ -439,10 +439,8 @@
         <!-- Footer -->
         <footer class="work_screen">
             <div id="footerflex">
-                <div><label for="userstatus">User:</label></div>
-                <div><input type="text" readonly id="userstatus"></div>
-                <div><label for "syncstatus">Sync status:</label></div>
-                <div><input type="text" readonly id="syncstatus"></div>
+                <div><label>User:<input type="text" readonly id="userstatus"></label></div>
+                <div><label>Sync status:<input type="text" readonly id="syncstatus"></label></div>
             </div>
         </footer>
         <!-- Card print -->
