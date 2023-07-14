@@ -267,6 +267,9 @@ class Note { // convenience class
         return null;
     }
 
+    static dateFromDoc( doc ) {
+        return ((doc["date"] ?? "") + Note.splitId(doc._id).key).substring(0,24) ;
+    }
 }
 
 class Operation { // convenience class
@@ -339,7 +342,7 @@ class Operation { // convenience class
         return db.allDocs(doc);
     }
     static splitId( oid=operationId ) {
-        if ( nid ) {
+        if ( oid ) {
             let spl = oid.split(";");
             if ( spl.length !== 6 ) {
                 return null;
@@ -356,7 +359,7 @@ class Operation { // convenience class
         return null;
     }
 
-    static dateFromRow( doc ) {
+    static dateFromDoc( doc ) {
         return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
     }
 }
@@ -600,7 +603,7 @@ class CSV { // convenience class
         let olist = null;
         Operation.getAllIdDoc()
         .then( doclist => {
-			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromRow(row.doc) );
+			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
             olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
             })
         .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
@@ -635,10 +638,12 @@ class CSV { // convenience class
             plist.forEach( p => nlist[p.id] = 0 );
             })
         .then( _ => Operation.getAllIdDoc() )
-        .then( doclist => {
-			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromRow(row.doc) );
-            doclist.rows.forEach( row => olist[row.doc.patient_id] = row.doc ) ;
-            })
+        .then( doclist =>
+			doclist.rows.forEach( row => {
+				row.doc["Date-List"] = Operation.dateFromDoc(row.doc) ;
+				olist[row.doc.patient_id] = row.doc ;
+				})
+            )
         .then( _ => Note.getAllIdDoc() )
         .then( doclist => {
             doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
@@ -822,7 +827,7 @@ class PPTX {
         .then( (img) => {
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
-                .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
+                .addNotes([doc?.text,doc._id,doc?.author].join("\n"))
                 .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
                 .addTable(
                     this.table(doc,["DOB","Height","Weight","Sex","Meds","Allergies"]),
@@ -845,20 +850,11 @@ class PPTX {
     notelist( nlist ) {
         return PromiseSeq( 
             nlist.rows
-            .sort((a,b)=>(a.doc?.date ?? Note.splitId(a.id).key).localeCompare((b.doc?.date ?? Note.splitId(b.id).key)))
+            .sort((a,b)=>Note.dateFromDoc(a.doc).localeCompare(Note.dateFromDoc(b.doc))
             .map( r => {
                 return _ => this.note(r.doc) ;
                 })
             ) ;         
-    }
-    
-    dateString( doc ) {
-        let key = ["date","Date-Time"].find( k => k in doc );
-        if ( key ) {
-            return doc[key].substring(0,10);
-        } else {
-            return "";
-        }
     }
     
     category( doc ) {
@@ -883,9 +879,9 @@ class PPTX {
         .then( (img) => {
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
-                .addNotes([doc?.text,doc._id,doc?.author,this.dateString(doc)].join("\n"))
+                .addNotes([doc?.text,doc._id,doc?.author,Note.dateFromDoc(doc).substring(0,10)].join("\n"))
                 .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-                .addTable([[this.category(doc)],[this.dateString(doc)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
+                .addTable([[this.category(doc)],[Note.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
                 ;
 
             if (img) {
@@ -906,7 +902,7 @@ class PPTX {
         return PromiseSeq( 
             olist.rows
             .filter( r => (r.doc.Procedure !== "Enter new procedure"))
-            .sort((a,b)=>Operation.dateFromRow(a.doc).localeCompare(Operation.dateFromRow(b.doc)))
+            .sort((a,b)=>Operation.dateFromDoc(a.doc).localeCompare(Operation.dateFromDoc(b.doc)))
             .map( r => {
                 return _ => this.operation(r.doc) ;
                 })
@@ -925,9 +921,9 @@ class PPTX {
     operation( doc ) {
         this.pptx
         .addSlide({masterName:"Template"})
-        .addNotes([doc?.Procedure,doc._id,doc?.author,this.dateString(doc)].join("\n"))
+        .addNotes([doc?.Procedure,doc._id,doc?.author,Operation.dateFromDoc(doc).substring(0,10)].join("\n"))
         .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-        .addTable([["Operation"],[this.dateString(doc)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
+        .addTable([["Operation"],[Operation.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
         .addTable(
             this.table(doc,["Procedure","Complaint","Surgeon","Equipment"]),
             {x:.5,y:1,w:6,fill:"114cc6",color:"ffffff",fontSize:24})

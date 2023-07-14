@@ -1768,10 +1768,10 @@ class Note { // convenience class
         return null;
     }
 
-
-    static dateFromRow( doc ) {
+    static dateFromDoc( doc ) {
         return ((doc["date"] ?? "") + Note.splitId(doc._id).key).substring(0,24) ;
     }
+
     static select( nid=noteId ) {
         // Check patient existence
         db.get(nid)
@@ -2078,7 +2078,7 @@ class Operation { // convenience class
         return null;
     }
 
-    static dateFromRow( doc ) {
+    static dateFromDoc( doc ) {
         return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
     }
 }
@@ -2550,10 +2550,7 @@ class Page { // singleton class
                     // create an pid -> name dict
                     nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
                     // Assign names, filter out empties
-                    olist.forEach( r => {
-						r.doc.Name         = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ;
-						r.doc["Date-Time"] = Operation.dateFromRow(r.doc) ;
-						});
+                    olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
                     objectTable = new AllOperationTable();
                     // Default value
                     objectTable.fill(olist.filter(o=>o.doc.Name!==""));
@@ -2570,7 +2567,7 @@ class Page { // singleton class
                 .then( oplist => {
                     oplist.forEach( r => o2pid[r.doc.patient_id] = ({
                         "Procedure": r.doc["Procedure"],
-                        "Date-Time": Operation.dateFromRow(r.doc),
+                        "Date-Time": Operation.dateFromDoc(r.doc),
                         "Surgeon": r.doc["Surgeon"],
                         }))
                     })
@@ -3210,7 +3207,7 @@ class PatientTable extends SortTable {
             "AllPatients",
             [
                 ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
-                ['Date-Time','Date',(doc)=>(doc["Date-Time"]??"").substring(0,10)],
+                ['Date-Time','Date',(doc)=>doc["Date-Time"].substring(0,10)],
             ] 
             );
     }
@@ -3310,7 +3307,7 @@ class AllOperationTable extends SortTable {
         [ "Date-Time","Name","Procedure","Surgeon" ], 
         "OperationsList",
         [
-            ["Date-Time","Date",(doc)=>doc["Date-Time"].substring(0,10)]
+            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
         ]
         );
     }
@@ -3334,7 +3331,7 @@ class OperationTable extends SortTable {
         [ "Date-Time","Procedure", "Surgeon" ], 
         "OperationsList",
         [
-            ["Date-Time","Date",(doc)=>doc["Date-Time"].substring(0,10)]
+            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
         ]
         );
     }
@@ -3542,12 +3539,7 @@ class NoteList {
     }
 
     yearTitle(row) {
-        if ( row.doc.date==undefined ) {
-            return "Undated" ;
-        } else {
-            const d = new Date(row.doc.date);
-            return d.getFullYear().toString() ;
-        }
+		return Note.dateFromDoc(row.doc).substr(0,4);
     }
         
     fsclick( target ) {
@@ -3574,7 +3566,7 @@ class NoteList {
         li.appendChild( document.getElementById("templates").querySelector(".notelabel").cloneNode(true) );
 
         li.querySelector(".inly").appendChild( document.createTextNode( ` by ${this.noteAuthor(note)}` ));
-        li.querySelector(".flatpickr").value = flatpickr.formatDate(this.noteDate(note),"Y-m-d h:i K");
+        li.querySelector(".flatpickr").value = flatpickr.formatDate(new Date(Note.dateFromDoc(note.doc)),"Y-m-d h:i K");
         li.addEventListener( 'click', () => Note.select( note.id ) );
 
         return li;
@@ -3623,18 +3615,6 @@ class NoteList {
         }
         return author;
     }
-
-    noteDate( doc ) {
-        let date = new Date().toISOString();
-        if ( doc  && doc.id ) {
-            date = Note.splitId(doc.id).key;
-            if ( doc.doc && doc.doc.date ) {
-                date = doc.doc.date;
-            }
-        }
-        return new Date(date);
-    }
-
 }
 
 class Collation {
