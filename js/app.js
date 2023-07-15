@@ -637,13 +637,17 @@ class ImageImbedded {
 
     addListen() {
         try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
-            catch {}
+            catch { // empty 
+				}
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
-            catch {}
+            catch { // empty 
+				}
         try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
-            catch {}
+            catch { // empty 
+				}
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
-            catch {}
+            catch { // empty 
+				}
     }
 
     remove() {
@@ -669,11 +673,12 @@ class ImageImbedded {
         this.addSrc();
         this.display();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
-            catch{}
+            catch{ // empty
+				}
     }
 
     save(doc) {
-        if ( this.upload == null ) {
+        if ( this.upload == null ) { // ignore
         } else if ( this.upload == "remove" ) {
             if ( "_attachments" in doc ) {
                 delete doc._attachments;
@@ -755,11 +760,14 @@ class ImageNote extends ImagePlus {
     addListen() {
         super.addListen();
         try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
-            catch {}
+            catch { //empty
+				}
         try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
-            catch {}
+            catch { //empty
+				}
         try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
-            catch {}
+            catch { //empty
+				}
     }
 
     buttonsdisabled( bool ) {
@@ -791,9 +799,11 @@ class ImageNote extends ImagePlus {
 class ImageQuick extends ImageImbedded {
     addListen(hfunc) {
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
-            catch {}
+            catch { //empty
+				}
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => hfunc() ); }
-            catch {}
+            catch { //empty
+				}
     }
 }
 
@@ -1355,18 +1365,6 @@ class EditUserData extends PatientData {
             // no password to send
             console.log("No password", User.password) ;
             objectPage.show( "UserList" );
-        }
-    }
-}
-
-class AccessData extends PatientData {
-    savePatientData() {
-        if ( this.loadDocData()[0] ) {
-            security_db.put( this.doc[0] )
-                .catch( err => objectLog.err(err) )
-                .finally( () => objectPage.show( "UserList" ) );
-        } else {
-            objectPage.show( "UserList" ) ;
         }
     }
 }
@@ -1952,7 +1950,7 @@ class Operation { // convenience class
                 return db.get( operationId );
                 })
             .then( (doc) => {
-                if ( confirm(`Delete operation \<${doc.Procedure}\>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
+                if ( confirm(`Delete operation <${doc.Procedure}>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
                     return doc;
                 } else {
                     throw "No delete";
@@ -2347,7 +2345,7 @@ class Remote { // convenience class
         let prot = "https";
         let addr = url;
         let port = "6984";
-        let spl = url.split(":\/\/") ;
+        let spl = url.split("://") ;
         if (spl.length < 2 ) {
             addr=spl[0];
         } else {
@@ -2540,11 +2538,10 @@ class Page { // singleton class
             case "AllOperations":
             {
                 Patient.unselect();
-                let last_pid = "" ;
                 let olist;
                 Operation.getAllIdDocCurated()
                 .then( doclist => olist = doclist)
-                .then( _=> db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
+                .then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
                 .then( nlist => {
                     const n2id = {} ;
                     // create an pid -> name dict
@@ -2932,117 +2929,6 @@ function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
 
-/*!
- * swiped-events.js - v@version@
- * Pure JavaScript swipe events
- * https://github.com/john-doherty/swiped-events
- * @inspiration https://stackoverflow.com/questions/16348031/disable-scrolling-when-touch-moving-certain-element
- * @author John Doherty <www.johndoherty.info>
- * @license MIT
- * Modified By Paul Alfille -- class format use only default settings
- */
-
-class Swipe {
-    constructor() {
-        document.addEventListener('touchstart', (e) => this.handleTouchStart(e), false);
-        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), false);
-        document.addEventListener('touchend', (e) => this.handleTouchEnd(e), false);
-        this.reset();
-    }
-
-    reset() {
-        this.xDown = null;
-        this.yDown = null;
-        this.xDiff = null;
-        this.yDiff = null;
-        this.timeDown = null;
-        this.startEl = null;
-    }
-
-    /**
-     * Fires swiped event if swipe detected on touchend
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchEnd(e) {
-        // if the user released on a different target, cancel!
-        if (this.startEl !== e.target) {
-            this.reset() ;
-            return ;
-        }
-
-        let timeDiff = Date.now() - this.timeDown;
-        if ( timeDiff > 500 ) {    // default 500ms
-            this.reset() ;
-            return ;
-        }
-
-        let eventType = '';
-
-        if (Math.abs(this.xDiff) > Math.abs(this.yDiff)) { // most significant
-            if (Math.abs(this.xDiff) > 20) { // default 20px
-                eventType = (this.xDiff > 0)?'swiped-left':'swiped-right';
-            }
-        }
-        else if (Math.abs(this.yDiff) > 20) { // default 20px
-            eventType = (this.yDiff > 0)?'swiped-up':'swiped-down';
-        } else {
-            this.reset() ;
-            return ;
-        }
-
-        let changedTouches = e.changedTouches || e.touches || [];
-        let eventData = {
-            dir: eventType.replace(/swiped-/, ''),
-            touchType: (changedTouches[0] || {}).touchType || 'direct',
-            xStart: parseInt(this.xDown, 10),
-            xEnd: parseInt((changedTouches[0] || {}).clientX || -1, 10),
-            yStart: parseInt(this.yDown, 10),
-            yEnd: parseInt((changedTouches[0] || {}).clientY || -1, 10)
-        };
-
-        // fire `swiped` event event on the element that started the swipe
-        //this.startEl.dispatchEvent(new CustomEvent('swiped', { bubbles: true, cancelable: true, detail: eventData }));
-
-        // fire `swiped-dir` event on the element that started the swipe
-        this.startEl.dispatchEvent(new CustomEvent(eventType, { bubbles: true, cancelable: true, detail: eventData }));
-
-        this.reset() ;
-    }
-
-    /**
-     * Records current location on touchstart event
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchStart(e) {
-        // if the element has data-swipe-ignore="true" we stop listening for swipe events
-        if (e.target.getAttribute('data-swipe-ignore') === 'true') return;
-
-        this.startEl = e.target;
-
-        this.timeDown = Date.now();
-        this.xDown = e.touches[0].clientX;
-        this.yDown = e.touches[0].clientY;
-        this.xDiff = 0;
-        this.yDiff = 0;
-    }
-
-    /**
-     * Records location diff in px on touchmove event
-     * @param {object} e - browser event object
-     * @returns {void}
-     */
-    handleTouchMove(e) {
-        if (!this.xDown || !this.yDown) return;
-
-        this.xDiff = this.xDown - e.touches[0].clientX;
-        this.yDiff = this.yDown - e.touches[0].clientY;
-    }
-
-}
-var objectSwipe = new Swipe() ;
-
 class SortTable {
     constructor( collist, tableId, aliaslist=[] ) {
         this.tbl = document.getElementById(tableId);
@@ -3158,6 +3044,7 @@ class SortTable {
         rowsArray.some( (r) => {
             let c = r.cells[colNum].innerText;
             if ( c == "" ) {
+				//empty
             } else if ( isNaN( Number(r.cells[colNum].innerText) ) ) {
                 type = "string";
                 return true;
@@ -3237,7 +3124,7 @@ class DatabaseTable extends SortTable {
         // set titlebox
         objectCollation.db.get(this.databaseId)
         .then( (doc) => document.getElementById( "titlebox" ).innerHTML = [doc.Name,doc.Location,doc.Organization].join(" ") )
-        .catch( (err) => document.getElementById( "titlebox" ).innerHTML = [remoteCouch.address, remoteCouch.database].join(" ") ) ;
+        .catch( _ => document.getElementById( "titlebox" ).innerHTML = [remoteCouch.address, remoteCouch.database].join(" ") ) ;
         this.selectFunc( this.databaseId ) ;
     }
 
@@ -3276,8 +3163,8 @@ class DatabaseTable extends SortTable {
                 objectTable.highlight();
             }
             })
-        .catch( (err) => this.unselect() )
-        .finally( () => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
+        .catch( _ => this.unselect() )
+        .finally( _ => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
     }
 
     editpage() {
@@ -3416,7 +3303,7 @@ class SearchTable extends SortTable {
                         }
                         Note.select( id );
                         objectPage.show( 'NoteList' );
-                        break ;        this.list.push(`${ttl}: ${msg}`);
+                        break ;
 
                     default:
                         objectPage.show( null );

@@ -3,7 +3,6 @@
 /* jshint esversion: 6 */
 
 // singleton class instances
-var objectPatientData;
 var objectNoteList={};
     objectNoteList.category = 'Uncategorized' ;
 var objectRemote = null;
@@ -16,18 +15,9 @@ var patientId;
 var noteId;
 var operationId;
 var remoteCouch;
-var NoPhoto = "style/NoPhoto.png";
-var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
-var security_db = null ;
-const remoteUser = {
-    database: "_users" ,
-    username: "admin",
-    password: "", // set in SuperUser
-    address: "", // set in SuperUser
-    };
 
 // used for record keys ( see makeId, etc )
 const RecordFormat = {
@@ -499,7 +489,7 @@ class Remote { // convenience class
         let prot = "https";
         let addr = url;
         let port = "6984";
-        let spl = url.split(":\/\/") ;
+        let spl = url.split("://") ;
         if (spl.length < 2 ) {
             addr=spl[0];
         } else {
@@ -685,7 +675,7 @@ class Backup {
                 `${remoteCouch.database}.json`
                 )
             );
-    };
+    }
 }
 
 // From https://bigcodenerd.org/resolving-promises-sequentially-javascript/
@@ -755,7 +745,7 @@ class PPTX {
                 return Promise.resolve(({h:h,w:w,data:`${attach_img.content_type};base64,${attach_img.data}`,sizing:{type:"contain",h:h,w:w}}));
                 })
             .catch( err =>{
-                console.log("Bad image format");
+                console.log("Bad image format " + err);
                 return Promise.resolve(null);
                 });
         } else {
@@ -854,7 +844,7 @@ class PPTX {
             .map( r => {
                 return _ => this.note(r.doc) ;
                 })
-            ) ;         
+            )) ;         
     }
     
     category( doc ) {
@@ -1022,7 +1012,7 @@ class Page { // singleton class
         window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
     
-    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+    show( state = "AllPatients" ) { // main routine for displaying different "pages" by hiding different elements
         Page.show_screen( "screen" );
         this.next(state) ; // update reversal list
 
@@ -1031,8 +1021,6 @@ class Page { // singleton class
 
         document.querySelectorAll(".pageOverlay")
             .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
-
-        objectPatientData = null;
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
@@ -1271,4 +1259,4 @@ window.onload = () => {
         objectPage.show("FirstTime");
     }
 
-};
+}
