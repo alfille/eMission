@@ -2239,6 +2239,7 @@ class Remote { // convenience class
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.syncHandler = null;
+		this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
         if ( Cookie.get( "remoteCouch" ) == null ) {
@@ -2273,29 +2274,30 @@ class Remote { // convenience class
         this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
         document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
-            const synctext = document.getElementById("syncstatus");
-
-            synctext.value = "download remote...";
+            this.synctext.value = "download remote...";
             db.replicate.from( this.remoteDB )
-            .catch( (err) => synctext.value=err.message )
+            .catch( (err) => this.synctext.value=err.message )
             .finally( () => {
-                synctext.value = "syncing...";
-                    
-                this.syncHandler = db.sync( this.remoteDB ,
-                    {
-                        live: true,
-                        retry: true,
-                        filter: (doc) => doc._id.indexOf('_design') !== 0,
-                    } )
-                    .on('change', ()       => synctext.value = "changed" )
-                    .on('paused', ()       => synctext.value = "resting" )
-                    .on('active', ()       => synctext.value = "active" )
-                    .on('denied', (err)    => { synctext.value = "denied"; objectLog.err(err,"Sync denied"); } )
-                    .on('complete', ()     => synctext.value = "stopped" )
-                    .on('error', (err)     => { synctext.value = err.reason ; objectLog.err(err,"Sync error"); } );
-                });
-        }
+                this.synctext.value = "syncing...";
+                this.syncer();
+            });
+		}
     }
+    
+    syncer() {
+		this.syncHandler = db.sync( this.remoteDB ,
+			{
+				live: true,
+				retry: true,
+				filter: (doc) => doc._id.indexOf('_design') !== 0,
+			} )
+			.on('change', ()       => this.synctext.value = "changed" )
+			.on('paused', ()       => this.synctext.value = "resting" )
+			.on('active', ()       => this.synctext.value = "active" )
+			.on('denied', (err)    => { this.synctext.value = "denied"; objectLog.err(err,"Sync denied"); } )
+			.on('complete', ()     => this.synctext.value = "stopped" )
+			.on('error', (err)     => { this.synctext.value = err.reason ; objectLog.err(err,"Sync error"); } );
+	}
     
     forceReplicate(id=null) {
         if (this.syncHandler) {
