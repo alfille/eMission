@@ -638,16 +638,16 @@ class ImageImbedded {
     addListen() {
         try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
             catch { // empty 
-				}
+                }
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
             catch { // empty 
-				}
+                }
         try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
             catch { // empty 
-				}
+                }
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
             catch { // empty 
-				}
+                }
     }
 
     remove() {
@@ -674,7 +674,7 @@ class ImageImbedded {
         this.display();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{ // empty
-				}
+                }
     }
 
     save(doc) {
@@ -761,13 +761,13 @@ class ImageNote extends ImagePlus {
         super.addListen();
         try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
             catch { //empty
-				}
+                }
         try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
             catch { //empty
-				}
+                }
         try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
             catch { //empty
-				}
+                }
     }
 
     buttonsdisabled( bool ) {
@@ -800,10 +800,10 @@ class ImageQuick extends ImageImbedded {
     addListen(hfunc) {
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
             catch { //empty
-				}
+                }
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => hfunc() ); }
             catch { //empty
-				}
+                }
     }
 }
 
@@ -2239,7 +2239,9 @@ class Remote { // convenience class
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.syncHandler = null;
-		this.synctext = document.getElementById("syncstatus");
+        this.lastStatus = null ;
+        this.problem = false ;
+        this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
         if ( Cookie.get( "remoteCouch" ) == null ) {
@@ -2266,7 +2268,13 @@ class Remote { // convenience class
                 objectPage.reset() ;               
                 Cookie.set( "remoteCouch", remoteCouch );
             }
-        }    
+        }
+        
+        window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
+        window.addEventListener("online", _ => this.status( this.problem?"problem":"good", "--network present--" ) );
+        navigator.onLine ? 
+            this.status( "good", "--network present--" ) 
+            : this.status( "disconnect", "--network offline--" ) ;
     }
 
     // Initialise a sync process with the remote server
@@ -2274,45 +2282,79 @@ class Remote { // convenience class
         this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
         document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
-            this.synctext.value = "download remote...";
+            this.status( "good","download remote database");
             db.replicate.from( this.remoteDB )
-            .catch( (err) => this.synctext.value=err.message )
-            .finally( () => {
-                this.synctext.value = "syncing...";
-                this.syncer();
-            });
-		}
+                .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
+                .finally( _ => this.syncer() );
+        } else {
+            this.status("problem","No remote database specified!");
+        }
     }
     
     syncer() {
-		this.syncHandler = db.sync( this.remoteDB ,
-			{
-				live: true,
-				retry: true,
-				filter: (doc) => doc._id.indexOf('_design') !== 0,
-			} )
-			.on('change', ()       => this.synctext.value = "changed" )
-			.on('paused', ()       => this.synctext.value = "resting" )
-			.on('active', ()       => this.synctext.value = "active" )
-			.on('denied', (err)    => { this.synctext.value = "denied"; objectLog.err(err,"Sync denied"); } )
-			.on('complete', ()     => this.synctext.value = "stopped" )
-			.on('error', (err)     => { this.synctext.value = err.reason ; objectLog.err(err,"Sync error"); } );
-	}
+        this.status("good","Starting database intermittent sync");
+        this.syncHandler = db.sync( this.remoteDB ,
+            {
+                live: true,
+                retry: true,
+                filter: (doc) => doc._id.indexOf('_design') !== 0,
+            } )
+            .on('change', ()       => this.status( "good", "changed" ))
+            .on('paused', ()       => this.status( "good", "quiescent" ))
+            .on('active', ()       => this.status( "good", "actively syncing" ))
+            .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
+            .on('complete', ()     => this.status( "good", "sync stopped" ))
+            .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
+    }
     
-    forceReplicate(id=null) {
-        if (this.syncHandler) {
-            this.syncHandler.cancel();
-            this.syncHandler = null;
+    status( state, msg ) {
+        console.log(document.body);
+        switch (state) {
+            case "disconnect":
+                document.body.style.background="#7071d3"; // grey
+                if ( this.lastState !== state ) {
+                    objectLog.err(msg,"Network status");
+                }
+                break ;
+            case "problem":
+                document.body.style.background="#d72e18"; // grey
+                objectLog.err(msg,"Network status");
+                this.problem = true ;
+                break ;
+            case "good":
+            default:
+                document.body.style.background="#172bae"; // heppy blue
+                if ( this.lastState !== state ) {
+                    objectLog.err(msg,"Network status");
+                }
+                this.problem = false ;
+                break ;
         }
+        this.synctext.value = msg ;
+        this.lastStatus = state ;
+    }
+            
+    forceReplicate() {
+        // Never called first -- foreverSync should have already run at least once
+        if (this.syncHandler) {
+            this.syncHandler.on("complete",_ => this.replicateTo() );
+            this.replicateTo() ;
+            // sync currently "active"
+            this.syncHandler.cancel();
+        } else {
+            this.replicateTo() = null;
+        }
+    }
+
+    replicateTo() {
+        this.syncHandler = null ;
         if (this.remoteDB) {
-            db.replicate.to( this.remoteDB,
-                {
-                    filter: (doc) => id ?
-                        doc._id == id :
-                        doc._id.indexOf('_design') !== 0,
-                } )
-            .catch( err => objectLog.err(err,`Replication ${id??""}`))
+            this.status("good","Attempting replication to remote database");
+            db.replicate.to( this.remoteDB )
+            .catch( err => this.status("problem",`Trouble replicating to remote: ${err.message}`))
             .finally( () => this.foreverSync() );
+        } else {
+            this.status("problem","No remote database specified!");
         }
     }
 
@@ -2961,7 +3003,7 @@ class SortTable {
 
     aliasAdd( fieldname, aliasname=null, transformfunction=null ) {
         if ( !(fieldname in this.aliases) ) {
-			// Add an entry (currently empty) for this column
+            // Add an entry (currently empty) for this column
             this.aliases[fieldname] = {} ;
         }
         this.aliases[fieldname]["name"] = aliasname ?? fieldname ;
@@ -3046,7 +3088,7 @@ class SortTable {
         rowsArray.some( (r) => {
             let c = r.cells[colNum].innerText;
             if ( c == "" ) {
-				//empty
+                //empty
             } else if ( isNaN( Number(r.cells[colNum].innerText) ) ) {
                 type = "string";
                 return true;
@@ -3428,7 +3470,7 @@ class NoteList {
     }
 
     yearTitle(row) {
-		return Note.dateFromDoc(row.doc).substr(0,4);
+        return Note.dateFromDoc(row.doc).substr(0,4);
     }
         
     fsclick( target ) {

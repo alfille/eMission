@@ -407,6 +407,9 @@ class Remote { // convenience class
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.syncHandler = null;
+        this.lastStatus = null ;
+        this.problem = false ;
+        this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
         if ( Cookie.get( "remoteCouch" ) == null ) {
@@ -433,38 +436,73 @@ class Remote { // convenience class
                 objectPage.reset() ;               
                 Cookie.set( "remoteCouch", remoteCouch );
             }
-        }    
+        }
+        
+        window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
+        window.addEventListener("online", _ => this.status( this.problem?"problem":"good", "--network present--" ) );
+        navigator.onLine ? 
+            this.status( "good", "--network present--" ) 
+            : this.status( "disconnect", "--network offline--" ) ;
     }
+
 
     // Initialise a sync process with the remote server
     foreverSync() {
         this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
         document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
-            const synctext = document.getElementById("syncstatus");
-
-            synctext.value = "download remote...";
+            this.status( "good","download remote database");
             db.replicate.from( this.remoteDB )
-            .catch( (err) => synctext.value=err.message )
-            .finally( () => {
-                synctext.value = "syncing...";
-                    
-                this.syncHandler = db.sync( this.remoteDB ,
-                    {
-                        live: true,
-                        retry: true,
-                        filter: (doc) => doc._id.indexOf('_design') !== 0,
-                    } )
-                    .on('change', ()       => synctext.value = "changed" )
-                    .on('paused', ()       => synctext.value = "resting" )
-                    .on('active', ()       => synctext.value = "active" )
-                    .on('denied', (err)    => { synctext.value = "denied"; objectLog.err(err,"Sync denied"); } )
-                    .on('complete', ()     => synctext.value = "stopped" )
-                    .on('error', (err)     => { synctext.value = err.reason ; objectLog.err(err,"Sync error"); } );
-                });
+                .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
+                .finally( _ => this.syncer() );
+        } else {
+            this.status("problem","No remote database specified!");
         }
     }
     
+    syncer() {
+        this.status("good","Starting database intermittent sync");
+        this.syncHandler = db.sync( this.remoteDB ,
+            {
+                live: true,
+                retry: true,
+                filter: (doc) => doc._id.indexOf('_design') !== 0,
+            } )
+            .on('change', ()       => this.status( "good", "changed" ))
+            .on('paused', ()       => this.status( "good", "quiescent" ))
+            .on('active', ()       => this.status( "good", "actively syncing" ))
+            .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
+            .on('complete', ()     => this.status( "good", "sync stopped" ))
+            .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
+    }
+    
+    status( state, msg ) {
+        console.log(document.body);
+        switch (state) {
+            case "disconnect":
+                document.body.style.background="#7071d3"; // grey
+                if ( this.lastState !== state ) {
+                    objectLog.err(msg,"Network status");
+                }
+                break ;
+            case "problem":
+                document.body.style.background="#d72e18"; // grey
+                objectLog.err(msg,"Network status");
+                this.problem = true ;
+                break ;
+            case "good":
+            default:
+                document.body.style.background="#172bae"; // heppy blue
+                if ( this.lastState !== state ) {
+                    objectLog.err(msg,"Network status");
+                }
+                this.problem = false ;
+                break ;
+        }
+        this.synctext.value = msg ;
+        this.lastStatus = state ;
+    }
+            
     openRemoteDB( DBstruct ) {
         if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
@@ -480,31 +518,6 @@ class Remote { // convenience class
         }
     }
             
-    // Fauxton link
-    link() {
-        window.open( `${remoteCouch.address}/_utils`, '_blank' );
-    }
-
-    SecureURLparse( url ) {
-        let prot = "https";
-        let addr = url;
-        let port = "6984";
-        let spl = url.split("://") ;
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            prot = spl[0];
-            addr = spl[1];
-        }
-        spl = addr.split(":");
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            addr = spl[0];
-            port = spl[1];
-        }
-        return [prot,[addr,port].join(":")].join("://");
-    }
 }
 
 class Cookie { //convenience class
@@ -840,11 +853,9 @@ class PPTX {
     notelist( nlist ) {
         return PromiseSeq( 
             nlist.rows
-            .sort((a,b)=>Note.dateFromDoc(a.doc).localeCompare(Note.dateFromDoc(b.doc))
-            .map( r => {
-                return _ => this.note(r.doc) ;
-                })
-            )) ;         
+            .sort((a,b)=>Note.dateFromDoc(a.doc).localeCompare(Note.dateFromDoc(b.doc)))
+            .map( r => this.note(r.doc) )
+            ) ;         
     }
     
     category( doc ) {
