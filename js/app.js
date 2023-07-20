@@ -3578,6 +3578,10 @@ class Log{
         console.log( ttl, msg ) ;
         console.trace();
         console.groupEnd();
+        if ( objectPage.current() == "ErrorLog" ) {
+            // update
+            this.show()
+        }
     }
     
     clear() {
