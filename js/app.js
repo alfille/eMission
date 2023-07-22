@@ -1363,7 +1363,7 @@ class EditUserData extends PatientData {
             objectPage.show( "SendUser" );
         } else {
             // no password to send
-            console.log("No password", User.password) ;
+            objectLog.err("No stored password") ;
             objectPage.show( "UserList" );
         }
     }
@@ -1530,7 +1530,7 @@ class Patient { // convenience class
         if ( pid ) {
             let spl = pid.split(";");
             if ( spl.length !== 5 ) {
-                console.log("Bad PatientId",pid);
+                objectLog.err("Bad PatientId "+pid);
                 return null;
             }
             return {
@@ -2308,7 +2308,6 @@ class Remote { // convenience class
     }
     
     status( state, msg ) {
-        console.log(document.body);
         switch (state) {
             case "disconnect":
                 document.body.style.background="#7071d3"; // grey
@@ -2368,7 +2367,7 @@ class Remote { // convenience class
                     },
                 });
         } else {
-            console.log("Bad DB");
+            objectLog.err("Bad DB");
             return null;
         }
     }
@@ -2450,6 +2449,7 @@ class Page { // singleton class
             "RemoteDatabaseInput",
             "SuperUser",
             "UserList",
+            "ErrorLog",            
 //            "UserNew",
 //            "UserEdit",
 //            "SendUser",
@@ -2526,12 +2526,11 @@ class Page { // singleton class
             if ( iop < 0 ) {
                 // add to from of page list
                 this.path.unshift( page ) ;
-                Cookie.set ( "displayState", this.path ) ;
             } else {
                 // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
-                Cookie.set ( "displayState", this.path ) ;
             }
+            Cookie.set ( "displayState", this.path ) ;
         }
     }
 

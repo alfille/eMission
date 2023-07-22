@@ -477,7 +477,6 @@ class Remote { // convenience class
     }
     
     status( state, msg ) {
-        console.log(document.body);
         switch (state) {
             case "disconnect":
                 document.body.style.background="#7071d3"; // grey
@@ -606,7 +605,7 @@ class CSV { // convenience class
         let olist = null;
         Operation.getAllIdDoc()
         .then( doclist => {
-			doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
+            doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
             olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
             })
         .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
@@ -642,10 +641,10 @@ class CSV { // convenience class
             })
         .then( _ => Operation.getAllIdDoc() )
         .then( doclist =>
-			doclist.rows.forEach( row => {
-				row.doc["Date-List"] = Operation.dateFromDoc(row.doc) ;
-				olist[row.doc.patient_id] = row.doc ;
-				})
+            doclist.rows.forEach( row => {
+                row.doc["Date-List"] = Operation.dateFromDoc(row.doc) ;
+                olist[row.doc.patient_id] = row.doc ;
+                })
             )
         .then( _ => Note.getAllIdDoc() )
         .then( doclist => {
@@ -1006,12 +1005,11 @@ class Page { // singleton class
             if ( iop < 0 ) {
                 // add to from of page list
                 this.path.unshift( page ) ;
-                Cookie.set ( "displayState", this.path ) ;
             } else {
                 // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
-                Cookie.set ( "displayState", this.path ) ;
             }
+            Cookie.set ( "displayState", this.path ) ;
         }
     }
 
