@@ -2439,24 +2439,21 @@ class Cookie { //convenience class
 
 class Page { // singleton class
     constructor() {
+        // get page history from cookies
         const path = Cookie.get( "displayState" );
-        if ( !Array.isArray(path) ) {
-            this.reset();
-        } else {
-            this.path = path;
+        this.path=[];
+        if ( Array.isArray(path) ) {
+            // review pages to make sure "landable"            
+            for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
+                if ( this.path.includes(p) ) {
+                    break ;
+                } else {
+                    this.path.push(p);
+                }
+            }
         }
-
-        const safeIndex =
-            this.safeLanding
-            .map(p=>this.path.indexOf(p))
-            .filter(i=>i>-1)
-            .reduce( (x,y)=>Math.min(x,y) , 1000 );
-        
-        if ( safeIndex == 1000 ) {
-            this.reset() ;
-        } else {
-            this.next( this.path[safeIndex] );
-        }
+        // default last choice
+        this.path.push("MainMenu");
     }
     
     reset() {
@@ -2470,7 +2467,7 @@ class Page { // singleton class
         if ( this.path.length == 0 ) {
             this.reset();
         }
-        if ( this.safeLanding.includes(this.path[0]) ) {
+        if ( Pagelist.subclass(this.path[0]).safeLanding ) {
             Cookie.set ( "displayState", this.path ) ;
         } else {
             this.back() ;
@@ -2515,15 +2512,15 @@ class Page { // singleton class
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        Page.show_screen( "screen" );
+        if ( db == null || remoteCouch.database=='' ) {
+            // can't bypass this! test if database exists
+            if ( state != "FirstTime" ) {
+                this.next("RemoteDatabaseInput");
+                this.show("RemoteDatabaseInput");
+            }
+        }
+
         this.next(state) ; // update reversal list
-
-        document.querySelector(".patientDataEdit").style.display="none"; 
-        document.querySelectorAll(".topButtons")
-            .forEach( (v) => v.style.display = "block" );
-
-        document.querySelectorAll(".pageOverlay")
-            .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
 
         objectPatientData = null;
         objectTable = null;
@@ -2532,15 +2529,8 @@ class Page { // singleton class
         ImageImbedded.clearSrc() ;
         ImageImbedded.clearSrc() ;
 
-        if ( db == null || remoteCouch.database=='' ) {
-            // can't bypass this! test if database exists
-            if ( state != "FirstTime" ) {
-                this.next("RemoteDatabaseInput");
-            }
-        }
-
-		// send to page-specific code
-		(Pagelist.subclass(objectPage.current())).subshow(extra);
+        // send to page-specific code
+        (Pagelist.subclass(objectPage.current())).show(extra);
     }
     
     static show_screen( type ) { // switch between screen and print
@@ -2599,497 +2589,512 @@ class Page { // singleton class
 }
 
 class Pagelist {
-	// list of subclasses = displayed "pages"
-	static pages = {} ;
-	// prototype to add to pages
-	static AddPage() { Pagelist.pages[this.name]=this; }
-	// safeLanding -- safe to resume on this page
-	static safeLanding = true ; // default
+    // list of subclasses = displayed "pages"
+    // Note that these classes are never "instantiated -- only used statically
+    static pages = {} ; // [pagetitle]->class -- pagetitle ise used by HTML to toggle display of "pages"
+    // prototype to add to pages
+    static AddPage() { Pagelist.pages[this.name]=this; }
+    // safeLanding -- safe to resume on this page
+    static safeLanding = true ; // default
+    
+    static show(extra="") {
+        // set up display
+        Page.show_screen( "screen" );
+        document.querySelector(".patientDataEdit").style.display="none"; 
+        document.querySelectorAll(".topButtons")
+            .forEach( tb => tb.style.display = "block" );
+
+        document.querySelectorAll(".pageOverlay")
+            .forEach( po => po.style.display = po.classList.contains(this.name) ? "block" : "none" );
+
+        this.subshow(extra);
+    }
     
     static subshow(extra="") {
-		// Simple menu page
-	}
-	
-	static subclass(p) {
-		let o = Pagelist.pages[p] ?? null ;
-		if ( o ) {
-			return o ;
-		} else {
-			// bad entry -- fix by making MainMenu the default
-			objectPage.next("MainMenu") ;
-			return MainMenu ;
-		}
-	} 
+        // default version, derived classes may overrule
+        // Simple menu page
+    }
+    
+    static subclass(pagetitle) {
+        let cls = Pagelist.pages[pagetitle] ?? null ;
+        if ( cls ) {
+            return cls ;
+        } else {
+            // bad entry -- fix by making MainMenu the default
+            objectPage.next("MainMenu") ;
+            return MainMenu ;
+        }
+    } 
 }
 
 class Administration extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class MainMenu extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class Settings extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class AllOperations extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		Patient.unselect();
-		let olist;
-		Operation.getAllIdDocCurated()
-		.then( doclist => olist = doclist)
-		.then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
-		.then( nlist => {
-			const n2id = {} ;
-			// create an pid -> name dict
-			nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
-			// Assign names, filter out empties
-			olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
-			objectTable = new AllOperationTable();
-			// Default value
-			objectTable.fill(olist.filter(o=>o.doc.Name!==""));
-			})
-		.catch( err=>objectLog.err(err) );
-	}
+    static subshow(extra="") {
+        Patient.unselect();
+        let olist;
+        Operation.getAllIdDocCurated()
+        .then( doclist => olist = doclist)
+        .then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
+        .then( nlist => {
+            const n2id = {} ;
+            // create an pid -> name dict
+            nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
+            // Assign names, filter out empties
+            olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
+            objectTable = new AllOperationTable();
+            // Default value
+            objectTable.fill(olist.filter(o=>o.doc.Name!==""));
+            })
+        .catch( err=>objectLog.err(err) );
+    }
 }
 
 class AllPatients extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		objectTable = new PatientTable();
-		let o2pid = {} ; // oplist
-		Operation.getAllIdDocCurated()
-		.then( oplist => {
-			oplist.forEach( r => o2pid[r.doc.patient_id] = ({
-				"Procedure": r.doc["Procedure"],
-				"Date-Time": Operation.dateFromDoc(r.doc),
-				"Surgeon": r.doc["Surgeon"],
-				}))
-			})
-		.then( _ => Patient.getAllIdDoc() )
-		.then( (docs) => {
-			docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
-			objectTable.fill(docs.rows );
-			if ( Patient.isSelected() ) {
-				Patient.select( patientId );
-			} else {
-				Patient.unselect();
-			}
-			})
-		.catch( (err) => objectLog.err(err) );
-	}
+    static subshow(extra="") {
+        objectTable = new PatientTable();
+        let o2pid = {} ; // oplist
+        Operation.getAllIdDocCurated()
+        .then( oplist => {
+            oplist.forEach( r => o2pid[r.doc.patient_id] = ({
+                "Procedure": r.doc["Procedure"],
+                "Date-Time": Operation.dateFromDoc(r.doc),
+                "Surgeon": r.doc["Surgeon"],
+                }))
+            })
+        .then( _ => Patient.getAllIdDoc() )
+        .then( (docs) => {
+            docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
+            objectTable.fill(docs.rows );
+            if ( Patient.isSelected() ) {
+                Patient.select( patientId );
+            } else {
+                Patient.unselect();
+            }
+            })
+        .catch( (err) => objectLog.err(err) );
+    }
 }
 
 class DatabaseInfo extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		db.info()
-		.then( doc => {
-			objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
-			})
-		.catch( err => objectLog.err(err) );
-	}
+    static subshow(extra="") {
+        db.info()
+        .then( doc => {
+            objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
+            })
+        .catch( err => objectLog.err(err) );
+    }
 }
 
 class DBTable extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		objectTable = new DatabaseTable();
-		Collation.getAllIdDoc()
-		.then( (docs) => {
-			objectTable.fill(docs.rows) ;
-			})
-		.catch( (err) => objectLog.err(err) );
-	}
+    static subshow(extra="") {
+        objectTable = new DatabaseTable();
+        Collation.getAllIdDoc()
+        .then( (docs) => {
+            objectTable.fill(docs.rows) ;
+            })
+        .catch( (err) => objectLog.err(err) );
+    }
 }
 
 class Download extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		window.location.href="/download.html" ;
-	}
+    static subshow(extra="") {
+        window.location.href="/download.html" ;
+    }
 }
 
 class DownloadCSV extends Download {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class DownloadJSON extends Download {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class DownloadPPTX extends Download {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 }
 
 class ErrorLog extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		objectLog.show() ;
-	}
+    static subshow(extra="") {
+        objectLog.show() ;
+    }
 }
 
 class FirstTime extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( db !== null ) {
-			objectPage.show("MainMenu");
-		}
-	}
+    static subshow(extra="") {
+        if ( db !== null ) {
+            objectPage.show("MainMenu");
+        }
+    }
 }
 
 class InvalidPatient extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		Patient.unselect();
-	}
+    static subshow(extra="") {
+        Patient.unselect();
+    }
 }
 
 class MissionInfo extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		Mission.select();
-		Patient.getRecordIdPix()
-		.then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
-		.catch( () => {
-			let doc = {
-				_id: missionId,
-				author: remoteCouch.username,
-				patient_id: missionId,
-				type: "mission",
-			};
-			objectPatientData = new MissionData( doc, structMission ) ;
-			})
-		.finally( () => Mission.link() );
-	}
+    static subshow(extra="") {
+        Mission.select();
+        Patient.getRecordIdPix()
+        .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
+        .catch( () => {
+            let doc = {
+                _id: missionId,
+                author: remoteCouch.username,
+                patient_id: missionId,
+                type: "mission",
+            };
+            objectPatientData = new MissionData( doc, structMission ) ;
+            })
+        .finally( () => Mission.link() );
+    }
 }
 
 class MissionList extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		Mission.select() ;
-		Mission.getRecordId()
-		.then( () => Note.getRecordsIdPix() )
-		.then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
-		.catch( ()=> objectPage.show( "MissionInfo" ) ) ;
-	}
+    static subshow(extra="") {
+        Mission.select() ;
+        Mission.getRecordId()
+        .then( () => Note.getRecordsIdPix() )
+        .then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
+        .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
+    }
 }
 
 class NoteListCategory extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			Note.getRecordsIdPix()
-			.then( notelist => objectNoteList = new NoteLister(notelist,extra) )
-			.catch( (err) => {
-				objectLog.err(err,`Notelist (${extra})`);
-				onjectPage.show( "InvalidPatient" );
-				});
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            Note.getRecordsIdPix()
+            .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
+            .catch( (err) => {
+                objectLog.err(err,`Notelist (${extra})`);
+                onjectPage.show( "InvalidPatient" );
+                });
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class NoteList extends NoteListCategory {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		super.subshow('Uncategorized');
-	}
+    static subshow(extra="") {
+        super.subshow('Uncategorized');
+    }
 }
 
 class NoteNew extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			// New note only
-			Note.unselect();
-			Note.create();
-		} else if ( patientId == missionId ) {
-			Note.unselect();
-			Note.create();
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            // New note only
+            Note.unselect();
+            Note.create();
+        } else if ( patientId == missionId ) {
+            Note.unselect();
+            Note.create();
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class OperationEdit extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( operationId ) {
-			db.get( operationId )
-			.then ( doc => {
-				Patient.select( doc.patient_id ); // async set title
-				return doc ;
-				})
-			.then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
-			.catch( (err) => {
-				objectLog.err(err);
-				objectPage.show( "InvalidPatient" );
-				});
-		} else if ( ! Patient.isSelected() ) {
-			objectPage.show( "AllPatients" );
-		} else {
-			objectPatientData = new OperationData(
-			{
-				_id: Operation.makeId(),
-				type: "operation",
-				patient_id: patientId,
-				author: remoteCouch.username,
-			} , structOperation );
-		}
-	}
+    static subshow(extra="") {
+        if ( operationId ) {
+            db.get( operationId )
+            .then ( doc => {
+                Patient.select( doc.patient_id ); // async set title
+                return doc ;
+                })
+            .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show( "InvalidPatient" );
+                });
+        } else if ( ! Patient.isSelected() ) {
+            objectPage.show( "AllPatients" );
+        } else {
+            objectPatientData = new OperationData(
+            {
+                _id: Operation.makeId(),
+                type: "operation",
+                patient_id: patientId,
+                author: remoteCouch.username,
+            } , structOperation );
+        }
+    }
 }
 
 class OperationList extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			objectTable = new OperationTable();
-			Operation.getRecordsIdDoc()
-			.then( (docs) => objectTable.fill(docs.rows ) )
-			.catch( (err) => objectLog.err(err) );
-		} else {
-			objectPage.show( "AllPatients" ) ;
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            objectTable = new OperationTable();
+            Operation.getRecordsIdDoc()
+            .then( (docs) => objectTable.fill(docs.rows ) )
+            .catch( (err) => objectLog.err(err) );
+        } else {
+            objectPage.show( "AllPatients" ) ;
+        }
+    }
 }
 
 class OperationNew extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			Operation.unselect();
-			objectPage.show( "OperationEdit" );
-		} else {
-			objectPage.show( "AllPatients" ) ;
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            Operation.unselect();
+            objectPage.show( "OperationEdit" );
+        } else {
+            objectPage.show( "AllPatients" ) ;
+        }
+    }
 }
 
 class PatientDemographics extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			Patient.getRecordIdPix()
-			.then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
-			.catch( (err) => {
-				objectLog.err(err);
-				objectPage.show( "InvalidPatient" );
-				});
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            Patient.getRecordIdPix()
+            .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show( "InvalidPatient" );
+                });
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class PatientMedical extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			let args;
-			Patient.getRecordId()
-			.then( (doc) => {
-				args = [doc,structMedical];
-				return Operation.getRecordsIdDoc();
-				})
-			.then( ( olist ) => {
-				olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-				objectPatientData = new PatientData( ...args );
-				})
-			.catch( (err) => {
-				objectLog.err(err);
-				objectPage.show( "InvalidPatient" );
-				});
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            let args;
+            Patient.getRecordId()
+            .then( (doc) => {
+                args = [doc,structMedical];
+                return Operation.getRecordsIdDoc();
+                })
+            .then( ( olist ) => {
+                olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
+                objectPatientData = new PatientData( ...args );
+                })
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show( "InvalidPatient" );
+                });
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class PatientNew extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		Patient.unselect();
-		objectPatientData = new NewPatientData(
-			{
-				author: remoteCouch.username,
-				type:"patient"
-			}, structNewPatient );
-	}
+    static subshow(extra="") {
+        Patient.unselect();
+        objectPatientData = new NewPatientData(
+            {
+                author: remoteCouch.username,
+                type:"patient"
+            }, structNewPatient );
+    }
 }
 
 class PatientPhoto extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		if ( Patient.isSelected() ) {
-			Patient.select( patientId );
-			let pdoc;
-			let onum ;
-			Patient.getRecordIdPix()
-			.then( (doc) => {
-				pdoc = doc;
-				return Operation.getRecordsIdDoc(); 
-				})
-			.then ( (doclist) => {
-				onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-				return Note.getRecordsIdDoc(); 
-				})
-			.then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
-			.catch( (err) => {
-				objectLog.err(err);
-				objectPage.show( "InvalidPatient" );
-				});
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        if ( Patient.isSelected() ) {
+            Patient.select( patientId );
+            let pdoc;
+            let onum ;
+            Patient.getRecordIdPix()
+            .then( (doc) => {
+                pdoc = doc;
+                return Operation.getRecordsIdDoc(); 
+                })
+            .then ( (doclist) => {
+                onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
+                return Note.getRecordsIdDoc(); 
+                })
+            .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show( "InvalidPatient" );
+                });
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class QuickPhoto extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		this.forget(); // don't return here!
-		if ( patientId ) { // patient or Mission!
-			Note.quickPhoto(this.extra);
-		} else {
-			objectPage.show( "AllPatients" );
-		}
-	}
+    static subshow(extra="") {
+        this.forget(); // don't return here!
+        if ( patientId ) { // patient or Mission!
+            Note.quickPhoto(this.extra);
+        } else {
+            objectPage.show( "AllPatients" );
+        }
+    }
 }
 
 class RemoteDatabaseInput extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
-	}
+    static subshow(extra="") {
+        objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
+    }
 }
 
 class SearchList extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		objectTable = new SearchTable() ;
-		objectSearch.setTable();
-	}
+    static subshow(extra="") {
+        objectTable = new SearchTable() ;
+        objectSearch.setTable();
+    }
 }
 
 class SendUser extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( User.db == null ) {
-			objectPage.show( "SuperUser" );
-		} else if ( User.id == null || !(User.id in User.password) ) {
-			objectPage.show( "UserList" );
-		} else {
-			User.db.get( User.id )
-			.then( doc => User.send( doc ) )
-			.catch( err => {
-				objectLog.err(err);
-				objectPage.show( "UserList" );
-				});
-		}
-	}
+    static subshow(extra="") {
+        if ( User.db == null ) {
+            objectPage.show( "SuperUser" );
+        } else if ( User.id == null || !(User.id in User.password) ) {
+            objectPage.show( "UserList" );
+        } else {
+            User.db.get( User.id )
+            .then( doc => User.send( doc ) )
+            .catch( err => {
+                objectLog.err(err);
+                objectPage.show( "UserList" );
+                });
+        }
+    }
 }
 
 class SuperUser extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
+    static { this.AddPage(); } // add to Page.pages struct
 
-	static subshow(extra="") {
-		remoteUser.address = remoteCouch.address;
-		objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
-	}
+    static subshow(extra="") {
+        remoteUser.address = remoteCouch.address;
+        objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
+    }
 }
 
 class UserEdit extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( User.db == null ) {
-			objectPage.show( "SuperUser" );
-		} else if ( User.id == null ) {
-			objectPage.show( "UserList" );
-		} else {
-			User.db.get( User.id )
-			.then( doc => {
-				doc.roles = doc.roles[0]; // unarray
-				objectPatientData = new EditUserData( doc, structEditUser );
-				})
-			.catch( err => {
-				objectLog.err(err);
-				User.unselect();
-				objectPage.show( "UserList" );
-				});
-		}
-	}
+    static subshow(extra="") {
+        if ( User.db == null ) {
+            objectPage.show( "SuperUser" );
+        } else if ( User.id == null ) {
+            objectPage.show( "UserList" );
+        } else {
+            User.db.get( User.id )
+            .then( doc => {
+                doc.roles = doc.roles[0]; // unarray
+                objectPatientData = new EditUserData( doc, structEditUser );
+                })
+            .catch( err => {
+                objectLog.err(err);
+                User.unselect();
+                objectPage.show( "UserList" );
+                });
+        }
+    }
 }
 
 class UserList extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( User.db == null ) {
-			objectPage.show( "SuperUser" );
-		} else {
-			objectTable = new UserTable();
-			User.getAllIdDoc()
-			.then( docs => objectTable.fill(docs.rows ) )
-			.catch( (err) => {
-				objectLog.err(err);
-				objectPage.show ( "SuperUser" );
-				});
-		}
-	}
+    static subshow(extra="") {
+        if ( User.db == null ) {
+            objectPage.show( "SuperUser" );
+        } else {
+            objectTable = new UserTable();
+            User.getAllIdDoc()
+            .then( docs => objectTable.fill(docs.rows ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show ( "SuperUser" );
+                });
+        }
+    }
 }
 
 class UserNew extends Pagelist {
-	static { this.AddPage(); } // add to Page.pages struct
-	static safeLanding  = false ; // don't return here
+    static { this.AddPage(); } // add to Page.pages struct
+    static safeLanding  = false ; // don't return here
 
-	static subshow(extra="") {
-		if ( User.db == null ) {
-			objectPage.show( "SuperUser" );
-		} else {
-			User.unselect();
-			objectPatientData = new NewUserData( {}, structNewUser );
-		}
-	}
+    static subshow(extra="") {
+        if ( User.db == null ) {
+            objectPage.show( "SuperUser" );
+        } else {
+            User.unselect();
+            objectPatientData = new NewUserData( {}, structNewUser );
+        }
+    }
 }
 
 function isAndroid() {
