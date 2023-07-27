@@ -934,40 +934,10 @@ class PPTX {
 
 class Page { // singleton class
     constructor() {
-        this.safeLanding = [
-            "Download",
-            "Settings",
-            "DBTable",
-            "RemoteDatabaseInput",
-            "SuperUser",
-//            "OperationNew",
-            "OperationEdit",
-//            "PatientNew",
-            "PatientPhoto",
-            "PatientDemographics",
-            "PatientMedical",
-            "DatabaseInfo",
-//            "InvalidPatient",
-//            "QuickPhoto",
-            ] ;
-        const path = Cookie.get( "displayState" );
-        if ( !Array.isArray(path) ) {
-            this.reset();
-        } else {
-            this.path = path;
-        }
-
-        const safeIndex =
-            this.safeLanding
-            .map(p=>this.path.indexOf(p))
-            .filter(i=>i>-1)
-            .reduce( (x,y)=>Math.min(x,y) , 1000 );
-        
-        if ( safeIndex == 1000 ) {
-            this.reset() ;
-        } else {
-            this.next( this.path[safeIndex] );
-        }
+        // get page history from cookies
+        // much simplified from app.js -- no checking of entries or history
+        // since any unrecognized entries send us back to app.js
+        const this.path = Cookie.get( "displayState" );
     }
     
     reset() {
@@ -977,14 +947,10 @@ class Page { // singleton class
     }
 
     back() {
+		// don't check entry -- 'app.js' will do that
         this.path.shift() ;
         if ( this.path.length == 0 ) {
             this.reset();
-        }
-        if ( this.safeLanding.includes(this.path[0]) ) {
-            Cookie.set ( "displayState", this.path ) ;
-        } else {
-            this.back() ;
         }
     }
 
@@ -1021,47 +987,22 @@ class Page { // singleton class
         window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
     } 
     
-    show( state = "AllPatients" ) { // main routine for displaying different "pages" by hiding different elements
-        Page.show_screen( "screen" );
+    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+        if ( db == null || remoteCouch.database=='' ) {
+			this.show("FirstTime");
+        }
+
         this.next(state) ; // update reversal list
 
-        document.querySelectorAll(".topButtons")
-            .forEach( (v) => v.style.display = "block" );
-
-        document.querySelectorAll(".pageOverlay")
-            .forEach( (v) => v.style.display = v.classList.contains(this.current()) ? "block" : "none" );
+        objectPatientData = null;
+        objectTable = null;
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
+        ImageImbedded.clearSrc() ;
 
-        if ( db == null || remoteCouch.database=='' ) {
-            // can't bypass this! test if database exists
-            if ( state != "FirstTime" ) {
-                this.next("RemoteDatabaseInput");
-            }
-        }
-        
-        console.log("Page: ",objectPage.current());
-
-        switch( objectPage.current() ) {  
-            case "Download":
-            case "DownloadCSV":
-            case "DownloadJSON":
-                Mission.select();
-                // Pure menus
-                break;
-                
-            case "DownloadPPTX":
-                Mission.select();
-                objectPPTX = new PPTX() ;
-                // Pure menus
-                break;
-                
-            default:
-                // jump back to main menu
-                window.location.href="/index.html" ;
-                break;
-        }
+        // send to page-specific code
+        (Pagelist.subclass(objectPage.current())).show(extra);
     }
 
     static show_screen( type ) { // switch between screen and print
@@ -1108,6 +1049,85 @@ class Page { // singleton class
     }
 }
 
+class Pagelist {
+    // list of subclasses = displayed "pages"
+    // Note that these classes are never "instantiated -- only used statically
+    static pages = {} ; // [pagetitle]->class -- pagetitle ise used by HTML to toggle display of "pages"
+    // prototype to add to pages
+    static AddPage() { Pagelist.pages[this.name]=this; }
+    // safeLanding -- safe to resume on this page
+    static safeLanding = true ; // default
+    
+    static show(extra="") {
+        // set up display
+        Page.show_screen( "screen" );
+        document.querySelector(".patientDataEdit").style.display="none"; 
+        document.querySelectorAll(".topButtons")
+            .forEach( tb => tb.style.display = "block" );
+
+        document.querySelectorAll(".pageOverlay")
+            .forEach( po => po.style.display = po.classList.contains(this.name) ? "block" : "none" );
+
+        this.subshow(extra);
+    }
+    
+    static subshow(extra="") {
+        // default version, derived classes may overrule
+        // Simple menu page
+    }
+    
+    static subclass(pagetitle) {
+        let cls = Pagelist.pages[pagetitle] ?? null ;
+        if ( cls ) {
+            return cls ;
+        } else {
+            // unrecognized entry -- will force return to main
+            return null ;
+        }
+    } 
+}
+
+class Download extends Pagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+    
+    static subshow(extra="") {
+		Mission.select();
+	}
+}
+
+class DownloadCSV extends Pagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+    
+    static subshow(extra="") {
+		Mission.select();
+	}
+}
+
+class DownloadJSON extends Pagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+    
+    static subshow(extra="") {
+		Mission.select();
+	}
+}
+
+class DownloadPPTX extends Pagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+    
+    static subshow(extra="") {
+		Mission.select();
+		objectPPTX = new PPTX() ;
+	}
+}
+
+class ErrorLog extends Pagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+
+    static subshow(extra="") {
+        objectLog.show() ;
+    }
+}
+
 class Log{
     constructor() {
         this.list = []
@@ -1122,6 +1142,10 @@ class Log{
         console.log( ttl, msg ) ;
         console.trace();
         console.groupEnd();
+        if ( objectPage.current() == "ErrorLog" ) {
+            // update
+            this.show()
+        }
     }
     
     clear() {
@@ -1143,6 +1167,7 @@ class Log{
         });
     }
 }
+
 
 objectLog = new Log() ;
 
