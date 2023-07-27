@@ -12,25 +12,25 @@
     <body>
         <header class="work_screen">
             <div id="headerbox">
-                <div id="headerboxlink"><img src="images/emission11-web-white.jpg"></div>
+                <div class="headerboxlink mainOnly"><img src="images/emission11-web-white.jpg"></div>
                 <div id="buttonheader">
                     <!-- top: MainMenu FirstTime -->
                     <div class="MainMenu FirstTime topButtons pageOverlay">
-                        <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
+                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                     </div>
                     <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
                     <div class= "Settings SuperUser Download DatabaseInfo SendUser topButtons pageOverlay">
-                        <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
+                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: Administration PatientPhoto -->
                     <div class= "Administration PatientPhoto topButtons pageOverlay">
-                        <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
+                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
                     </div>
                     <!-- top: QuickPhoto -->
                     <div class= "QuickPhoto topButtons pageOverlay">
-                        <div id="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
+                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show('back')">Return</button>
                     </div>
                     <!-- top: RemoteDatabaseInput -->
@@ -50,12 +50,12 @@
                     </div>
                     <!-- top: SearchList -->
                     <div class="SearchList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'MainMenu' )">Main Menu</button>
                     </div>
                     <!-- top: UserList -->
                     <div class="UserList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
                     </div>
@@ -141,7 +141,7 @@
                         <button type="button" class="divbutton savedata">Save Changes</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
-                        <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage"></button>
+                        <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage mainOnly"></button>
                     </div>
                 </div>
             </div>
@@ -433,14 +433,14 @@
             <div id="moreTop">
                 <button type="button" class="divbutton Search">Find &#x1F50E;&#xFE0E;</button>
                 <button type="button" class="divbutton Qmark">Help</button>
-                <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage"></button>
+                <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage mainOnly"></button>
             </div>
         </div>
         <!-- Footer -->
-        <footer class="work_screen">
+        <footer class="work_screen mainOnly">
             <div id="footerflex">
                 <div><label>User:<input type="text" readonly id="userstatus"></label></div>
-                <div><label>Sync status:<input type="text" readonly id="syncstatus" onclick="objectPage.show( 'ErrorLog' )"></label></div>
+                <div ><label>Sync status:<input type="text" readonly id="syncstatus" onclick="objectPage.show( 'ErrorLog' )"></label></div>
             </div>
         </footer>
         <!-- Card print -->

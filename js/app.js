@@ -11,6 +11,7 @@ var objectSearch = null;
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
+var embeddedState = false ;
 
 // globals cookie backed
 var objectPage ;
@@ -2627,7 +2628,19 @@ class Pagelist {
     } 
 }
 
-class Administration extends Pagelist {
+class xPagelist extends Pagelist {
+    // un-embeddable page
+    // e.g. cannot be used to search for a record
+    // exclude administrative pages
+    static show(extra="") {
+        if ( embeddedState ) {
+            objectPage.show("AllPatients");
+        }
+        super.show(extra);
+    }
+}
+
+class Administration extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
@@ -2635,7 +2648,11 @@ class MainMenu extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
-class Settings extends Pagelist {
+class Settings extends xPagelist {
+    static { this.AddPage(); } // add to Page.pages struct
+}
+
+class Test extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
@@ -2690,7 +2707,7 @@ class AllPatients extends Pagelist {
     }
 }
 
-class DatabaseInfo extends Pagelist {
+class DatabaseInfo extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2702,7 +2719,7 @@ class DatabaseInfo extends Pagelist {
     }
 }
 
-class DBTable extends Pagelist {
+class DBTable extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2715,7 +2732,7 @@ class DBTable extends Pagelist {
     }
 }
 
-class Download extends Pagelist {
+class Download extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2735,7 +2752,7 @@ class DownloadPPTX extends Download {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
-class ErrorLog extends Pagelist {
+class ErrorLog extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2762,7 +2779,7 @@ class InvalidPatient extends Pagelist {
     }
 }
 
-class MissionInfo extends Pagelist {
+class MissionInfo extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2782,7 +2799,7 @@ class MissionInfo extends Pagelist {
     }
 }
 
-class MissionList extends Pagelist {
+class MissionList extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -2819,7 +2836,7 @@ class NoteList extends NoteListCategory {
     }
 }
 
-class NoteNew extends Pagelist {
+class NoteNew extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -2882,7 +2899,7 @@ class OperationList extends Pagelist {
     }
 }
 
-class OperationNew extends Pagelist {
+class OperationNew extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -2938,7 +2955,7 @@ class PatientMedical extends Pagelist {
     }
 }
 
-class PatientNew extends Pagelist {
+class PatientNew extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -2980,12 +2997,12 @@ class PatientPhoto extends Pagelist {
     }
 }
 
-class QuickPhoto extends Pagelist {
+class QuickPhoto extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        this.forget(); // don't return here!
+        objectPage.forget(); // don't return here!
         if ( patientId ) { // patient or Mission!
             Note.quickPhoto(this.extra);
         } else {
@@ -2994,7 +3011,7 @@ class QuickPhoto extends Pagelist {
     }
 }
 
-class RemoteDatabaseInput extends Pagelist {
+class RemoteDatabaseInput extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -3011,7 +3028,7 @@ class SearchList extends Pagelist {
     }
 }
 
-class SendUser extends Pagelist {
+class SendUser extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -3031,7 +3048,7 @@ class SendUser extends Pagelist {
     }
 }
 
-class SuperUser extends Pagelist {
+class SuperUser extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
@@ -3040,7 +3057,7 @@ class SuperUser extends Pagelist {
     }
 }
 
-class UserEdit extends Pagelist {
+class UserEdit extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -3064,7 +3081,7 @@ class UserEdit extends Pagelist {
     }
 }
 
-class UserList extends Pagelist {
+class UserList extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -3083,7 +3100,7 @@ class UserList extends Pagelist {
     }
 }
 
-class UserNew extends Pagelist {
+class UserNew extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
 
@@ -3776,6 +3793,16 @@ function cookies_n_query() {
     }
 }
 
+function setEmbedded(focus="patient") {
+    // document.querySelector("body").style.transform="scale(0.7)";
+    embeddedState = true ;
+    document.querySelectorAll(".mainOnly")
+    .forEach( (v)=> v.style.display="none" ) ;
+    document.querySelectorAll(".mainOnly")
+    .forEach( (v)=> console.log(v) ) ;
+    objectPage.show( objectPage.show("AllPatients") );
+}
+
 // Application starting point
 window.onload = () => {
     // Initial splash screen
@@ -3802,7 +3829,8 @@ window.onload = () => {
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
-        document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
+        document.querySelectorAll(".headerboxlink")
+        .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
         // Set up text search
         objectSearch = new Search();

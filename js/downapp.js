@@ -1268,8 +1268,8 @@ window.onload = () => {
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
-        document.getElementById("headerboxlink").addEventListener("click",()=>objectPage.show("MainMenu"));
-
+        document.querySelectorAll(".headerboxlink")
+        .forEach(q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
         // start sync with remote database
         objectRemote.foreverSync();
