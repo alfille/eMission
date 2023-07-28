@@ -1036,12 +1036,6 @@ class Page { // singleton class
             s.addEventListener("click",()=>objectPage.show('SearchList'));
             });
 
-        // set Quick Photo buttons
-        document.querySelectorAll(".Qphoto").forEach( q => {
-            q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
-            });
-
         // remove redundant mission buttons
         [...document.querySelectorAll(".topButtons")]
         .filter(d => d.querySelector(".missionLogo"))

@@ -1858,24 +1858,6 @@ class Note { // convenience class
         };
     }
 
-    static quickPhoto() {
-        let inp = document.getElementById("QuickPhotoContent");
-        cloneClass( ".imagetemplate_quick", inp );
-        let doc = Note.template();
-        let img = new ImageQuick( inp, doc );
-        function handle() {
-            img.handle();
-            img.save(doc);
-            db.put(doc)
-            .then( () => Note.getRecordsId() ) // to try to prime the list
-            .catch( err => objectLog.err(err) )
-            .finally( objectPage.show( null ) );
-        }
-        img.display();
-        img.addListen(handle);
-        img.getImage();
-    }
-
 }
 
 class Operation { // convenience class
@@ -2565,12 +2547,6 @@ class Page { // singleton class
             s.addEventListener("click",()=>objectPage.show('SearchList'));
             });
 
-        // set Quick Photo buttons
-        document.querySelectorAll(".Qphoto").forEach( q => {
-            q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
-            });
-
         // set edit details for PatientData edit pages -- only for "top" portion
         document.querySelectorAll(".edit_data").forEach( e => {
             e.title = "Unlock record to allow changes" ;
@@ -2991,20 +2967,6 @@ class PatientPhoto extends Pagelist {
                 objectLog.err(err);
                 objectPage.show( "InvalidPatient" );
                 });
-        } else {
-            objectPage.show( "AllPatients" );
-        }
-    }
-}
-
-class QuickPhoto extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        objectPage.forget(); // don't return here!
-        if ( patientId ) { // patient or Mission!
-            Note.quickPhoto(this.extra);
         } else {
             objectPage.show( "AllPatients" );
         }
