@@ -937,7 +937,7 @@ class Page { // singleton class
         // get page history from cookies
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
-        const this.path = Cookie.get( "displayState" );
+        this.path = Cookie.get( "displayState" );
     }
     
     reset() {
@@ -947,7 +947,7 @@ class Page { // singleton class
     }
 
     back() {
-		// don't check entry -- 'app.js' will do that
+        // don't check entry -- 'app.js' will do that
         this.path.shift() ;
         if ( this.path.length == 0 ) {
             this.reset();
@@ -989,20 +989,22 @@ class Page { // singleton class
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
-			this.show("FirstTime");
+            this.show("FirstTime");
         }
 
         this.next(state) ; // update reversal list
-
-        objectPatientData = null;
-        objectTable = null;
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
         ImageImbedded.clearSrc() ;
 
         // send to page-specific code
-        (Pagelist.subclass(objectPage.current())).show(extra);
+        const page_class = Pagelist.subclass(objectPage.current()) ;
+        if ( page_class ) {
+            page_class.show(extra) ;
+        } else {
+            window.location.href="/index.html" ;
+        }
     }
 
     static show_screen( type ) { // switch between screen and print
@@ -1066,7 +1068,7 @@ class Pagelist {
     }
     
     static subshow(extra="") {
-        // default version, derived classes may overrule
+        // default version, linkderived classes may overrule
         // Simple menu page
     }
     
@@ -1085,33 +1087,33 @@ class Download extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
     
     static subshow(extra="") {
-		Mission.select();
-	}
+        Mission.select();
+    }
 }
 
 class DownloadCSV extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
     
     static subshow(extra="") {
-		Mission.select();
-	}
+        Mission.select();
+    }
 }
 
 class DownloadJSON extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
     
     static subshow(extra="") {
-		Mission.select();
-	}
+        Mission.select();
+    }
 }
 
 class DownloadPPTX extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
     
     static subshow(extra="") {
-		Mission.select();
-		objectPPTX = new PPTX() ;
-	}
+        Mission.select();
+        objectPPTX = new PPTX() ;
+    }
 }
 
 class ErrorLog extends Pagelist {

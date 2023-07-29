@@ -2311,7 +2311,7 @@ class Remote { // convenience class
     status( state, msg ) {
         switch (state) {
             case "disconnect":
-                document.body.style.background="#7071d3"; // grey
+                document.body.style.background="#7071d3"; // Orange
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }

@@ -43,11 +43,6 @@
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectTable.editpage()" id="switchdatabase" title="Switch to another database">Change Mission</button>
                     </div>
-                    <!-- top: SearchList -->
-                    <div class="SearchList topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'MainMenu' )">Main Menu</button>
-                    </div>
                     <!-- top: UserList -->
                     <div class="UserList topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
@@ -212,13 +207,6 @@
                 Choose a medical mission to use:
                 <div id="DBTableContent" >
                     <table id="DBTable"></table>
-                </div>
-            </div>
-            <!-- body: SearchList -->
-            <div class="SearchList pageOverlay">
-                <div id="searchbar"><input type="search" id="searchtext" autofocus="true" value="" onsearch="objectSearch.toTable()"><button type="button" class="search" onclick="objectSearch.toTable()">Search</button></div>
-                <div id="SearchListContent" >
-                    <table id="SearchList"></table>
                 </div>
             </div>
             <!-- body: UserList -->
@@ -422,7 +410,6 @@
             </span>
             <!-- more top buttons -->
             <div id="moreTop">
-                <button type="button" class="divbutton Search">Find &#x1F50E;&#xFE0E;</button>
                 <button type="button" class="divbutton Qmark">Help</button>
                 <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage mainOnly"></button>
             </div>
@@ -489,8 +476,7 @@
         <!-- scripts -->
         <!-- pouchdb --> <script src="js/pouchdb-8.0.1.min.js"></script>
         <!-- qr --> <script src="js/qrenc-4.0.0.min.js"></script>
-        <!-- load search --> <script src="js/elasticlunr.min.js"></script>
         <!-- new data-time --> <script src="js/flatpickr.min.js"></script>
-        <!-- application code --> <script src="js/app.js"></script>
+        <!-- application code --> <script src="js/adminapp.js"></script>
     </body>
 </html>

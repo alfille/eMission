@@ -7,7 +7,6 @@ var objectPatientData;
 var objectNoteList={};
     objectNoteList.category = 'Uncategorized' ;
 var objectTable = null;
-var objectSearch = null;
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
@@ -479,97 +478,6 @@ function createQueries() {
             });
         }))
     .catch( (err) => objectLog.err(err) );
-}
-
-class Search { // singleton class
-    constructor() {
-        this.index={};
-        this.fieldlist={
-            note: ["text","title",],
-            operation: ["Procedure","Complaint","Surgeon","Equipment"],
-            patient: ["Dx","LastName","FirstName","email","address","contact","Allergies","Meds",],
-            mission: ["Mission","Organization","Link","Location","LocalContact",],
-        };
-        this.types = Object.keys(this.fieldlist);
-        this.types.forEach( ty => this.makeIndex(ty) ) ;
-        this.result=[];
-        this.select_id = null ;
-    }
-
-    makeIndex(type) {
-        let fl = this.fieldlist[type] ;
-        this.index[type] = elasticlunr( function() {
-            this.setRef("_id");
-            fl.forEach( f => this.addField(f) ) ;
-        }) ;
-    }
-
-    addDoc( doc ) {
-        if ( doc?.type in this.fieldlist ) {
-            this.index[doc.type].addDoc(
-                this.fieldlist[doc.type]
-                .concat("_id")
-                .reduce( (o,k) => {o[k]=doc[k]??"";return o;}, {})
-                );
-        }
-    }
-
-    removeDocById( doc_id ) {
-        // we don't have full doc. Could figure type from ID, but easier (and more general) to remove from all.
-        this.types.forEach( ty => this.index[ty].removeDocByRef( doc_id ) );
-    }
-
-    fill() {
-        // adds docs to index
-        return db.allDocs( { include_docs: true, } )
-        .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
-    }
-
-    search( text="" ) {
-        return [].concat( ... this.types.map(ty => this.index[ty].search(text)) );
-    }
-
-    resetTable () {
-        if ( this.result.length > 0 ) {
-            this.reselect_id = null ;
-            this.result = [];
-            this.setTable();
-        }
-    } 
-
-    select(id) {
-        this.select_id = id;
-    }
-
-    toTable() {
-        let result = [] ;
-        let value = document.getElementById("searchtext").value;
-
-        if ( value.length == 0 ) {
-            return this.resetTable();
-        }
-        
-        db.allDocs( { // get docs from search
-            include_docs: true,
-            keys: this.search(value).map( s => s.ref ),
-        })
-        .then( docs => { // add _id, Text, Type fields to result
-            docs.rows.forEach( (r,i)=> result[i]=({_id:r.id,Type:r.doc.type,Text:r.doc[this.fieldlist[r.doc.type][0]]}) );
-            return db.query("Doc2Pid", { keys: docs.rows.map( r=>r.id), } );
-            })
-        .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} )) // associated patient Id for each
-        .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value[0] )) // associate patient name
-        .then( () => this.result = result.map( r=>({doc:r}))) // encode as list of doc objects
-        .then( ()=>this.setTable()) // fill the table
-        .catch(err=> {
-            objectLog.err(err);
-            this.resetTable();
-            });
-    }
-
-    setTable() {
-        objectTable.fill(this.result);
-    }
 }
 
 class ImageImbedded {
@@ -2293,19 +2201,19 @@ class Remote { // convenience class
     status( state, msg ) {
         switch (state) {
             case "disconnect":
-                document.body.style.background="#7071d3"; // grey
+                document.body.style.background="#8ed191"; // grey
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }
                 break ;
             case "problem":
-                document.body.style.background="#d72e18"; // grey
+                document.body.style.background="#d72e18"; // orange
                 objectLog.err(msg,"Network status");
                 this.problem = true ;
                 break ;
             case "good":
             default:
-                document.body.style.background="#172bae"; // heppy blue
+                document.body.style.background="#19a720"; // heppy green
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }
@@ -2513,7 +2421,12 @@ class Page { // singleton class
         ImageImbedded.clearSrc() ;
 
         // send to page-specific code
-        (Pagelist.subclass(objectPage.current())).show(extra);
+        const page_class = Pagelist.subclass(objectPage.current()) ;
+        if ( page_class ) {
+            page_class.show(extra) ;
+        } else {
+            window.location.href="/index.html" ;
+        }
     }
     
     static show_screen( type ) { // switch between screen and print
@@ -2539,12 +2452,6 @@ class Page { // singleton class
         document.querySelectorAll(".Qmark").forEach( h => {
             h.title = "Open explanation in another tab" ;
             h.addEventListener("click",()=>objectPage.link());
-            });
-
-        // set Search buttons
-        document.querySelectorAll(".Search").forEach( s => {
-            s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>objectPage.show('SearchList'));
             });
 
         // set edit details for PatientData edit pages -- only for "top" portion
@@ -2981,15 +2888,6 @@ class RemoteDatabaseInput extends xPagelist {
     }
 }
 
-class SearchList extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        objectTable = new SearchTable() ;
-        objectSearch.setTable();
-    }
-}
-
 class SendUser extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
@@ -3408,67 +3306,6 @@ class UserTable extends SortTable {
     }
 }
 
-class SearchTable extends SortTable {
-    constructor() {
-        super( 
-        ["Name","Type","Text"], 
-        "SearchList"
-        );
-    }
-
-    selectId() {
-        return objectSearch.select_id;
-    }
-
-    selectFunc(id) {
-        objectSearch.select_id = id ;
-        objectTable.highlight();
-    }
-    
-    // for search -- go to a result of search
-    editpage() {
-        let id = objectSearch.select_id;
-        if ( id == null ) {
-            objectPage.show( null );
-        } else if ( id == missionId ) {
-            Mission.select();
-            objectPage.show( 'MissionInfo' ) ;
-        } else {
-            db.get( id )
-            .then( doc => {
-                switch (doc.type) {
-                    case 'patient':
-                        Patient.select( id );
-                        objectPage.show( 'PatientPhoto' ) ;
-                        break ;
-                    case 'operation':
-                        Patient.select( doc.patient_id );
-                        Operation.select( id );
-                        objectPage.show( 'OperationEdit' );
-                        break ;
-                    case 'note':
-                        if ( doc.patientId == missionId ) {
-                            Mission.select();
-                        } else {
-                            Patient.select( doc.patient_id );
-                        }
-                        Note.select( id );
-                        objectPage.show( 'NoteList' );
-                        break ;
-
-                    default:
-                        objectPage.show( null );
-                        break ;
-                    }
-            })
-            .catch( err => {
-                objectLog.err(err);
-                objectPage.show(null);
-                });
-        }
-    }
-}
-
 function cloneClass( fromClass, target ) {
     let c = document.getElementById("templates").querySelector(fromClass);
     target.innerHTML = "";
@@ -3793,43 +3630,6 @@ window.onload = () => {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.querySelectorAll(".headerboxlink")
         .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
-
-        // Set up text search
-        objectSearch = new Search();
-        objectSearch.fill()
-        .then ( () =>
-            // now start listening for any changes to the database
-            db.changes({ since: 'now', live: true, include_docs: true, })
-            .on('change', (change) => {
-                // update search index
-                if ( change?.deleted ) {
-                    objectSearch.removeDocById(change.id);
-                } else {
-                    objectSearch.addDoc(change.doc);
-                }
-                // update screen display
-                switch ( change?.doc?.type ) {
-                    case "patient":
-                        if ( objectPage.test("AllPatients") ) {
-                            objectPage.show("AllPatients");
-                        }
-                        break;
-                    case "note":
-                        if ( objectPage.test("NoteList") && change.doc?.patient_id==patientId ) {
-                            objectPage.show("NoteList");
-                        } else if ( objectPage.test("MissionList") && change.doc?.patient_id==missionId ) {
-                            objectPage.show("MissionList");
-                        }
-                        break;
-                    case "operation":
-                        if ( objectPage.test("OperationList") && change.doc?.patient_id==patientId ) {
-                            objectPage.show("OperationList");
-                        }
-                        break;
-                }
-                })
-            )
-        .catch( err => objectLog.err(err,"Initial search database") );
 
         // start sync with remote database
         objectRemote.foreverSync();
