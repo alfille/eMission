@@ -2642,6 +2642,10 @@ class xPagelist extends Pagelist {
 
 class Administration extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
+
+    static subshow(extra="") {
+        window.location.href="/admin.html" ;
+    }
 }
 
 class MainMenu extends Pagelist {
