@@ -378,108 +378,6 @@ const structMission = [
     },
 ];
 
-// Create pouchdb indexes.
-// Used for links between records and getting list of choices
-// change version number to force a new version
-function createQueries() {
-    let ddoclist = [
-    {
-        _id: "_design/bySurgeon" ,
-        version: 2,
-        views: {
-            bySurgeon: {
-                map: function( doc ) {
-                    if ( doc.type=="operation" ) {
-                        emit( doc.Surgeon );
-                    }
-                }.toString(),
-                reduce: '_count',
-            },
-        },
-    },
-    {
-        _id: "_design/byEquipment" ,
-        version: 2,
-        views: {
-            byEquipment: {
-                map: function( doc ) {
-                    if ( doc.type=="operation" ) {
-                        emit( doc.Equipment );
-                    }
-                }.toString(),
-                reduce: '_count',
-            },
-        },
-    },
-    { 
-        _id: "_design/byProcedure" ,
-        version: 2,
-        views: {
-            byProcedure: {
-                map: function( doc ) {
-                    if ( doc.type=="operation" ) {
-                        emit( doc.Procedure );
-                    }
-                }.toString(),
-                reduce: '_count',
-            },
-        },
-    }, 
-    {
-        _id: "_design/Doc2Pid" ,
-        version: 0,
-        views: {
-            Doc2Pid: {
-                map: function( doc ) {
-                    if ( doc.type=="patient" || doc.type=="mission" ) {
-                        emit( doc._id,doc._id );
-                    } else {
-                        emit( doc._id,doc.patient_id );
-                    }
-                }.toString(),
-            },
-        },
-    }, 
-    {
-        _id: "_design/Pid2Name" ,
-        version: 2,
-        views: {
-            Pid2Name: {
-                map: function( doc ) {
-                    if ( doc.type=="patient" ) {
-                        emit( doc._id, [
-                            `${doc.FirstName} ${doc.LastName}`,
-                            `Patient: <B>${doc.FirstName} ${doc.LastName}</B> DOB: <B>${doc.DOB}</B>`
-                            ]);
-                    } else if ( doc.type=="mission" ) {
-                        emit( doc._id, [
-                            `${doc.Organization??""} ${doc.Name??doc._id}`,
-                            `Mission: <B>${doc.Organization??""}: ${doc.Name??""}</B> to <B>${doc.Location??"?"}</B> on <B>${[doc.StartDate,doc.EndDate].join("-")}</B>`
-                            ]);
-                    }
-                }.toString(),
-            },
-        },
-    }, 
-    ];
-    Promise.all( ddoclist.map( (ddoc) => {
-        db.get( ddoc._id )
-        .then( doc => {
-            if ( ddoc.version !== doc.version ) {
-                ddoc._rev = doc._rev;
-                return db.put( ddoc );
-            } else {
-                return Promise.resolve(true);
-            }
-            })
-        .catch( () => {
-            // assume because this is first time and cannot "get"
-            return db.put( ddoc );
-            });
-        }))
-    .catch( (err) => objectLog.err(err) );
-}
-
 class ImageImbedded {
     static srcList = [] ;
     
@@ -3636,11 +3534,6 @@ window.onload = () => {
 
         // set link for mission
         Mission.link();
-
-        // Secondary indexes
-        createQueries();
-        db.viewCleanup()
-        .catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;
