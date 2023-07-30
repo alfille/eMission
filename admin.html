@@ -14,17 +14,13 @@
             <div id="headerbox">
                 <div class="headerboxlink mainOnly"><img src="images/emission11-web-white.jpg"></div>
                 <div id="buttonheader">
-                    <!-- top: MainMenu FirstTime -->
-                    <div class="MainMenu FirstTime topButtons pageOverlay">
-                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                    </div>
-                    <!-- top: Settings SuperUser Download DatabaseInfo SendUser -->
-                    <div class= "Settings SuperUser Download DatabaseInfo SendUser topButtons pageOverlay">
+                    <!-- top: SuperUser DatabaseInfo SendUser -->
+                    <div class= "SuperUser DatabaseInfo SendUser topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
-                    <!-- top: Administration PatientPhoto -->
-                    <div class= "Administration PatientPhoto topButtons pageOverlay">
+                    <!-- top: Administration -->
+                    <div class= "Administration topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
                     </div>
@@ -32,11 +28,6 @@
                     <div class="RemoteDatabaseInput topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
-                    </div>
-                    <!-- top: AllPatients -->
-                    <div class="AllPatients topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )">Return</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientNew' )" title="Create a new patient entry">Add Patient</button>
                     </div>
                     <!-- top: DBTable -->
                     <div class="DBTable topButtons pageOverlay">
@@ -48,20 +39,6 @@
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
-                    </div>
-                    <!-- top: AllOperations -->
-                    <div class="AllOperations topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
-                    <!-- top: OperationList -->
-                    <div class="OperationList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'OperationNew' )" title="New operation creation for this patient">Add Operation</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
-                    <!-- top: PatientNew -->
-                    <div class="PatientData PatientNew topButtons pageOverlay">
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Abandon this task">Cancel</button>
                     </div>
                     <!-- top: SuperUser -->
                     <div class="PatientData SuperUser topButtons pageOverlay">
@@ -79,51 +56,10 @@
                         <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
-                    <!-- top: MissionInfo -->
-                    <div class="PatientData MissionInfo topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList')">Mission Notes</button>
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
-                    </div>
-                    <!-- top: PatientDemographics PatientMedical -->
-                    <div class="PatientData PatientDemographics PatientMedical topButtons pageOverlay">
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
-                    </div>
-                    <!-- top: OperationEdit -->
-                    <div class="PatientData OperationEdit topButtons pageOverlay">
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton delete" onclick="Operation.del()">Delete Operation</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
-                    <!-- top: InvalidPatient -->
-                    <div class="InvalidPatient topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'AllPatients' )">Return</button>
-                    </div>
                     <!-- top: ErrorLog -->
                     <div class="ErrorLog topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                         <button type="button" class="divbutton delete" onclick="objectLog.clear()">Erase Log</button>
-                    </div>
-                    <!-- top: NoteList -->
-                    <div class="NoteList topButtons pageOverlay">
-                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
-                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
-                    <!-- top: NoteListCategory -->
-                    <div class="NoteListCategory topButtons pageOverlay">
-                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
-                        <button class="libutton divbutton" type="button" onclick="objectPage.show('NoteList')">All Notes</button>
-                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
-                    <!-- top: MissionList -->
-                    <div class="MissionList topButtons pageOverlay">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo')">Mission Info</button>
-                        <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-                        <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247;</button>
-                        <button class="returnfromnote libutton divbutton return" type="button" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: EditMode (for any of the PatientData derivatives -->
                     <div class="patientDataEdit pageOverlay">
@@ -139,50 +75,6 @@
             </div>
         </header>
         <div id="emissionbody" class="work_screen">
-            <!-- body: MainMenu -->
-            <div class="MainMenu pageOverlay">
-                <div id="MainMenuContent" class="buttonmenu" >
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">This Mission</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Settings' )">Additional Choices</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DBTable' )">Switch Mission Database</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <a href="https://emissionsystem.org/README.md" target="_blank">Instructions</a>
-                </div>
-            </div>
-            <!-- body: FirstTime -->
-            <div class="FirstTime pageOverlay">
-                <div id="FirstTimeContent" class="buttonmenu">
-                    <h2>
-                        Welcome to eMission Medical Mission Database
-                    </h2>
-                    <p>
-                        It looks like this is your first time using the software on this device. Please choose an option:
-                    </p>
-                    <a href="https://emissionsystem.org/README.md" target="_blank">eMission Instructions</a>
-                    <a href="https://emissionsystem.org/?address=https%3A%2F%2Femissionsystem.org%3A6984&database=testdb&password=TheShire&username=Hobbit">Try it out in a fantasy database</a>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Manually enter your credentials</button>
-                    <p><i>
-                        Note that if you are part of a medical mission, your leader will usually send you a direct link or  QR code to access the database automatically.
-                    </i></p>
-                </div>
-            </div>
-            <!-- body: Settings -->
-            <div class="Settings pageOverlay">
-                <div id="SettingsContent" class="buttonmenu">
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">Mission Info</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Administration' )">Privileged operations</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Remote Database Setup</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton delete" onclick="clearLocal()">Erase local data</button>
-                </div>
-            </div>
             <!-- body: Administration -->
             <div class="Administration pageOverlay">
                 <div id="AdministrationContent" class="buttonmenu" >
@@ -191,15 +83,6 @@
                     <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="objectRemote.forceReplicate()">Force Replicate</button>
-                </div>
-            </div>
-            <!-- body: Download -->
-            <div class="Download pageOverlay">
-            </div>
-            <!-- body: AllPatients -->
-            <div class="AllPatients pageOverlay">
-                <div id="PatientListContent" >
-                    <table id="AllPatients"></table>
                 </div>
             </div>
             <!-- body: DBTable -->
@@ -215,57 +98,9 @@
                     <table id="UserList"></table>
                 </div>
             </div>
-            <!-- body: AllOperations OperationList -->
-            <div class="AllOperations OperationList pageOverlay">
-                <div id="OperationListContent" >
-                    <table id="OperationsList"></table>
-                </div>
-            </div>
-            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit MissionInfo -->
-            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit MissionInfo pageOverlay">
+            <!-- body: RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit -->
+            <div class="PatientData RemoteDatabaseInput DatabaseInfo SuperUser UserNew UserEdit pageOverlay">
                 <div id="PatientDataContent" ></div>
-            </div>
-            <!-- body: PatientPhoto -->
-            <div class="PatientPhoto pageOverlay">
-                <div id="PatientPhotoContent" >
-                    <div id="PatientPhotoContent2"></div>
-                </div>
-                <div id="PatientPhotoButtons1">
-                    <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientDemographics' )">Demographics</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMedical' )">Medical</button>
-                    </div>
-                    <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" id="nOps" onclick="objectPage.show( 'OperationList' )">Operations (0)</button>
-                    </div>
-                </div>
-                <div id="NoteChoiceButtons">
-                    <fieldset id="NoteFieldset">
-                        <legend>Notes</legend>
-                        <div id="PatientPhotoButtons0">
-                            <div class="PatientProcButtons">
-                                <button type="button" class="divbutton" id="nAll" onclick="objectPage.show( 'NoteList', 'All' )">All Notes (0)</button>
-                                <button class="create_note libutton divbutton" type="button" onclick="objectPage.show( 'NoteNew' )">New Note</button>
-                                <button class="createtheimage libutton divbutton Qphoto" type="button">&#128247; New Picture</button>
-                            </div>
-                            <div class="PatientProcButtons">
-                                <button class="libutton divbutton" id="nPreOp" type="button" onclick="objectPage.show( 'NoteListCategory', 'Pre Op' )">Pre Op (0)</button>
-                                <button class="libutton divbutton" id="nAnesthesia" type="button" onclick="objectPage.show( 'NoteListCategory', 'Anesthesia' )">Anesthesia (0)</button>
-                                <button class="libutton divbutton" id="nOpNote" type="button" onclick="objectPage.show( 'NoteListCategory', 'Op Note' )">Op Note (0)</button>
-                                <button class="libutton divbutton" id="nPostOp" type="button" onclick="objectPage.show( 'NoteListCategory', 'Post Op' )">Post Op (0)</button>
-                                <button class="libutton divbutton" id="nFollowup" type="button" onclick="objectPage.show( 'NoteListCategory', 'Followup' )">Followup (0)</button>
-                            </div>
-                        </div>
-                    </fieldset>
-                </div>
-                <div id="PatientPhotoButtons1">
-                    <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" onclick="Patient.printCard()">Print Card</button>
-                    </div>
-                    <div class="PatientProcButtons">
-                        <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
-                    </div>
-                </div>
             </div>
             <!-- body: SendUser -->
             <div class="SendUser pageOverlay">
@@ -276,22 +111,6 @@
                     <div><a target="_blank" rel=noopener noreferrer href="" id="SendUserMail">Mail link</a></div>
                     <div><button type="button" class="divbutton" id="SendUserPrint">Print for sending</button></div>
                 </div>
-            </div>
-            <!-- body: InvalidPatient -->
-            <div class="InvalidPatient pageOverlay">
-                <div id="InvalidPatientContent" >
-                    <H2>Not a valid patient ID</H2>
-                    <p>Possble causes include your data not yet synced, or changes since this patient was selected</p>
-                    <center><button type="button" class="divbutton" onclick="objectPage.show('AllPatients')">Ok</button></center>
-                </div>
-            </div>
-            <!-- body: NoteList NoteListCategory MissionList -->
-            <div class="NoteList NoteListCategory MissionList pageOverlay">
-                <div id="NoteListContent"></div>
-            </div>
-            <!-- body: NoteNew (quick note) -->
-            <div class="NoteNew pageOverlay">
-                <div id="NoteNewContent"></div>
             </div>
             <!-- body: ErrorLog -->
             <div class="ErrorLog pageOverlay">
@@ -421,35 +240,6 @@
                 <div ><label>Sync status:<input type="text" readonly id="syncstatus" onclick="objectPage.show( 'ErrorLog' )"></label></div>
             </div>
         </footer>
-        <!-- Card print -->
-        <div class="print_patient">
-            <div id="printCard">
-                <div class=rowCard>
-                    <div><img id="photoCard" alt="Patient photo"></div>
-                    <div><canvas class="qrCard" height=180 width=180></canvas></div>
-                </div>
-                <div class=rowCard>
-                    <div><table>
-                        <tr><td>Name</td><td></td></tr>
-                        <tr><td>Complaints</td><td></td></tr>
-                        <tr><td>Procedure</td><td></td></tr>
-                        <tr><td>Length</td><td></td></tr>
-                        <tr><td>Surgeon</td><td></td></tr>
-                        <tr><td>ASA</td><td></td></tr>
-                    </table></div>
-                </div>
-                <div class=rowCard>
-                    <div><table>
-                        <tr><td>Age</td><td></td></tr>
-                        <tr><td>Sex</td><td></td></tr>
-                        <tr><td>Weight</td><td></td></tr>
-                        <tr><td>Allergies</td><td></td></tr>
-                        <tr><td>Meds</td><td></td></tr>
-                        <tr><td>Equipment</td><td></td></tr>
-                    </table></div>
-                </div>
-            </div>
-        </div>
         <!-- User print -->
         <div class="print_user">
             <div id="printUser">

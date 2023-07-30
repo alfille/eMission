@@ -2656,10 +2656,6 @@ class Settings extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
-class Test extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
 class AllOperations extends Pagelist {
     static { this.AddPage(); } // add to Page.pages struct
 

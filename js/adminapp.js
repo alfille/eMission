@@ -18,7 +18,6 @@ var patientId;
 var noteId;
 var operationId;
 var remoteCouch;
-var NoPhoto = "style/NoPhoto.png";
 var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
@@ -57,156 +56,6 @@ var missionId = [
         ].join(";");
 
 // used to generate data entry pages "PatientData" type
-const structNewPatient = [
-    {
-        name: "LastName",
-        hint: "Late name of patient",
-        type: "text",
-    },
-    {
-        name: "FirstName",
-        hint: "First name of patient",
-        type: "text",
-    },
-    {
-        name: "DOB",
-        hint: "Date of birth (as close as possible)",
-        type: "date",
-    },
-];
-    
-const structDemographics = [
-    {
-        name: "Photo",
-        hint: "PatientPhoto",
-        type: "image",
-        none: NoPhoto,
-    },
-    {
-        name: "LastName",
-        hint: "Late name of patient",
-        type: "text",
-    },
-    {
-        name: "FirstName",
-        hint: "First name of patient",
-        type: "text",
-    },
-    {
-        name: "DOB",
-        hint: "Date of Birth",
-        type: "date",
-    },
-    {
-        name: "email",
-        hint: "email address",
-        type: "email",
-    },
-    {
-        name: "phone",
-        hint: "Contact phone number",
-        type: "tel",
-    },
-    {
-        name: "Address",
-        hint: "Patient home address",
-        type: "textarea",
-    },
-    {
-        name: "Contact",
-        hint: "Additional contact information (family member, local address,...)",
-        type: "textarea",
-    },
-];
-
-const structMedical = [
-    {
-        name: "Dx",
-        hint: "Diagnosis",
-        type: "textarea",
-    } , 
-    {
-        name: "Sex",
-        hint: "Patient gender",
-        type: "radio",
-        choices: ["?","M","F","X"],
-    },
-    {
-        name: "Weight",
-        hint: "Patient weight (kg)",
-        type: "number",
-    },
-    {
-        name: "Height",
-        hint: "Patient height (cm?)",
-        type: "number",
-    },
-    {
-        name: "ASA",
-        hint: "ASA classification",
-        type: "radio",
-        choices: ["I","II","III","IV"],
-    },
-    {
-        name: "Allergies",
-        hint: "Allergies and intolerances",
-        type: "textarea",
-    },
-    {
-        name: "Meds",
-        hint: "Medicine and antibiotics",
-        type: "textarea",
-    },
-];
-
-const structOperation = [
-    {
-        name: "Complaint",
-        hint: "Main complaint (patient's view of the problem)",
-        type: "textarea",
-    },
-    {
-        name: "Procedure",
-        hint: "Surgical operation / procedure",
-        type: "list",
-        query: "byProcedure"
-    },
-    {
-        name: "Surgeon",
-        hint: "Surgeon(s) involved",
-        type: "list",
-        query: "bySurgeon"
-    },
-    {
-        name: "Equipment",
-        hint: "Special equipment",
-        type: "list",
-        query: "byEquipment"
-    },
-    {
-        name: "Status",
-        hint: "Status of operation planning",
-        type: "radio",
-        choices: ["none","unscheduled", "scheduled", "finished", "postponed", "cancelled"],
-    },
-    {
-        name: "Date-Time",
-        hint: "Scheduled date",
-        type: "datetime",
-    },
-    {
-        name: "Duration",
-        hint: "Case length",
-        type: "length",
-    },
-    {
-        name: "Laterality",
-        hint: "Is there a sidedness to the case?",
-        type: "radio",
-        choices: ["?", "L", "R", "L+R", "N/A"],
-    },
-];
-
 const structDatabase = [
     {
         name: "username",
@@ -329,54 +178,6 @@ const structSuperUser = [
     } ,
 ];
 
-const structMission = [
-    {
-        name: "Logo",
-        hint: "logo for this organization/mission -- ~150x50 pixels",
-        type: "image",
-        none: DCTOHClogo,
-    } , 
-    {
-        name: "Organization",
-        hint: "Mission organization",
-        type: "text",
-    } , 
-    {
-        name: "Mission",
-        hint: "Mission Name",
-        type: "text",
-    },
-    {
-        name: "Link",
-        hint: "Web page of organization or mission",
-        type: "url",
-    } , 
-    {
-        name: "Location",
-        hint: "Where is the mission?",
-        type: "text",
-    },
-    {
-        name: "StartDate",
-        hint: "First day of mission",
-        type: "date",
-    },
-    {
-        name: "EndDate",
-        hint: "Last day of mission",
-        type: "date",
-    },
-    {
-        name: "LocalContact",
-        hint: "Who and how to contact local facility",
-        type: "textarea",
-    },
-    {
-        name: "Emergency",
-        hint: "Emergency contact",
-        type: "textarea",
-    },
-];
 
 class ImageImbedded {
     static srcList = [] ;
@@ -538,13 +339,6 @@ class ImageNote extends ImagePlus {
     
     leave() {
         this.buttonsdisabled( false );
-        if (patientId == missionId) {
-            objectPage.show( 'MissionList');
-        } else if ( objectNoteList.category == 'Uncategorized' ) {
-            objectPage.show( 'NoteList');
-        } else {
-            objectPage.show( 'NoteListCategory', objectNoteList.category);
-        }
     }
 
     store() {
@@ -1059,18 +853,6 @@ class PatientDataEditMode extends PatientDataRaw {
     }
 }
 
-class MissionData extends PatientData {
-    savePatientData() {
-        this.saveChanged( "MainMenu" );
-    }
-}    
-
-class OperationData extends PatientData {
-    savePatientData() {
-        this.saveChanged( "OperationList" );
-    }
-}
-
 class DatabaseInfoData extends PatientData {
     savePatientData() {}
 }
@@ -1083,30 +865,6 @@ class DatabaseData extends PatientDataEditMode {
         }
         objectPage.reset();
         location.reload(); // force reload
-    }
-}
-
-class NewPatientData extends PatientDataEditMode {
-    savePatientData() {
-        this.loadDocData();
-        // make sure the fields needed for a patient ID are present
-        if ( this.doc[0].FirstName == "" ) {
-            alert("Need a First Name");
-        } else if ( this.doc[0].LastName == "" ) {
-            alert("Need a Last Name");
-        } else if ( this.doc[0].DOB == "" ) {
-            alert("Enter some Date Of Birth");
-        } else {
-            // create new patient record
-            this.doc[0]._id = Patient.makeId( this.doc[0] );
-            this.doc[0].patient_id = this.doc[0]._id;
-            db.put( this.doc[0] )
-            .then( (response) => {
-                Patient.select(response.id);
-                objectPage.show( "PatientPhoto" );
-                })
-            .catch( (err) => objectLog.err(err) );
-        }
     }
 }
 
@@ -1310,10 +1068,6 @@ class Patient { // convenience class
             // Check patient existence
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
-                // highlight the list row
-                if ( objectPage.test('AllPatients') ) {
-                    objectTable.highlight();
-                }
                 document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
                 })
             .catch( (err) => {
@@ -1361,107 +1115,8 @@ class Patient { // convenience class
         Note.unselect();
         objectNoteList.category = 'Uncategorized' ;
         Operation.unselect();
-        if ( objectPage.test("AllPatients") ) {
-            let pt = document.getElementById("PatientTable");
-            if ( pt ) {
-                let rows = pt.rows;
-                for ( let i = 0; i < rows.length; ++i ) {
-                    rows[i].classList.remove('choice');
-                }
-            }
-        }
         document.getElementById( "titlebox" ).innerHTML = "";
     }
-
-    static menu( doc, notelist, onum=0 ) {
-        let d = document.getElementById("PatientPhotoContent2");
-        let inp = new ImageImbedded( d, doc, NoPhoto );
-
-        cloneClass( ".imagetemplate", d );
-        inp.display();
-        Patient.buttonSub( "nOps", onum );
-        NoteLister.categorize(notelist);
-        Patient.buttonSub( "nAll", notelist.rows.length );
-        Patient.buttonCalcSub( "nPreOp",      "Pre Op",     notelist ) ;
-        Patient.buttonCalcSub( "nAnesthesia", "Anesthesia", notelist ) ;
-        Patient.buttonCalcSub( "nOpNote",     "Op Note",    notelist ) ;
-        Patient.buttonCalcSub( "nPostOp",     "Post Op",    notelist ) ;
-        Patient.buttonCalcSub( "nFollowup",   "Followup",   notelist ) ;
-    }
-
-    static buttonCalcSub( id, cat, notelist ) {
-        Patient.buttonSub( id, notelist.rows.filter( r=>r.doc.category==cat ).length );
-    }
-
-    static buttonSub( id, num ) {
-        let d=document.getElementById(id);
-        d.innerText=d.innerText.replace( /\(.*\)/ , `(${num})` );
-    }
-    
-    static printCard() {
-        if ( patientId == null ) {
-            return objectPage.show( "InvalidPatient" );
-        }
-        let card = document.getElementById("printCard");
-        let t = card.getElementsByTagName("table");
-        Patient.getRecordIdPix()
-        .then( (doc) => {
-            Page.show_screen( "patient" );
-            let img = new ImageImbedded( card, doc, NoPhoto ) ;
-            img.display();
-            let link = new URL(window.location.href);
-            link.searchParams.append( "patientId", patientId );
-            new QR(
-                card.querySelector(".qrCard"),
-                link.href,
-                195,195,
-                4);
-            // patient parameters
-            t[0].rows[0].cells[1].innerText = ""; // name
-            t[0].rows[1].cells[1].innerText = doc.Complaint??"";
-            t[0].rows[2].cells[1].innerText = ""; // procedure
-            t[0].rows[3].cells[1].innerText = ""; // length
-            t[0].rows[4].cells[1].innerText = ""; // surgeon
-            t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
-
-            t[1].rows[0].cells[1].innerText = DateMath.age(doc.DOB); 
-            t[1].rows[1].cells[1].innerText = doc.Sex??""; 
-            t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
-            t[1].rows[3].cells[1].innerText = doc.Allergies??"";
-            t[1].rows[4].cells[1].innerText = doc.Meds??"";
-            t[1].rows[5].cells[1].innerText = ""; // equipment
-            return db.query("Pid2Name",{key:doc._id}) ;
-            }) 
-        .then( (doc) => {
-            t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
-            return Operation.getRecordsIdDoc();
-            })
-        .then( (docs) => {
-            let oleng = docs.rows.length;
-            switch(oleng) {
-                case 0:
-                case 1:
-                    oleng -= 1 ;
-                    break;
-                default:
-                    oleng -= 2;
-                    break;
-            }
-            if ( oleng >= 0 ) {
-                t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
-                t[0].rows[3].cells[1].innerText = docs.rows[oleng].doc.Duration + " hr"??"";
-                t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
-                t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
-            }
-            window.print();
-            objectPage.show("PatientPhoto");
-            })
-        .catch( (err) => {
-            objectLog.err(err);
-            objectPage.show( "InvalidPatient" );
-            });
-    }
-   
 }
 
 class Note { // convenience class
@@ -1585,67 +1240,12 @@ class Note { // convenience class
                 Patient.select( doc.patient_id);
             }
             Cookie.set( "noteId", nid );
-            if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
-                objectNoteList.select() ;
-            }
             })
         .catch( err => objectLog.err(err,"note select"));
     }
 
     static unselect() {
         Cookie.del ( "noteId" );
-        if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
-            document.getElementById("NoteListContent").querySelectorAll("li")
-            .forEach( l => l.classList.remove('choice') );
-        }
-    }
-
-    static create() { // new note, not class
-        let d = document.getElementById("NoteNewContent");
-        cloneClass ( ".newnotetemplate_edit", d );
-        let doc = Note.template();
-        let img = new ImageNote( d, doc );
-        img.edit();
-    }
-
-    static dropPictureinNote( target ) {
-            // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
-        target.addEventListener('dragover', e => {
-            e.stopPropagation();
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-            });
-
-        // Get file data on drop
-        target.addEventListener('drop', e => {
-            e.stopPropagation();
-            e.preventDefault();
-            // Array of files
-            Promise.all(
-                Array.from(e.dataTransfer.files)
-                .filter( file => file.type.match(/image.*/) )
-                .map( file => {
-                    let reader = new FileReader();
-                    reader.onload = e2 =>
-                        fetch(e2.target.result)
-                        .then( b64 => b64.blob() )
-                        .then( blb => {
-                            let doc = Note.template();
-                            new ImageDrop(blb).save(doc);
-                            return db.put(doc);
-                            });
-                    reader.readAsDataURL(file); // start reading the file data.
-                    }))
-                    .then( () => Note.getRecordsId() ) // refresh the list
-                    .catch( err => objectLog.err(err,"Photo drop") )
-                    .finally( () => {
-                        if (objectNoteList.category=='Uncategorized') {
-                            objectPage.show( "NoteList" );
-                        } else {
-                            objectPage.show( "NoteListCategory",objectNoteList.category );
-                        }
-                        });
-            });
     }
 
     static template(category=objectNoteList.category) {
@@ -1676,10 +1276,6 @@ class Operation { // convenience class
                 Patient.select( doc.patient_id);
             }
             Cookie.set ( "operationId", oid  );
-            // highlight the list row
-            if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
-                objectTable.highlight();
-            }
             })
         .catch( err => {
             objectLog.err(err,"operation select");
@@ -1690,15 +1286,6 @@ class Operation { // convenience class
     static unselect() {
         operationId = null;
         Cookie.del( "operationId" );
-        if ( objectPage.test("OperationList") ) {
-            let ot = document.getElementById("OperationsList");
-            if ( ot ) {
-                let rows = ot.rows;
-                for ( let i = 0; i < rows.length; ++i ) {
-                    rows[i].classList.remove('choice');
-                }
-            }
-        }
     }
 
     static makeId() {
@@ -1748,7 +1335,6 @@ class Operation { // convenience class
             .then( (doc) =>db.remove(doc) )
             .then( () => Operation.unselect() )
             .catch( (err) => objectLog.err(err) )
-            .finally( () => objectPage.show( "OperationList" ) );
         }
         return true;
     }    
@@ -2229,20 +1815,9 @@ class Cookie { //convenience class
 class Page { // singleton class
     constructor() {
         // get page history from cookies
-        const path = Cookie.get( "displayState" );
-        this.path=[];
-        if ( Array.isArray(path) ) {
-            // review pages to make sure "landable"            
-            for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
-                if ( this.path.includes(p) ) {
-                    break ;
-                } else {
-                    this.path.push(p);
-                }
-            }
-        }
-        // default last choice
-        this.path.push("MainMenu");
+        // much simplified from app.js -- no checking of entries or history
+        // since any unrecognized entries send us back to app.js
+        this.path = Cookie.get( "displayState" );
     }
     
     reset() {
@@ -2252,14 +1827,10 @@ class Page { // singleton class
     }
 
     back() {
+        // don't check entry -- 'app.js' will do that
         this.path.shift() ;
         if ( this.path.length == 0 ) {
             this.reset();
-        }
-        if ( Pagelist.subclass(this.path[0]).safeLanding ) {
-            Cookie.set ( "displayState", this.path ) ;
-        } else {
-            this.back() ;
         }
     }
 
@@ -2302,17 +1873,10 @@ class Page { // singleton class
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
-            // can't bypass this! test if database exists
-            if ( state != "FirstTime" ) {
-                this.next("RemoteDatabaseInput");
-                this.show("RemoteDatabaseInput");
-            }
+            this.show("FirstTime");
         }
 
         this.next(state) ; // update reversal list
-
-        objectPatientData = null;
-        objectTable = null;
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
@@ -2326,6 +1890,7 @@ class Page { // singleton class
             window.location.href="/index.html" ;
         }
     }
+
     
     static show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
@@ -2402,9 +1967,8 @@ class Pagelist {
         if ( cls ) {
             return cls ;
         } else {
-            // bad entry -- fix by making MainMenu the default
-            objectPage.next("MainMenu") ;
-            return MainMenu ;
+            // unrecognized entry -- will force return to main
+            return null ;
         }
     } 
 }
@@ -2423,69 +1987,6 @@ class xPagelist extends Pagelist {
 
 class Administration extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
-}
-
-class MainMenu extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class Settings extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class Test extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class AllOperations extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        Patient.unselect();
-        let olist;
-        Operation.getAllIdDocCurated()
-        .then( doclist => olist = doclist)
-        .then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
-        .then( nlist => {
-            const n2id = {} ;
-            // create an pid -> name dict
-            nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
-            // Assign names, filter out empties
-            olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
-            objectTable = new AllOperationTable();
-            // Default value
-            objectTable.fill(olist.filter(o=>o.doc.Name!==""));
-            })
-        .catch( err=>objectLog.err(err) );
-    }
-}
-
-class AllPatients extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        objectTable = new PatientTable();
-        let o2pid = {} ; // oplist
-        Operation.getAllIdDocCurated()
-        .then( oplist => {
-            oplist.forEach( r => o2pid[r.doc.patient_id] = ({
-                "Procedure": r.doc["Procedure"],
-                "Date-Time": Operation.dateFromDoc(r.doc),
-                "Surgeon": r.doc["Surgeon"],
-                }))
-            })
-        .then( _ => Patient.getAllIdDoc() )
-        .then( (docs) => {
-            docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
-            objectTable.fill(docs.rows );
-            if ( Patient.isSelected() ) {
-                Patient.select( patientId );
-            } else {
-                Patient.unselect();
-            }
-            })
-        .catch( (err) => objectLog.err(err) );
-    }
 }
 
 class DatabaseInfo extends xPagelist {
@@ -2513,268 +2014,11 @@ class DBTable extends xPagelist {
     }
 }
 
-class Download extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        window.location.href="/download.html" ;
-    }
-}
-
-class DownloadCSV extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class DownloadJSON extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class DownloadPPTX extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
 class ErrorLog extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 
     static subshow(extra="") {
         objectLog.show() ;
-    }
-}
-
-class FirstTime extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( db !== null ) {
-            objectPage.show("MainMenu");
-        }
-    }
-}
-
-class InvalidPatient extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        Patient.unselect();
-    }
-}
-
-class MissionInfo extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        Mission.select();
-        Patient.getRecordIdPix()
-        .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
-        .catch( () => {
-            let doc = {
-                _id: missionId,
-                author: remoteCouch.username,
-                patient_id: missionId,
-                type: "mission",
-            };
-            objectPatientData = new MissionData( doc, structMission ) ;
-            })
-        .finally( () => Mission.link() );
-    }
-}
-
-class MissionList extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        Mission.select() ;
-        Mission.getRecordId()
-        .then( () => Note.getRecordsIdPix() )
-        .then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
-        .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
-    }
-}
-
-class NoteListCategory extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            Note.getRecordsIdPix()
-            .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
-            .catch( (err) => {
-                objectLog.err(err,`Notelist (${extra})`);
-                onjectPage.show( "InvalidPatient" );
-                });
-        } else {
-            objectPage.show( "AllPatients" );
-        }
-    }
-}
-
-class NoteList extends NoteListCategory {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        super.subshow('Uncategorized');
-    }
-}
-
-class NoteNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            // New note only
-            Note.unselect();
-            Note.create();
-        } else if ( patientId == missionId ) {
-            Note.unselect();
-            Note.create();
-        } else {
-            objectPage.show( "AllPatients" );
-        }
-    }
-}
-
-class OperationEdit extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( operationId ) {
-            db.get( operationId )
-            .then ( doc => {
-                Patient.select( doc.patient_id ); // async set title
-                return doc ;
-                })
-            .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
-                });
-        } else if ( ! Patient.isSelected() ) {
-            objectPage.show( "AllPatients" );
-        } else {
-            objectPatientData = new OperationData(
-            {
-                _id: Operation.makeId(),
-                type: "operation",
-                patient_id: patientId,
-                author: remoteCouch.username,
-            } , structOperation );
-        }
-    }
-}
-
-class OperationList extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            objectTable = new OperationTable();
-            Operation.getRecordsIdDoc()
-            .then( (docs) => objectTable.fill(docs.rows ) )
-            .catch( (err) => objectLog.err(err) );
-        } else {
-            objectPage.show( "AllPatients" ) ;
-        }
-    }
-}
-
-class OperationNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            Operation.unselect();
-            objectPage.show( "OperationEdit" );
-        } else {
-            objectPage.show( "AllPatients" ) ;
-        }
-    }
-}
-
-class PatientDemographics extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            Patient.getRecordIdPix()
-            .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
-                });
-        } else {
-            objectPage.show( "AllPatients" );
-        }
-    }
-}
-
-class PatientMedical extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            let args;
-            Patient.getRecordId()
-            .then( (doc) => {
-                args = [doc,structMedical];
-                return Operation.getRecordsIdDoc();
-                })
-            .then( ( olist ) => {
-                olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-                objectPatientData = new PatientData( ...args );
-                })
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
-                });
-        } else {
-            objectPage.show( "AllPatients" );
-        }
-    }
-}
-
-class PatientNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        Patient.unselect();
-        objectPatientData = new NewPatientData(
-            {
-                author: remoteCouch.username,
-                type:"patient"
-            }, structNewPatient );
-    }
-}
-
-class PatientPhoto extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        if ( Patient.isSelected() ) {
-            Patient.select( patientId );
-            let pdoc;
-            let onum ;
-            Patient.getRecordIdPix()
-            .then( (doc) => {
-                pdoc = doc;
-                return Operation.getRecordsIdDoc(); 
-                })
-            .then ( (doclist) => {
-                onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-                return Note.getRecordsIdDoc(); 
-                })
-            .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
-                });
-        } else {
-            objectPage.show( "AllPatients" );
-        }
     }
 }
 
@@ -3135,54 +2379,6 @@ class DatabaseTable extends SortTable {
     }
 }
 
-class AllOperationTable extends SortTable {
-    constructor() {
-        super( 
-        [ "Date-Time","Name","Procedure","Surgeon" ], 
-        "OperationsList",
-        [
-            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
-        ]
-        );
-    }
-
-    selectId() {
-        return operationId;
-    }
-
-    selectFunc(id) {
-        Operation.select(id) ;
-    }
-
-    editpage() {
-        objectPage.show("OperationEdit");
-    }
-}
-
-class OperationTable extends SortTable {
-    constructor() {
-        super( 
-        [ "Date-Time","Procedure", "Surgeon" ], 
-        "OperationsList",
-        [
-            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
-        ]
-        );
-    }
-
-    selectId() {
-        return operationId;
-    }
-
-    selectFunc(id) {
-        Operation.select(id) ;
-    }
-
-    editpage() {
-        objectPage.show("OperationEdit");
-    }
-}
-
 class UserTable extends SortTable {
     constructor() {
         super(
@@ -3209,186 +2405,6 @@ function cloneClass( fromClass, target ) {
     target.innerHTML = "";
     c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
 }    
-
-class NoteLister {
-    constructor( notelist, category="Uncategorized" ) {
-        this.category = category;
-        if ( category == "" ) {
-            this.category = "Uncategorized" ;
-        }
-        NoteLister.categorize(notelist);
-
-        let parent = document.getElementById("NoteListContent") ;
-        parent.innerHTML = "" ;
-
-        // Filter or sort
-        if ( this.category !== 'Uncategorized' ) {
-            // category selected, must filter
-            notelist.rows = notelist.rows.filter( r=>r.doc.category == this.category ) ;
-        }
-
-        // Separate rows into groups by year (and "Undated")
-        this.year={};
-        notelist.rows
-        .forEach( r => {
-            let y = this.yearTitle(r);
-            if ( y in this.year ) {
-                this.year[y].rows.push(r);
-            } else {
-                this.year[y] = { open:false, rows:[r] } ;
-            }
-        });
-        this.yearKeys = Object.keys(this.year).sort() ;
-        
-        let fieldset = document.getElementById("templates").querySelector(".noteFieldset");
-        
-        // show notes
-        if ( notelist.rows.length == 0 ) {
-            parent.appendChild( document.querySelector(".emptynotelist").cloneNode(true) );
-        } else {
-            this.yearKeys.forEach( y => {
-                let fs = fieldset.cloneNode( true ) ;
-                fs.querySelector(".yearspan").innerText = y ;
-                fs.querySelector(".yearnumber").innerText = `(${this.year[y].rows.length})` ;
-                parent.appendChild(fs);
-                let ul = document.createElement('ul');
-                fs.appendChild(ul);
-                this.year[y].rows.forEach( note => {
-                    let li1 = this.liLabel(note);
-                    ul.appendChild( li1 );
-                    let li2 = this.liNote(note,li1);
-                    ul.appendChild( li2 );
-                    });
-                this.close(fs);
-                });
-        }
-
-        // Highlight (and open fieldset) selected note
-        // this includes recently edited or created
-        this.select() ;
-        
-        // if only one year open fieldset
-        if ( this.yearKeys.length == 1 ) {
-            this.open(parent.querySelector("fieldset"));
-        }
-        
-        
-        Note.dropPictureinNote( parent );        
-    }
-    
-    open( fs ) {
-        fs.querySelector("ul").style.display=""; // show
-        fs.querySelector(".triggerbutton").innerHTML="&#10134;";
-        fs.querySelector(".triggerbutton").onclick = () => this.close(fs) ;
-    }
-    
-    close( fs ) {
-        fs.querySelector("ul").style.display="none"; // show
-        fs.querySelector(".triggerbutton").innerHTML="&#10133;";
-        fs.querySelector(".triggerbutton").onclick = () => this.open(fs) ;
-    }
-    
-    select() {
-        // select noteId in list and highlight (if there)
-        document.getElementById("NoteListContent")
-        .querySelectorAll("fieldset")
-        .forEach( fs => fs.querySelectorAll("li")
-            .forEach(li=>{
-                if ( li.getAttribute("data-id") == noteId ) {
-                    li.classList.add('choice');
-                    this.open(fs);
-                    li.scrollIntoView();
-                } else {
-                    li.classList.remove('choice');
-                }
-                })
-            ) ;
-    }
-    
-    static categorize( notelist ) {
-        // place categories (if none exist)
-        notelist.rows.forEach(r=> r.doc.category = r.doc?.category ?? "Uncategorized" ); 
-        notelist.rows.forEach(r=> { if (r.doc.category=='') r.doc.category = "Uncategorized" ; } ); 
-    }
-
-    yearTitle(row) {
-        return Note.dateFromDoc(row.doc).substr(0,4);
-    }
-        
-    fsclick( target ) {
-        if ( this.yearKeys.length > 1 ) {
-            let ul = target.parentNode.parentNode.querySelector("ul");
-            if ( target.value === "show" ) {
-                // hide
-                target.innerHTML = "&#10133;";
-                ul.style.display = "none";
-                target.value = "hide";
-            } else {
-                // show
-                target.innerHTML = "&#10134;"; 
-                ul.style.display = "";
-                target.value = "show";
-            }
-        }
-    }
-    
-    liLabel( note ) {
-        let li = document.createElement("li");
-        li.setAttribute("data-id", note.id );
-
-        li.appendChild( document.getElementById("templates").querySelector(".notelabel").cloneNode(true) );
-
-        li.querySelector(".inly").appendChild( document.createTextNode( ` by ${this.noteAuthor(note)}` ));
-        li.querySelector(".flatpickr").value = flatpickr.formatDate(new Date(Note.dateFromDoc(note.doc)),"Y-m-d h:i K");
-        li.addEventListener( 'click', () => Note.select( note.id ) );
-
-        return li;
-    }
-
-    liNote( note, label ) {
-        let li = document.createElement("li");
-        li.setAttribute("data-id", note.id );
-        let img;
-        if ( noteId == note.id ) {
-            li.classList.add("choice");
-        }
-        if ( "doc" in note ) {
-            cloneClass( ".notetemplate", li );
-            img=new ImageNote(li,note.doc);
-            img.display();
-        }    
-        
-        let edit_note = () => {
-            flatpickr( label.querySelector(".flatpickr"),
-                {
-                    time_24hr: false,
-                    enableTime: true,
-                    noCalendar: false,
-                    dateFormat: "Y-m-d h:i K",
-                    onChange: (d) => note.doc.date=d[0].toISOString(),
-                });
-            Note.select( note.id );
-            cloneClass( ".notetemplate_edit", li );
-            img.edit();
-            } ;
-        li.addEventListener( 'click', () => Note.select( note.id ) );
-        ['dblclick','swiped-right','swiped-left'].forEach( ev =>
-            [li, label].forEach( targ => targ.addEventListener( ev, edit_note )));
-        label.querySelector(".edit_note").addEventListener( 'click', edit_note );
-
-        return li;
-    }
-
-    noteAuthor( doc ) {
-        let author = remoteCouch.username;
-        if ( doc  && doc.id ) {
-            if ( doc.doc && doc.doc.author ) {
-                author = doc.doc.author;
-            }
-        }
-        return author;
-    }
-}
 
 class Collation {
     constructor() {
@@ -3457,18 +2473,6 @@ function parseQuery() {
     }
     //location.search = "";
     return r;
-}
-
-function clearLocal() {
-    const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
-    if ( remove ) {
-        Cookie.del( "patientId" );
-        Cookie.del("remoteCouch");
-        Cookie.del("operationId");
-        Cookie.del( "noteId" );
-        db.destroy().finally( ()=>objectPage.reset() );
-    }
-    objectPage.show( "MainMenu" );
 }
 
 function cookies_n_query() {
