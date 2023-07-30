@@ -2707,16 +2707,8 @@ class AllPatients extends Pagelist {
     }
 }
 
-class DatabaseInfo extends xPagelist {
+class DatabaseInfo extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        db.info()
-        .then( doc => {
-            objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
-            })
-        .catch( err => objectLog.err(err) );
-    }
 }
 
 class DBTable extends xPagelist {
