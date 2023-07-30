@@ -1,10 +1,18 @@
 {
+  "author":"Paul H Alfille MD",
+  "background": 
+    {
+	  "service_worker": "sw.js",
+	  "type":"module"
+    }, 
   "background_color": "#1c6ef2",
   "description": "Medical mission simple database -- details, notes and pictures",
   "dir": "ltr",
   "display": "standalone",
   "name": "eMission",
   "orientation": "natural",
+  "offline_enabled":true,	
+  "permissions":["storage","cookies","unlimitedstorage"],
   "scope": "/",
   "short_name": "eMission",
   "start_url": "/index.html",
