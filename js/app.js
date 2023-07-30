@@ -232,38 +232,6 @@ const structDatabase = [
     },
 ];
 
-const structDatabaseInfo = [
-    {
-        name: "db_name",
-        alias: "Database name",
-        hint: "Name of underlying database",
-        type: "text",
-    },
-    {
-        name: "doc_count",
-        alias: "Document count",
-        hint: "Total number of undeleted documents",
-        type: "number",
-    },
-    {
-        name: "update_seq",
-        hint: "Sequence number",
-        type: "number",
-    },
-    {
-        name: "adapter",
-        alias: "Database adapter",
-        hint: "Actual database type used",
-        type: "text",
-    },
-    {
-        name: "auto_compaction",
-        alias: "Automatic compaction",
-        hint: "Database compaction done automaticslly?",
-        type: "text",
-    },
-];
-
 const structNewUser = [
     {
         name: "name",
@@ -1263,10 +1231,6 @@ class OperationData extends PatientData {
     savePatientData() {
         this.saveChanged( "OperationList" );
     }
-}
-
-class DatabaseInfoData extends PatientData {
-    savePatientData() {}
 }
 
 class DatabaseData extends PatientDataEditMode {
