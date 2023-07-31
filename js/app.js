@@ -2235,11 +2235,21 @@ class Remote { // convenience class
             }
         }
         
-        window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
-        window.addEventListener("online", _ => this.status( this.problem?"problem":"good", "--network present--" ) );
-        navigator.onLine ? 
-            this.status( "good", "--network present--" ) 
-            : this.status( "disconnect", "--network offline--" ) ;
+
+        // set up monitoring
+        window.addEventListener("offline", _ => this.not_present() );
+        window.addEventListener("online", _ => this.present() );
+
+        // initial status
+        navigator.onLine ? this.present() : this.not_present() ;
+    }
+    
+    present() {
+        this.status( "good", "--network present--" ) ;
+    }
+
+    not_present() {
+        this.status( "disconnect", "--network offline--" ) ;
     }
 
     // Initialise a sync process with the remote server
@@ -2258,6 +2268,7 @@ class Remote { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
+        console.log("SYNC PRESTART");
         this.syncHandler = db.sync( this.remoteDB ,
             {
                 live: true,
@@ -2270,6 +2281,7 @@ class Remote { // convenience class
             .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
             .on('complete', ()     => this.status( "good", "sync stopped" ))
             .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
+        console.log("SYNC POSTSTART");
     }
     
     status( state, msg ) {
@@ -2298,30 +2310,6 @@ class Remote { // convenience class
         this.lastStatus = state ;
     }
             
-    forceReplicate() {
-        // Never called first -- foreverSync should have already run at least once
-        if (this.syncHandler) {
-            this.syncHandler.on("complete",_ => this.replicateTo() );
-            this.replicateTo() ;
-            // sync currently "active"
-            this.syncHandler.cancel();
-        } else {
-            this.replicateTo() = null;
-        }
-    }
-
-    replicateTo() {
-        this.syncHandler = null ;
-        if (this.remoteDB) {
-            this.status("good","Attempting replication to remote database");
-            db.replicate.to( this.remoteDB )
-            .catch( err => this.status("problem",`Trouble replicating to remote: ${err.message}`))
-            .finally( () => this.foreverSync() );
-        } else {
-            this.status("problem","No remote database specified!");
-        }
-    }
-
     openRemoteDB( DBstruct ) {
         if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
@@ -2342,11 +2330,6 @@ class Remote { // convenience class
             User.db ? User.db.close() : Promise.resolve(true),
             security_db ? security_db.close() : Promise.resolve(true),
             ]);
-    }
-
-    // Fauxton link
-    link() {
-        window.open( `${remoteCouch.address}/_utils`, '_blank' );
     }
 
     SecureURLparse( url ) {

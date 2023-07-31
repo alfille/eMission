@@ -1708,30 +1708,6 @@ class Remote { // convenience class
         this.lastStatus = state ;
     }
             
-    forceReplicate() {
-        // Never called first -- foreverSync should have already run at least once
-        if (this.syncHandler) {
-            this.syncHandler.on("complete",_ => this.replicateTo() );
-            this.replicateTo() ;
-            // sync currently "active"
-            this.syncHandler.cancel();
-        } else {
-            this.replicateTo() = null;
-        }
-    }
-
-    replicateTo() {
-        this.syncHandler = null ;
-        if (this.remoteDB) {
-            this.status("good","Attempting replication to remote database");
-            db.replicate.to( this.remoteDB )
-            .catch( err => this.status("problem",`Trouble replicating to remote: ${err.message}`))
-            .finally( () => this.foreverSync() );
-        } else {
-            this.status("problem","No remote database specified!");
-        }
-    }
-
     openRemoteDB( DBstruct ) {
         if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
