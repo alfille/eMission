@@ -24,16 +24,9 @@ var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
-var security_db = null ;
 const remoteUser = {
     database: "_users" ,
     username: "admin",
-    password: "", // set in SuperUser
-    address: "", // set in SuperUser
-    };
-const remoteSecurity = {
-    database: "" , // set in SuperUser
-    username: "", // set in SuperUser
     password: "", // set in SuperUser
     address: "", // set in SuperUser
     };
@@ -230,72 +223,6 @@ const structDatabase = [
         hint: 'Name of patient information database (e.g. "ukraine"',
         type: "text",
     },
-];
-
-const structNewUser = [
-    {
-        name: "name",
-        hint: "User Name (can be email address)",
-        type: "text",
-    },
-    {
-        name: "password",
-        hint: "User password",
-        type: "password",
-    } ,
-    {
-        name: "roles",
-        hint: "Regular user or administrator",
-        type: "radio",
-        roles: ["user","admin"],
-    },
-    {
-        name: "email",
-        alias: "email address",
-        hint: "email address of user (optional but helps send invite)",
-        type: "email",
-    }
-];
-
-const structEditUser = [
-    {
-        name: "name",
-        hint: "User Name (can be email address)",
-        type: "text",
-        readonly: "true",
-    },
-    {
-        name: "password",
-        hint: "User password",
-        type: "password",
-    } ,
-    {
-        name: "roles",
-        hint: "Regular user or administrator",
-        type: "radio",
-        roles: ["user","admin"],
-    },
-    {
-        name: "email",
-        alias: "email address",
-        hint: "email address of user (optional but helps send invite)",
-        type: "email",
-    }
-];
-    
-const structSuperUser = [
-    {
-        name: "username",
-        alias: "Superuser name" ,
-        hint: "Site administrator name",
-        type: "text",
-    },
-    {
-        name: "password",
-        alias: "Superuser password" ,
-        hint: "Site admnistrator password",
-        type: "password",
-    } ,
 ];
 
 const structMission = [
@@ -1268,72 +1195,6 @@ class NewPatientData extends PatientDataEditMode {
     }
 }
 
-class SuperUserData extends PatientDataEditMode {
-    savePatientData() {
-        this.loadDocData();
-
-        objectRemote.closeRemoteDB()
-        .then( () => {
-            // remote User database
-            remoteUser.username = this.doc[0].username;
-            remoteUser.password = this.doc[0].password;
-            User.db = objectRemote.openRemoteDB( remoteUser );
-
-            // admin access to this database
-            remoteSecurity.username = remoteUser.username;
-            remoteSecurity.password = remoteUser.password;
-            remoteSecurity.address  = remoteCouch.address;
-            remoteSecurity.database = remoteCouch.database;        
-            security_db = objectRemote.openRemoteDB( remoteSecurity );
-
-            objectPage.show( "UserList" ); })
-        .catch( err => {
-            alert( err );
-            objectPage.show( "SuperUser" );
-            });
-    }
-}
-
-class NewUserData extends PatientDataEditMode {
-    savePatientData() {
-        this.loadDocData();
-        this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
-        this.doc[0].type = "user";
-        this.doc[0].roles = [ this.doc[0].roles ];
-        User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
-        User.db.put( this.doc[0] )
-        .then( response => {
-            User.select( response.id );
-            objectPage.show( "SendUser" );
-            })
-        .catch( err => {
-            objectLog.err(err);
-            objectPage.show( "UserList" );
-            });
-    }
-}
-
-class EditUserData extends PatientData {
-    savePatientData() {
-        if ( this.loadDocData()[0] ) {
-            this.doc[0].roles = [ this.doc[0].roles ];
-            User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
-            User.db.put( this.doc[0] )
-            .then( () => objectPage.show( "SendUser" ) )
-            .catch( err => {
-                objectLog.err(err);
-                objectPage.show( "UserList" );
-                });
-        } else if ( User.id in User.password ) {
-            objectPage.show( "SendUser" );
-        } else {
-            // no password to send
-            objectLog.err("No stored password") ;
-            objectPage.show( "UserList" );
-        }
-    }
-}
-
 class DateMath { // convenience class
     static prettyInterval(msec) {
         let hours = msec / 1000 / 60 / 60;
@@ -2046,110 +1907,6 @@ class Operation { // convenience class
     }
 }
 
-class User { // convenience class
-    static db = null ; // the special user couchdb database for access control
-    static id = null; // not cookie backed
-    static password = {}; // userid/password pairs from this session since you can't get them back from the database (encrypted)
-    static del() {
-        if ( User.id ) {
-            User.db.get( User.id )
-            .then( (doc) => {
-                if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
-                    return User.db.remove(doc) ;
-                } else {
-                    throw "No delete";
-                }
-                })              
-            .then( () => User.unselect() )
-            .catch( (err) => objectLog.err(err) )
-            .finally( () => objectPage.show( "UserList" ) );
-        }
-        return true;
-    }    
-    
-    static select( uid ) {
-        User.id = uid;
-        if ( objectPage.test("UserList") ) {
-            objectTable.highlight();
-        }
-        document.getElementById("editreviewuser").disabled = false;
-    }    
-
-    static unselect() {
-        User.id = null;
-        document.getElementById("editreviewuser").disabled = true;
-    }
-
-    static getAllIdDoc() {
-        let doc = {
-            startkey: "org.couchdb.user:",
-            endkey: "org.couchdb.user:\\fff0",
-            include_docs: true,
-            binary: true,
-            attachments: true,
-        } ;
-        return User.db.allDocs(doc);
-    }
-
-    static send( doc ) {
-        document.getElementById("SendUserMail").href = "";
-        document.getElementById("SendUserPrint").onclick=null;
-        let url = new URL( window.location.href );
-        url.searchParams.append( "address", remoteCouch.address );
-        url.searchParams.append( "database", remoteCouch.database );
-        url.searchParams.append( "password", User.password[User.id] );
-        url.searchParams.append( "username", doc.name );
-        new QR(
-            document.getElementById("SendUserQR"),
-            url.href,
-            200,200,
-            4);
-        document.getElementById("SendUserEmail").value = doc.email;
-        document.getElementById("SendUserLink").value = url.href;
-
-        let bodytext=
-`Welcome, ${doc.name}, to eMission.
-
-  eMission: software for managing medical missions
-      in resource-poor environments.
-      https://emissionsystems.org
-
-You have an account:
-
-  web address: ${remoteCouch.address}
-     username: ${doc.name}
-     password: ${User.password[User.id]}
-     database: ${remoteCouch.database}
-
-Full link (paste into your browser address bar):
-  ${url.href}
-
-We are looking forward to your participation.
-`
-        ;
-
-        let mail_url = new URL( "mailto:" + doc.email );
-        mail_url.searchParams.append( "subject", "Welcome to eMission" );
-        mail_url.searchParams.append( "body", bodytext );
-        document.getElementById("SendUserMail").href = mail_url.href;
-        document.getElementById("SendUserPrint").onclick=()=>User.printCard(url,bodytext);
-    }
-
-    static printCard(url,bodytext="") {
-        let card = document.getElementById("printUser");
-        card.querySelector("#printUserText").innerText=bodytext;
-        new QR(
-            card.querySelector(".qrUser"),
-            url.href,
-            300,300,
-            4);
-
-        Page.show_screen( "user" ) ;
-        window.print();
-        objectPage.show("SendUser");
-    }
-}
-
 class Mission { // convenience class
     static select() {
         Patient.unselect();
@@ -2268,7 +2025,6 @@ class Remote { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        console.log("SYNC PRESTART");
         this.syncHandler = db.sync( this.remoteDB ,
             {
                 live: true,
@@ -2281,7 +2037,6 @@ class Remote { // convenience class
             .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
             .on('complete', ()     => this.status( "good", "sync stopped" ))
             .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
-        console.log("SYNC POSTSTART");
     }
     
     status( state, msg ) {
@@ -2325,13 +2080,6 @@ class Remote { // convenience class
         }
     }
             
-    closeRemoteDB() {
-        return Promise.all( [
-            User.db ? User.db.close() : Promise.resolve(true),
-            security_db ? security_db.close() : Promise.resolve(true),
-            ]);
-    }
-
     SecureURLparse( url ) {
         let prot = "https";
         let addr = url;
@@ -2967,90 +2715,28 @@ class SearchList extends Pagelist {
     }
 }
 
-class SendUser extends xPagelist {
+class SendUser extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.db == null ) {
-            objectPage.show( "SuperUser" );
-        } else if ( User.id == null || !(User.id in User.password) ) {
-            objectPage.show( "UserList" );
-        } else {
-            User.db.get( User.id )
-            .then( doc => User.send( doc ) )
-            .catch( err => {
-                objectLog.err(err);
-                objectPage.show( "UserList" );
-                });
-        }
-    }
 }
 
-class SuperUser extends xPagelist {
+class SuperUser extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        remoteUser.address = remoteCouch.address;
-        objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
-    }
 }
 
-class UserEdit extends xPagelist {
+class UserEdit extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.db == null ) {
-            objectPage.show( "SuperUser" );
-        } else if ( User.id == null ) {
-            objectPage.show( "UserList" );
-        } else {
-            User.db.get( User.id )
-            .then( doc => {
-                doc.roles = doc.roles[0]; // unarray
-                objectPatientData = new EditUserData( doc, structEditUser );
-                })
-            .catch( err => {
-                objectLog.err(err);
-                User.unselect();
-                objectPage.show( "UserList" );
-                });
-        }
-    }
 }
 
-class UserList extends xPagelist {
+class UserList extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.db == null ) {
-            objectPage.show( "SuperUser" );
-        } else {
-            objectTable = new UserTable();
-            User.getAllIdDoc()
-            .then( docs => objectTable.fill(docs.rows ) )
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show ( "SuperUser" );
-                });
-        }
-    }
 }
 
-class UserNew extends xPagelist {
+class UserNew extends Administration {
     static { this.AddPage(); } // add to Page.pages struct
     static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.db == null ) {
-            objectPage.show( "SuperUser" );
-        } else {
-            User.unselect();
-            objectPatientData = new NewUserData( {}, structNewUser );
-        }
-    }
 }
 
 function isAndroid() {
@@ -3361,27 +3047,6 @@ class OperationTable extends SortTable {
 
     editpage() {
         objectPage.show("OperationEdit");
-    }
-}
-
-class UserTable extends SortTable {
-    constructor() {
-        super(
-            ["name", "roles", "email", "type", ], 
-            "UserList"
-            );
-    }
-
-    selectId() {
-        return User.id;
-    }
-
-    selectFunc(id) {
-        User.select(id) ;
-    }
-
-    editpage() {
-        objectPage.show("UserEdit");
     }
 }
 

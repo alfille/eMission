@@ -975,8 +975,8 @@ class Page { // singleton class
                 // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
             }
-            Cookie.set ( "displayState", this.path ) ;
         }
+        Cookie.set ( "displayState", this.path ) ;
     }
 
     test( page ) {
@@ -1057,7 +1057,6 @@ class Pagelist {
     static show(extra="") {
         // set up display
         Page.show_screen( "screen" );
-        document.querySelector(".patientDataEdit").style.display="none"; 
         document.querySelectorAll(".topButtons")
             .forEach( tb => tb.style.display = "block" );
 

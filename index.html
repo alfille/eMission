@@ -18,13 +18,13 @@
                     <div class="MainMenu FirstTime topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                     </div>
-                    <!-- top: Settings SuperUser Download SendUser -->
-                    <div class= "Settings SuperUser Download SendUser topButtons pageOverlay">
+                    <!-- top: Settings Download -->
+                    <div class= "Settings Download topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
-                    <!-- top: Administration PatientPhoto -->
-                    <div class= "Administration PatientPhoto topButtons pageOverlay">
+                    <!-- top: PatientPhoto -->
+                    <div class= "PatientPhoto topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
                     </div>
@@ -53,12 +53,6 @@
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                         <button type="button" class="divbutton" onclick="objectPage.show( 'MainMenu' )">Main Menu</button>
                     </div>
-                    <!-- top: UserList -->
-                    <div class="UserList topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
-                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserEdit' )" id="editreviewuser" title="Edit user's data/password">Review/Edit User</button>
-                    </div>
                     <!-- top: AllOperations -->
                     <div class="AllOperations topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
@@ -74,20 +68,9 @@
                         <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Abandon this task">Cancel</button>
                     </div>
                     <!-- top: SuperUser -->
-                    <div class="PatientData SuperUser topButtons pageOverlay">
+                    <div class="PatientData topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Discard changes">Cancel</button>
-                    </div>
-                    <!-- top: UserNew -->
-                    <div class="PatientData UserNew topButtons pageOverlay">
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
-                    </div>
-                    <!-- top: UserEdit -->
-                    <div class="PatientData UserEdit topButtons pageOverlay">
-                        <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: MissionInfo -->
                     <div class="PatientData MissionInfo topButtons pageOverlay">
@@ -193,14 +176,6 @@
                     <button type="button" class="divbutton delete" onclick="clearLocal()">Erase local data</button>
                 </div>
             </div>
-            <!-- body: Administration -->
-            <div class="Administration pageOverlay">
-                <div id="AdministrationContent" class="buttonmenu" >
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'SuperUser' )">User Management</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
-                </div>
-            </div>
             <!-- body: Download -->
             <div class="Download pageOverlay">
             </div>
@@ -224,20 +199,14 @@
                     <table id="SearchList"></table>
                 </div>
             </div>
-            <!-- body: UserList -->
-            <div class="UserList pageOverlay">
-                <div id="UserListContent" >
-                    <table id="UserList"></table>
-                </div>
-            </div>
             <!-- body: AllOperations OperationList -->
             <div class="AllOperations OperationList pageOverlay">
                 <div id="OperationListContent" >
                     <table id="OperationsList"></table>
                 </div>
             </div>
-            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput SuperUser UserNew UserEdit MissionInfo -->
-            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput SuperUser UserNew UserEdit MissionInfo pageOverlay">
+            <!-- body: PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput MissionInfo -->
+            <div class="PatientData PatientNew PatientDemographics PatientMedical OperationEdit RemoteDatabaseInput MissionInfo pageOverlay">
                 <div id="PatientDataContent" ></div>
             </div>
             <!-- body: PatientPhoto -->
@@ -280,16 +249,6 @@
                     <div class="PatientProcButtons">
                         <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
                     </div>
-                </div>
-            </div>
-            <!-- body: SendUser -->
-            <div class="SendUser pageOverlay">
-                <div id="SendUserContent" class="buttonmenu" >
-                    <div><canvas id="SendUserQR" height=180 width=180>QR code</canvas></div>
-                    <div><laMarkbel>User email:<input type=text readonly=true id="SendUserEmail"></label></div>
-                    <div><label>User eMission link:<input type=text readonly=true id="SendUserLink"></label></div>
-                    <div><a target="_blank" rel=noopener noreferrer href="" id="SendUserMail">Mail link</a></div>
-                    <div><button type="button" class="divbutton" id="SendUserPrint">Print for sending</button></div>
                 </div>
             </div>
             <!-- body: InvalidPatient -->
