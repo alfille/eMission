@@ -1956,13 +1956,12 @@ class Mission { // convenience class
     }
 }
 
-class Remote { // convenience class
+class RemoteReplicant { // convenience class
+	// Access to remote (cloud) version of database
     constructor( qline ) {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
-        this.syncHandler = null;
-        this.lastStatus = null ;
-        this.problem = false ;
+        this.problem = false ; // separates real connection problem from just network offline
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
@@ -2025,7 +2024,7 @@ class Remote { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        this.syncHandler = db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -2062,7 +2061,6 @@ class Remote { // convenience class
                 break ;
         }
         this.synctext.value = msg ;
-        this.lastStatus = state ;
     }
             
     openRemoteDB( DBstruct ) {
@@ -2344,10 +2342,6 @@ class Administration extends xPagelist {
 }
 
 class MainMenu extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-}
-
-class Settings extends xPagelist {
     static { this.AddPage(); } // add to Page.pages struct
 }
 
@@ -3388,7 +3382,7 @@ function cookies_n_query() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new Remote( qline ) ;
+    objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {

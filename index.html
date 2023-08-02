@@ -18,11 +18,6 @@
                     <div class="MainMenu FirstTime topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                     </div>
-                    <!-- top: Settings Download -->
-                    <div class= "Settings Download topButtons pageOverlay">
-                        <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
-                    </div>
                     <!-- top: PatientPhoto -->
                     <div class= "PatientPhoto topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
@@ -134,15 +129,32 @@
         <div id="emissionbody" class="work_screen">
             <!-- body: MainMenu -->
             <div class="MainMenu pageOverlay">
+				
                 <div id="MainMenuContent" class="buttonmenu" >
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionList' )">This Mission</button>
+					<div class="MainMenuRow">
+						<button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
+						<button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
+					</div>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Settings' )">Additional Choices</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DBTable' )">Switch Mission Database</button>
+					<div class="MainMenuRow">
+						<button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">This Mission</button>
+						<button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download Data</button>
+					</div>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <a href="https://emissionsystem.org/README.md" target="_blank">Instructions</a>
+					<div class="MainMenuRow">
+						<button type="button" class="divbutton" onclick="objectPage.show( 'DBTable' )">Switch Mission</button>
+						<button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Set Name/Password</button>
+					</div>
+                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
+					<div class="MainMenuRow">
+						<button type="button" class="divbutton delete" onclick="clearLocal()">Clear local data</button>
+						<button type="button" class="divbutton delete" onclick="objectPage.show( 'Administration' )">Administrator Area</button>
+					</div>
+                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
+					<div class="MainMenuRow">
+						<a href="https://emissionsystem.org/README.md" target="_blank" class="return">Instructions</a>
+						<button type="button" class="divbutton" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
+					</div>
                 </div>
             </div>
             <!-- body: FirstTime -->
@@ -161,23 +173,6 @@
                         Note that if you are part of a medical mission, your leader will usually send you a direct link or  QR code to access the database automatically.
                     </i></p>
                 </div>
-            </div>
-            <!-- body: Settings -->
-            <div class="Settings pageOverlay">
-                <div id="SettingsContent" class="buttonmenu">
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">Mission Info</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'Administration' )">Privileged operations</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Remote Database Setup</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton delete" onclick="clearLocal()">Erase local data</button>
-                </div>
-            </div>
-            <!-- body: Download -->
-            <div class="Download pageOverlay">
             </div>
             <!-- body: AllPatients -->
             <div class="AllPatients pageOverlay">

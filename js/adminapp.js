@@ -26,8 +26,8 @@ var security_db = null ;
 const remoteUser = {
     database: "_users" ,
     username: "admin",
-    password: "", // set in SuperUser
-    address: "", // set in SuperUser
+    password: "",
+    address: "",
     };
 const remoteSecurity = {
     database: "" , // set in SuperUser
@@ -1077,16 +1077,6 @@ class Patient { // convenience class
         }
     }
 
-    static makeId( doc ) {
-        return [ 
-            RecordFormat.type.patient,
-            RecordFormat.version,
-            doc.LastName,
-            doc.FirstName,
-            doc.DOB, 
-            ].join(";");
-    }
-
     static splitId( pid = patientId ) {
         if ( pid ) {
             let spl = pid.split(";");
@@ -1198,18 +1188,6 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static makeId() {
-        const spl = Patient.splitId();
-            return [ 
-            RecordFormat.type.note,
-            RecordFormat.version,
-            spl.last,
-            spl.first,
-            spl.dob,
-            new Date().toISOString() , 
-            ].join(";");
-    }
-
     static splitId( nid=noteId ) {
         if ( nid ) {
             let spl = nid.split(";");
@@ -1246,22 +1224,6 @@ class Note { // convenience class
 
     static unselect() {
         Cookie.del ( "noteId" );
-    }
-
-    static template(category=objectNoteList.category) {
-        if ( category=='' ) {
-            category = 'Uncategorized' ;
-        }
-        return {
-            _id: Note.makeId(),
-            text: "",
-            title: "",
-            author: remoteCouch.username,
-            type: "note",
-            category: category,
-            patient_id: patientId,
-            date: new Date().toISOString(),
-        };
     }
 
 }
@@ -1609,12 +1571,10 @@ class Mission { // convenience class
     }
 }
 
-class Remote { // convenience class
+class RemoteReplicant { // convenience class
     constructor( qline ) {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
-        this.syncHandler = null;
-        this.lastStatus = null ;
         this.problem = false ;
         this.synctext = document.getElementById("syncstatus");
         
@@ -1668,7 +1628,7 @@ class Remote { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        this.syncHandler = db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -1705,7 +1665,6 @@ class Remote { // convenience class
                 break ;
         }
         this.synctext.value = msg ;
-        this.lastStatus = state ;
     }
             
     openRemoteDB( DBstruct ) {
@@ -1995,14 +1954,6 @@ class ErrorLog extends xPagelist {
 
     static subshow(extra="") {
         objectLog.show() ;
-    }
-}
-
-class RemoteDatabaseInput extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
-
-    static subshow(extra="") {
-        objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
     }
 }
 
@@ -2461,7 +2412,7 @@ function cookies_n_query() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new Remote( qline ) ;
+    objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
@@ -2482,8 +2433,6 @@ function setEmbedded(focus="patient") {
 
 // Application starting point
 window.onload = () => {
-    // Initial splash screen
-
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
     window.addEventListener('popstate', ()=>window.history.pushState({}, '') );

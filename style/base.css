@@ -298,12 +298,6 @@ body {
   background-color: #b3b3ff ;
 }
 
-.NoteChoiceButtons2 {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-around;
-}
-
 #PatientPhotoContent2 {
     display: flex;
     justify-content: center;
@@ -336,13 +330,16 @@ legend {
   margin-left: 5px;
   margin-right: 5px;
 }
-#PatientPhotoButtons0{
+#PatientPhotoButtons0, .MainMenuRow{
   display: flex;
   color: white;
   background: inherit;
   padding-top: 2px;
   flex-direction: row ;
   justify-content: space-around;
+}
+.MainBold {
+  font-weight: bold;
 }
 #NoteFieldset {
 	background: #a581ed;
@@ -358,7 +355,7 @@ legend {
   flex-direction: row ;
   justify-content: space-around;
 }
-.PatientProcButtons {
+.PatientProcButtons, .MainMenuButtons {
   display: flex;
   flex-direction: column;
 }

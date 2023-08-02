@@ -406,7 +406,6 @@ class Remote { // convenience class
     constructor( qline ) {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
-        this.syncHandler = null;
         this.lastStatus = null ;
         this.problem = false ;
         this.synctext = document.getElementById("syncstatus");
@@ -462,7 +461,7 @@ class Remote { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        this.syncHandler = db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -499,7 +498,6 @@ class Remote { // convenience class
                 break ;
         }
         this.synctext.value = msg ;
-        this.lastStatus = state ;
     }
             
     openRemoteDB( DBstruct ) {
@@ -1231,7 +1229,7 @@ function cookies_n_query() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new Remote( qline ) ;
+    objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {
