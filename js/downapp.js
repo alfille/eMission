@@ -840,11 +840,11 @@ class PPTX {
                 ;
             } else {
                 slide
+                ;
             }
   
             })
-        .then( _ => Promise.resolve(true) )
-        ;
+        .then( _ => Promise.resolve(true) ) ;
     }
 
     notelist( nlist ) {
@@ -890,6 +890,7 @@ class PPTX {
             } else {
                 slide
                 .addText(doc?.text,{x:.5,y:2.2,h:3.4,w:7,color:"e4e444",fontSize:24,autofit:true,isTestBox:true})
+                ;
             }
             })
         .then( _ => Promise.resolve(true) )
