@@ -1153,7 +1153,7 @@ class ErrorLog extends Pagelist {
 
 class Log{
     constructor() {
-        this.list = []
+        this.list = [];
     }
     
     err( err, title=null ) {
@@ -1167,7 +1167,7 @@ class Log{
         console.groupEnd();
         if ( objectPage.current() == "ErrorLog" ) {
             // update
-            this.show()
+            this.show();
         }
     }
     
@@ -1316,4 +1316,4 @@ window.onload = () => {
         objectPage.show("FirstTime");
     }
 
-}
+};
