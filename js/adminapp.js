@@ -1921,11 +1921,11 @@ class xPagelist extends Pagelist {
 }
 
 class Administration extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class DatabaseInfo extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         db.info()
@@ -1937,7 +1937,7 @@ class DatabaseInfo extends xPagelist {
 }
 
 class DBTable extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectTable = new DatabaseTable();
@@ -1950,7 +1950,7 @@ class DBTable extends xPagelist {
 }
 
 class ErrorLog extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectLog.show() ;
@@ -1958,7 +1958,7 @@ class ErrorLog extends xPagelist {
 }
 
 class SendUser extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -1978,7 +1978,7 @@ class SendUser extends xPagelist {
 }
 
 class SuperUser extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         remoteUser.address = remoteCouch.address;
@@ -1987,7 +1987,7 @@ class SuperUser extends xPagelist {
 }
 
 class UserEdit extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2011,7 +2011,7 @@ class UserEdit extends xPagelist {
 }
 
 class UserList extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2030,7 +2030,7 @@ class UserList extends xPagelist {
 }
 
 class UserNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {

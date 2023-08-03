@@ -402,12 +402,12 @@ class Mission { // convenience class
     }
 }
 
-class Remote { // convenience class
+class RemoteReplicant { // convenience class
+	// Access to remote (cloud) version of database
     constructor( qline ) {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
-        this.lastStatus = null ;
-        this.problem = false ;
+        this.problem = false ; // separates real connection problem from just network offline
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
@@ -437,13 +437,22 @@ class Remote { // convenience class
             }
         }
         
-        window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
-        window.addEventListener("online", _ => this.status( this.problem?"problem":"good", "--network present--" ) );
-        navigator.onLine ? 
-            this.status( "good", "--network present--" ) 
-            : this.status( "disconnect", "--network offline--" ) ;
+
+        // set up monitoring
+        window.addEventListener("offline", _ => this.not_present() );
+        window.addEventListener("online", _ => this.present() );
+
+        // initial status
+        navigator.onLine ? this.present() : this.not_present() ;
+    }
+    
+    present() {
+        this.status( "good", "--network present--" ) ;
     }
 
+    not_present() {
+        this.status( "disconnect", "--network offline--" ) ;
+    }
 
     // Initialise a sync process with the remote server
     foreverSync() {
@@ -478,7 +487,7 @@ class Remote { // convenience class
     status( state, msg ) {
         switch (state) {
             case "disconnect":
-                document.body.style.background="#7071d3"; // grey
+                document.body.style.background="#7071d3"; // Orange
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }
@@ -510,11 +519,31 @@ class Remote { // convenience class
                     },
                 });
         } else {
-            console.log("Bad DB");
+            objectLog.err("Bad DB");
             return null;
         }
     }
             
+    SecureURLparse( url ) {
+        let prot = "https";
+        let addr = url;
+        let port = "6984";
+        let spl = url.split("://") ;
+        if (spl.length < 2 ) {
+            addr=spl[0];
+        } else {
+            prot = spl[0];
+            addr = spl[1];
+        }
+        spl = addr.split(":");
+        if (spl.length < 2 ) {
+            addr=spl[0];
+        } else {
+            addr = spl[0];
+            port = spl[1];
+        }
+        return [prot,[addr,port].join(":")].join("://");
+    }
 }
 
 class Cookie { //convenience class
@@ -1082,7 +1111,7 @@ class Pagelist {
 }
 
 class Download extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
     static subshow(extra="") {
         Mission.select();
@@ -1090,7 +1119,7 @@ class Download extends Pagelist {
 }
 
 class DownloadCSV extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
     static subshow(extra="") {
         Mission.select();
@@ -1098,7 +1127,7 @@ class DownloadCSV extends Pagelist {
 }
 
 class DownloadJSON extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
     static subshow(extra="") {
         Mission.select();
@@ -1106,7 +1135,7 @@ class DownloadJSON extends Pagelist {
 }
 
 class DownloadPPTX extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
     static subshow(extra="") {
         Mission.select();
@@ -1115,7 +1144,7 @@ class DownloadPPTX extends Pagelist {
 }
 
 class ErrorLog extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectLog.show() ;

@@ -2208,8 +2208,7 @@ class Page { // singleton class
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
-            if ( state != "FirstTime" ) {
-                this.next("RemoteDatabaseInput");
+            if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
         }
@@ -2334,7 +2333,7 @@ class xPagelist extends Pagelist {
 }
 
 class Administration extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         window.location.href="/admin.html" ;
@@ -2342,11 +2341,11 @@ class Administration extends xPagelist {
 }
 
 class MainMenu extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class AllOperations extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         Patient.unselect();
@@ -2369,7 +2368,7 @@ class AllOperations extends Pagelist {
 }
 
 class AllPatients extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectTable = new PatientTable();
@@ -2397,11 +2396,11 @@ class AllPatients extends Pagelist {
 }
 
 class DatabaseInfo extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class DBTable extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectTable = new DatabaseTable();
@@ -2414,7 +2413,7 @@ class DBTable extends xPagelist {
 }
 
 class Download extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         window.location.href="/download.html" ;
@@ -2422,19 +2421,19 @@ class Download extends xPagelist {
 }
 
 class DownloadCSV extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class DownloadJSON extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class DownloadPPTX extends Download {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class ErrorLog extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectLog.show() ;
@@ -2442,7 +2441,7 @@ class ErrorLog extends xPagelist {
 }
 
 class FirstTime extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( db !== null ) {
@@ -2452,7 +2451,7 @@ class FirstTime extends Pagelist {
 }
 
 class InvalidPatient extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2461,7 +2460,7 @@ class InvalidPatient extends Pagelist {
 }
 
 class MissionInfo extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         Mission.select();
@@ -2481,7 +2480,7 @@ class MissionInfo extends xPagelist {
 }
 
 class MissionList extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         Mission.select() ;
@@ -2493,7 +2492,7 @@ class MissionList extends xPagelist {
 }
 
 class NoteListCategory extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2510,7 +2509,7 @@ class NoteListCategory extends Pagelist {
 }
 
 class NoteList extends NoteListCategory {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         super.subshow('Uncategorized');
@@ -2518,7 +2517,7 @@ class NoteList extends NoteListCategory {
 }
 
 class NoteNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2536,7 +2535,7 @@ class NoteNew extends xPagelist {
 }
 
 class OperationEdit extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2566,7 +2565,7 @@ class OperationEdit extends Pagelist {
 }
 
 class OperationList extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2581,7 +2580,7 @@ class OperationList extends Pagelist {
 }
 
 class OperationNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2595,7 +2594,7 @@ class OperationNew extends xPagelist {
 }
 
 class PatientDemographics extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2612,7 +2611,7 @@ class PatientDemographics extends Pagelist {
 }
 
 class PatientMedical extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2637,7 +2636,7 @@ class PatientMedical extends Pagelist {
 }
 
 class PatientNew extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2651,7 +2650,7 @@ class PatientNew extends xPagelist {
 }
 
 class PatientPhoto extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2679,7 +2678,7 @@ class PatientPhoto extends Pagelist {
 }
 
 class QuickPhoto extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
@@ -2693,7 +2692,7 @@ class QuickPhoto extends xPagelist {
 }
 
 class RemoteDatabaseInput extends xPagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
@@ -2701,7 +2700,7 @@ class RemoteDatabaseInput extends xPagelist {
 }
 
 class SearchList extends Pagelist {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
         objectTable = new SearchTable() ;
@@ -2710,26 +2709,26 @@ class SearchList extends Pagelist {
 }
 
 class SendUser extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 }
 
 class SuperUser extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class UserEdit extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 }
 
 class UserList extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 }
 
 class UserNew extends Administration {
-    static { this.AddPage(); } // add to Page.pages struct
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 }
 
@@ -3363,13 +3362,20 @@ function parseQuery() {
 function clearLocal() {
     const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
     if ( remove ) {
+		// clear cookies
         Cookie.del( "patientId" );
-        Cookie.del("remoteCouch");
-        Cookie.del("operationId");
+        Cookie.del( "remoteCouch");
+        Cookie.del( "operationId");
         Cookie.del( "noteId" );
-        db.destroy().finally( ()=>objectPage.reset() );
-    }
-    objectPage.show( "MainMenu" );
+		// clear (local) database
+        db.destroy()
+        .finally( _ => {
+			objectPage.reset();
+			location.reload(); // force reload
+			});
+    } else {
+		objectPage.show( "MainMenu" );
+	}
 }
 
 function cookies_n_query() {
