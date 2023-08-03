@@ -304,9 +304,9 @@ body {
 }
 
 legend {
-	font-size: 16px;
-	font-family: inherit;
-	font-weight: bold;
+  font-size: 16px;
+  font-family: inherit;
+  font-weight: bold;
 }
 
 .buttonmenu {
@@ -318,13 +318,13 @@ legend {
   padding: 1em;
 }
 #DownloadPPTXContent {
-	font-size: 20px;
-	line-height: 2em;
-	font=weight: bold;
+  font-size: 20px;
+  line-height: 2em;
+  font=weight: bold;
 }
 #DownloadPPTXContent input[type="checkbox"] {
-	height: 2em;
-	width: 2em;
+  height: 2em;
+  width: 2em;
 }
 #FirstTimeContent p {
   margin-left: 5px;
@@ -340,12 +340,18 @@ legend {
 }
 .MainBold {
   font-weight: bold;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+.MainItalic {
+  font-style: italic;
+  color: #d0d0d0;
 }
 #NoteFieldset {
-	background: #a581ed;
+  background: #a581ed;
 }
 #NoteFieldset legend {
-	color: white;
+  color: white;
 }
 #PatientPhotoButtons1{
   display: flex;

@@ -129,32 +129,23 @@
         <div id="emissionbody" class="work_screen">
             <!-- body: MainMenu -->
             <div class="MainMenu pageOverlay">
-				
-                <div id="MainMenuContent" class="buttonmenu" >
-					<div class="MainMenuRow">
-						<button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
-						<button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
-					</div>
+                
+                <div id="MainMenuContent" class="MainMenuRow" >
+                    <div class="PatientProcButtons">
+                        <button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllPatients' )">All Patients</button>
+                        <button type="button" class="divbutton MainBold" onclick="objectPage.show( 'AllOperations' )">All Operations</button>
+                        <button type="button" class="divbutton MainBold" onclick="objectPage.show( 'MissionInfo' )">This Mission</button>
+                        <button type="button" class="divbutton MainBold" onclick="objectPage.show( 'Download' )">Download Data</button>
+                        <a href="https://emissionsystem.org/README.md" target="_blank" class="return MainBold">Instructions</a>
+                    </div>
+                    <div class="PatientProcButtons">
+                        <button type="button" class="divbutton MainItalic" onclick="objectPage.show( 'DBTable' )">Switch Mission</button>
+                        <button type="button" class="divbutton MainItalic" onclick="objectPage.show( 'RemoteDatabaseInput' )">Set Name/Password</button>
+                        <button type="button" class="divbutton MainItalic" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
+                        <button type="button" class="divbutton delete MainItalic" onclick="clearLocal()">Clear local data</button>
+                        <button type="button" class="divbutton delete MainItalic" onclick="objectPage.show( 'Administration' )">Administrator Area</button>
+                    </div>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-					<div class="MainMenuRow">
-						<button type="button" class="divbutton" onclick="objectPage.show( 'MissionInfo' )">This Mission</button>
-						<button type="button" class="divbutton" onclick="objectPage.show( 'Download' )">Download Data</button>
-					</div>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-					<div class="MainMenuRow">
-						<button type="button" class="divbutton" onclick="objectPage.show( 'DBTable' )">Switch Mission</button>
-						<button type="button" class="divbutton" onclick="objectPage.show( 'RemoteDatabaseInput' )">Set Name/Password</button>
-					</div>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-					<div class="MainMenuRow">
-						<button type="button" class="divbutton delete" onclick="clearLocal()">Clear local data</button>
-						<button type="button" class="divbutton delete" onclick="objectPage.show( 'Administration' )">Administrator Area</button>
-					</div>
-                    <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-					<div class="MainMenuRow">
-						<a href="https://emissionsystem.org/README.md" target="_blank" class="return">Instructions</a>
-						<button type="button" class="divbutton" onclick="objectPage.show( 'ErrorLog' )">Error Log</button>
-					</div>
                 </div>
             </div>
             <!-- body: FirstTime -->
