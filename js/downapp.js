@@ -1,6 +1,6 @@
 "use strict";
 
-/* jshint esversion: 6 */
+/* jshint esversion: 11 */
 
 // singleton class instances
 var objectNoteList={};
