@@ -42,13 +42,7 @@ const RecordFormat = {
     version: 0,
 };
 
-var missionId = [
-        RecordFormat.type.mission,
-        RecordFormat.version,
-        "",
-        "",
-        "", 
-        ].join(";");
+var missionId = null;
 
 // used to generate data entry pages "PatientData" type
 const structNewPatient = [
@@ -1183,7 +1177,7 @@ class NewPatientData extends PatientDataEditMode {
             alert("Enter some Date Of Birth");
         } else {
             // create new patient record
-            this.doc[0]._id = Patient.makeId( this.doc[0] );
+            this.doc[0]._id = PatientId.makeId( this.doc[0] );
             this.doc[0].patient_id = this.doc[0]._id;
             db.put( this.doc[0] )
             .then( (response) => {
@@ -1342,34 +1336,6 @@ class Patient { // convenience class
         }
     }
 
-    static makeId( doc ) {
-        return [ 
-            RecordFormat.type.patient,
-            RecordFormat.version,
-            doc.LastName,
-            doc.FirstName,
-            doc.DOB, 
-            ].join(";");
-    }
-
-    static splitId( pid = patientId ) {
-        if ( pid ) {
-            let spl = pid.split(";");
-            if ( spl.length !== 5 ) {
-                objectLog.err("Bad PatientId "+pid);
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-            };
-        }
-        return null;
-    }
-
     static isSelected() {
         return ( patientId != null ) && ( patientId != missionId ) ;
     }
@@ -1483,6 +1449,82 @@ class Patient { // convenience class
    
 }
 
+class Id {
+    static version = 0;
+    static splitId( id ) {
+        if ( id ) {
+            const spl = id.split(";");
+            return {
+                type:    spl[0] ?? null,
+                version: spl[1] ?? null, // 0 so far
+                last:    spl[2] ?? null,
+                first:   spl[3] ?? null,
+                dob:     spl[4] ?? null,
+                key:     spl[5] ?? null, // really creation date
+            };
+        }
+        return null;
+    }
+    static joinId( obj ) {
+        return [
+            obj.type,
+            obj.version,
+            obj.last,
+            obj.first,
+            obj.dob,
+            obj.key
+            ].join(";");
+    }
+    static makeId( pid=patientId ) {
+        let obj = this.splitId( pid ) ;
+        obj.type = this.type;
+        obj.key = new Date().toISOString();
+        return this.joinId( obj );
+    }
+}
+        
+class PatientId extends Id{
+    static type = "p";
+    static makeId( first, last, dob ) {
+        return [
+            this.type,
+            this.version,
+            last,
+            first,
+            dob
+            ].join(";");
+    }
+    static splitId( id=patientId ) {
+        return super.splitId(id);
+    }
+}
+
+class NoteId extends Id{
+    static type = "c";        
+    static splitId( id=noteId ) {
+        return super.splitId(id);
+    }
+}
+
+class OperationId extends Id{
+    static type = "o";
+    static splitId( id=operationId ) {
+        return super.splitId(id);
+    }
+}
+
+class MissionId extends PatientId{
+    static type = "m";
+    static makeId() {
+        return super.makeId("","","");
+    }
+    static splitId( id=missionId ) {
+        return super.splitId(id);
+    }
+}
+
+var missionId = MissionId.makeId() ;
+
 class Note { // convenience class
     static getAllIdDoc() {
         let doc = {
@@ -1496,7 +1538,7 @@ class Note { // convenience class
     }
 
     static getRecordsId() {
-        let pspl = Patient.splitId();
+        let pspl = PatientId.splitId();
         let doc = {
             startkey: [
                 RecordFormat.type.note,
@@ -1517,7 +1559,7 @@ class Note { // convenience class
     }
 
     static getRecordsIdDoc() {
-        let pspl = Patient.splitId();
+        let pspl = PatientId.splitId();
         let doc = {
             startkey: [
                 RecordFormat.type.note,
@@ -1539,7 +1581,7 @@ class Note { // convenience class
     }
 
     static getRecordsIdPix() {
-        let pspl = Patient.splitId();
+        let pspl = PatientId.splitId();
         let doc = {
             startkey: [
                 RecordFormat.type.note,
@@ -1562,38 +1604,8 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static makeId() {
-        const spl = Patient.splitId();
-            return [ 
-            RecordFormat.type.note,
-            RecordFormat.version,
-            spl.last,
-            spl.first,
-            spl.dob,
-            new Date().toISOString() , 
-            ].join(";");
-    }
-
-    static splitId( nid=noteId ) {
-        if ( nid ) {
-            let spl = nid.split(";");
-            if ( spl.length !== 6 ) {
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-                key: spl[5],
-            };
-        }
-        return null;
-    }
-
     static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + Note.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["date"] ?? "") + NoteId.splitId(doc._id).key).substring(0,24) ;
     }
 
     static select( nid=noteId ) {
@@ -1672,7 +1684,7 @@ class Note { // convenience class
             category = 'Uncategorized' ;
         }
         return {
-            _id: Note.makeId(),
+            _id: NoteId.makeId(),
             text: "",
             title: "",
             author: remoteCouch.username,
@@ -1738,21 +1750,9 @@ class Operation { // convenience class
         }
     }
 
-    static makeId() {
-        const spl = Patient.splitId();    
-        return [ 
-            RecordFormat.type.operation,
-            RecordFormat.version,
-            spl.last,
-            spl.first,
-            spl.dob,
-            new Date().toISOString() , 
-            ].join(";");
-    }
-
     static create() {
         let doc = {
-            _id: Operation.makeId(),
+            _id: OperationId.makeId(),
             author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
@@ -1813,7 +1813,7 @@ class Operation { // convenience class
     }
 
     static getRecordsId(pid=patientId) {
-        let pspl = Patient.splitId(pid);
+        let pspl = PatientId.splitId(pid);
         let doc = {
             startkey: [
                 RecordFormat.type.operation,
@@ -1834,7 +1834,7 @@ class Operation { // convenience class
         return db.allDocs(doc) ;
     }
     static getRecordsIdDoc( pid=patientId ) {
-        let pspl = Patient.splitId(pid);
+        let pspl = PatientId.splitId(pid);
         let doc = {
             startkey: [
                 RecordFormat.type.operation,
@@ -1884,26 +1884,8 @@ class Operation { // convenience class
             });
     }
 
-    static splitId( oid=operationId ) {
-        if ( oid ) {
-            let spl = oid.split(";");
-            if ( spl.length !== 6 ) {
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-                key: spl[5],
-            };
-        }
-        return null;
-    }
-
     static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["Date-Time"] ?? "") + OperationId.splitId(doc._id).key).substring(0,24) ;
     }
 }
 
@@ -1957,7 +1939,7 @@ class Mission { // convenience class
 }
 
 class RemoteReplicant { // convenience class
-	// Access to remote (cloud) version of database
+    // Access to remote (cloud) version of database
     constructor( qline ) {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
@@ -2555,7 +2537,7 @@ class OperationEdit extends Pagelist {
         } else {
             objectPatientData = new OperationData(
             {
-                _id: Operation.makeId(),
+                _id: OperationId.makeId(),
                 type: "operation",
                 patient_id: patientId,
                 author: remoteCouch.username,
@@ -2617,10 +2599,8 @@ class PatientMedical extends Pagelist {
         if ( Patient.isSelected() ) {
             let args;
             Patient.getRecordId()
-            .then( (doc) => {
-                args = [doc,structMedical];
-                return Operation.getRecordsIdDoc();
-                })
+            .then( (doc) => args = [doc,structMedical] )
+            .then( _ => Operation.getRecordsIdDoc() )
             .then( ( olist ) => {
                 olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
                 objectPatientData = new PatientData( ...args );
@@ -2658,14 +2638,10 @@ class PatientPhoto extends Pagelist {
             let pdoc;
             let onum ;
             Patient.getRecordIdPix()
-            .then( (doc) => {
-                pdoc = doc;
-                return Operation.getRecordsIdDoc(); 
-                })
-            .then ( (doclist) => {
-                onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length ;
-                return Note.getRecordsIdDoc(); 
-                })
+            .then( (doc) => pdoc = doc )
+            .then( _ => Operation.getRecordsIdDoc() )
+            .then ( (doclist) => onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length )
+            .then( _ => Note.getRecordsIdDoc() )
             .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
                 objectLog.err(err);
@@ -3362,20 +3338,20 @@ function parseQuery() {
 function clearLocal() {
     const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
     if ( remove ) {
-		// clear cookies
+        // clear cookies
         Cookie.del( "patientId" );
         Cookie.del( "remoteCouch");
         Cookie.del( "operationId");
         Cookie.del( "noteId" );
-		// clear (local) database
+        // clear (local) database
         db.destroy()
         .finally( _ => {
-			objectPage.reset();
-			location.reload(); // force reload
-			});
+            objectPage.reset();
+            location.reload(); // force reload
+            });
     } else {
-		objectPage.show( "MainMenu" );
-	}
+        objectPage.show( "MainMenu" );
+    }
 }
 
 function cookies_n_query() {

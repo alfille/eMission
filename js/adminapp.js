@@ -47,13 +47,69 @@ const RecordFormat = {
     version: 0,
 };
 
-var missionId = [
-        RecordFormat.type.mission,
-        RecordFormat.version,
-        "",
-        "",
-        "", 
-        ].join(";");
+class Id {
+    static version = 0;
+    static splitId( id ) {
+        if ( id ) {
+            const spl = id.split(";");
+            return {
+                type:    spl[0] ?? null,
+                version: spl[1] ?? null, // 0 so far
+                last:    spl[2] ?? null,
+                first:   spl[3] ?? null,
+                dob:     spl[4] ?? null,
+                key:     spl[5] ?? null, // really creation date
+            };
+        }
+        return null;
+    }
+    static joinId( obj ) {
+        return [
+            obj.type,
+            obj.version,
+            obj.last,
+            obj.first,
+            obj.dob,
+            obj.key
+            ].join(";");
+    }
+    static makeId( pid=patientId ) {
+        let obj = this.splitId( pid ) ;
+        obj.type = this.type;
+        obj.key = new Date().toISOString();
+        return this.joinId( obj );
+    }
+}
+        
+class PatientId extends Id{
+    static type = "p";
+    static makeId( first, last, dob ) {
+        return [
+            this.type,
+            this.version,
+            last,
+            first,
+            dob
+            ].join(";");
+    }
+}
+
+class NoteId extends Id{
+    static type = "c";        
+}
+
+class OperationId extends Id{
+    static type = "o";
+}
+
+class MissionId extends PatientId{
+    static type = "m";
+    static makeId() {
+        return super.makeId("","","");
+    }
+}
+
+var missionId = MissionId.makeId();
 
 // used to generate data entry pages "PatientData" type
 const structDatabase = [
@@ -305,113 +361,6 @@ class ImageImbedded {
 
     changed() {
         return this.upload != null;
-    }
-}
-
-class ImagePlus extends ImageImbedded {
-    constructor(...args) {
-        super(...args);
-        this.text = this.doc?.text ?? "";
-        this.title = this.doc?.title ?? "";
-        this.category = this.doc?.category ?? "";
-    }
-
-    display() {
-        super.display();
-        this.parent.querySelector(".entryfield_text").innerText = this.text;
-        this.parent.querySelector(".entryfield_title").innerText = this.title;
-        this.parent.querySelector("select").value = this.category;
-    }
-
-    save(doc) {
-        super.save(doc);
-        doc.text = this.parent.querySelector(".entryfield_text").innerText;
-        doc.title = this.parent.querySelector(".entryfield_title").innerText;
-        doc.category = this.parent.querySelector("select").value;
-    }
-}
-
-class ImageNote extends ImagePlus {
-    constructor( ...args ) {
-        super( ...args );
-        this.buttonsdisabled( false );
-    }
-    
-    leave() {
-        this.buttonsdisabled( false );
-    }
-
-    store() {
-        this.save( this.doc );
-        db.put( this.doc )
-        .then( resp => {
-            Note.select( resp.id );
-            return Note.getAllIdDoc(); // to prime list
-            })
-        .catch( err => objectLog.err(err) )
-        .finally( () => this.leave() );
-    }
-
-    edit() {
-        this.addListen();
-        this.buttonsdisabled( true );
-        this.display();
-    }
-
-    addListen() {
-        super.addListen();
-        try { this.parent.querySelector( ".imageSave").addEventListener( 'click', () => this.store() ); }
-            catch { //empty
-                }
-        try { this.parent.querySelector( ".imageCancel").addEventListener( 'click', () => this.leave() ); }
-            catch { //empty
-                }
-        try { this.parent.querySelector( ".imageDelete").addEventListener( 'click', () => this.delete() ); }
-            catch { //empty
-                }
-    }
-
-    buttonsdisabled( bool ) {
-        document.querySelectorAll(".libutton" ).forEach( b => b.disabled=bool );
-        document.querySelectorAll(".divbutton").forEach( b => b.disabled=bool );
-    }
-
-    delete() {
-        let pdoc;
-        Patient.getRecordId()
-        .then( (doc) => {
-            pdoc = doc;
-            return db.get( noteId );
-            })
-        .then( (doc) => {
-            if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
-                return doc;
-            } else {
-                throw "No delete";
-            }           
-            })
-        .then( (doc) => db.remove(doc) )
-        .then( () => Note.unselect() )
-        .catch( (err) => objectLog.err(err) )
-        .finally( () => this.leave() );
-    }
-}
-
-class ImageQuick extends ImageImbedded {
-    addListen(hfunc) {
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
-            catch { //empty
-                }
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => hfunc() ); }
-            catch { //empty
-                }
-    }
-}
-
-class ImageDrop extends ImageImbedded { // can only save(doc)
-    constructor( upload ) {
-        super( null, null );
-        this.upload = upload;
     }
 }
 
@@ -1250,21 +1199,9 @@ class Operation { // convenience class
         Cookie.del( "operationId" );
     }
 
-    static makeId() {
-        const spl = Patient.splitId();    
-        return [ 
-            RecordFormat.type.operation,
-            RecordFormat.version,
-            spl.last,
-            spl.first,
-            spl.dob,
-            new Date().toISOString() , 
-            ].join(";");
-    }
-
     static create() {
         let doc = {
-            _id: Operation.makeId(),
+            _id: OperationId.makeId(),
             author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
@@ -2466,17 +2403,6 @@ window.onload = () => {
 
         // now jump to proper page
         objectPage.show( null ) ;
-
-        // Set patient, operation and note -- need page shown first
-        if ( Patient.isSelected() ) { // mission too
-            Patient.select() ;
-        }
-        if ( operationId ) {
-            Operation.select(operationId) ;
-        }
-        if ( noteId ) {
-            Note.select() ;
-        }
 
     } else {
         db = null;
