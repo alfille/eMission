@@ -31,19 +31,6 @@ const remoteUser = {
     address: "", // set in SuperUser
     };
 
-// used for record keys ( see makeId, etc )
-const RecordFormat = {
-    type: {
-        patient: "p" ,
-        operation: "o" ,
-        note: "c" ,
-        mission: "m",
-        } ,
-    version: 0,
-};
-
-var missionId = null;
-
 // used to generate data entry pages "PatientData" type
 const structNewPatient = [
     {
@@ -1169,15 +1156,16 @@ class NewPatientData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
         // make sure the fields needed for a patient ID are present
+        
         if ( this.doc[0].FirstName == "" ) {
             alert("Need a First Name");
         } else if ( this.doc[0].LastName == "" ) {
             alert("Need a Last Name");
         } else if ( this.doc[0].DOB == "" ) {
-            alert("Enter some Date Of Birth");
+            this.doc[0].DOB = new Date().toISOString();
         } else {
             // create new patient record
-            this.doc[0]._id = PatientId.makeId( this.doc[0] );
+            this.doc[0]._id = Id_patient.makeId( this.doc[0] );
             this.doc[0].patient_id = this.doc[0]._id;
             db.put( this.doc[0] )
             .then( (response) => {
@@ -1228,16 +1216,10 @@ class Patient { // convenience class
             let ndocs;
             let odocs;
             Patient.getRecordIdPix()
-                // get patient
-            .then( (doc) => {
-                pdoc = doc;
-                return Note.getRecordsIdDoc();
-                })
-            .then( (docs) => {
-                // get notes
-                ndocs = docs.rows;
-                return Operation.getRecordsIdDoc();
-                })
+            .then( (doc) => pdoc = doc ) // patient
+            .then( _ => Note.getRecordsIdDoc(patientId) ) // notes
+            .then( (docs) => ndocs = docs.rows ) // get notes
+            .then( _ => Operation.getRecordsIdDoc(patientId) ) // operations
             .then( (docs) => {
                 // get operations
                 odocs = docs.rows;
@@ -1248,10 +1230,10 @@ class Patient { // convenience class
                 } else {
                     c += `also delete ${ndocs.length} associated notes\n   `;
                 }
-                if (odocs.length == 0 ) {
+                if (odocs.length < 2 ) {
                     c += "(no associated operations on this patient) \n   ";
                 } else {
-                    c += `also delete ${odocs.length} associated operations\n   `;
+                    c += `also delete ${odocs.length-1} associated operations\n   `;
                 }
                 c += "Are you sure?";
                 if ( confirm(c) ) {
@@ -1260,12 +1242,12 @@ class Patient { // convenience class
                     throw "No delete";
                 }           
                 })
-            .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( () => db.remove(pdoc) )
-            .then( () => Patient.unselect() )
+            .then( _ => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( _ => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( _ => db.remove(pdoc) )
+            .then( _ => Patient.unselect() )
             .catch( (err) => objectLog.err(err) ) 
-            .finally( () => objectPage.show( "AllPatients" ) );
+            .finally( _ => objectPage.show( "AllPatients" ) );
         }
     }
 
@@ -1279,8 +1261,8 @@ class Patient { // convenience class
 
     static getAllId() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey:   Id_patient.allEnd(),
         };
 
         return db.allDocs(doc);
@@ -1288,8 +1270,8 @@ class Patient { // convenience class
         
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey:   Id_patient.allEnd(),
             include_docs: true,
         };
 
@@ -1298,8 +1280,8 @@ class Patient { // convenience class
         
     static getAllIdDocPix() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey:   Id_patient.allEnd(),
             include_docs: true,
             binary: true,
             attachments: true,
@@ -1415,12 +1397,10 @@ class Patient { // convenience class
             t[1].rows[3].cells[1].innerText = doc.Allergies??"";
             t[1].rows[4].cells[1].innerText = doc.Meds??"";
             t[1].rows[5].cells[1].innerText = ""; // equipment
-            return db.query("Pid2Name",{key:doc._id}) ;
             }) 
-        .then( (doc) => {
-            t[0].rows[0].cells[1].innerText = doc.rows[0].value[0];
-            return Operation.getRecordsIdDoc();
-            })
+        .then( _ => db.query("Pid2Name",{key:doc._id}) )
+        .then( (doc) => t[0].rows[0].cells[1].innerText = doc.rows[0].value[0] )
+        .then( _ => Operation.getRecordsIdDoc(patientId) )
         .then( (docs) => {
             let oleng = docs.rows.length;
             switch(oleng) {
@@ -1451,6 +1431,9 @@ class Patient { // convenience class
 
 class Id {
     static version = 0;
+    static start="";
+    static end="\\fff0";
+    
     static splitId( id ) {
         if ( id ) {
             const spl = id.split(";");
@@ -1465,6 +1448,7 @@ class Id {
         }
         return null;
     }
+    
     static joinId( obj ) {
         return [
             obj.type,
@@ -1475,23 +1459,49 @@ class Id {
             obj.key
             ].join(";");
     }
-    static makeId( pid=patientId ) {
+    
+    static makeIdKey( pid, key=null ) {
         let obj = this.splitId( pid ) ;
-        obj.type = this.type;
-        obj.key = new Date().toISOString();
+		if ( key==null ) {
+			obj.key = new Date().toISOString();
+		} else {
+			obj.key = key;
+		}
+		obj.type = this.type;
         return this.joinId( obj );
     }
+    
+    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
+		return this.makeIdKey(pid);
+    }
+    
+    static allStart() { // Search entire database
+		return [this.type, this.start].join(";");
+	}
+    
+    static allEnd() { // Search entire database
+		return [this.type, this.end].join(";");
+	}
+
+    static patStart( pid=patientId ) { // Search just this patient's records
+		return this.makeIdKey( pid, this.start ) ;
+	}    
+
+    static patEnd( pid=patientId ) { // Search just this patient's records
+		return this.makeIdKey( pid, this.end ) ;
+	}    
 }
-        
-class PatientId extends Id{
+      
+class Id_patient extends Id{
     static type = "p";
-    static makeId( first, last, dob ) {
+    static makeId( doc ) {
+		// remove any ';' in the name
         return [
             this.type,
             this.version,
-            last,
-            first,
-            dob
+            (doc.LastName??"").replace(/;/g,"_"),
+            (doc.FirstName??"").replace(/;/g,"_"),
+            (doc.DOB??"").replace(/;/g,"_")
             ].join(";");
     }
     static splitId( id=patientId ) {
@@ -1499,37 +1509,36 @@ class PatientId extends Id{
     }
 }
 
-class NoteId extends Id{
+class Id_note extends Id{
     static type = "c";        
     static splitId( id=noteId ) {
         return super.splitId(id);
     }
 }
 
-class OperationId extends Id{
+class Id_operation extends Id{
     static type = "o";
     static splitId( id=operationId ) {
         return super.splitId(id);
     }
 }
 
-class MissionId extends PatientId{
+class Id_mission extends Id_patient{
     static type = "m";
     static makeId() {
-        return super.makeId("","","");
+        return super.makeId({});
     }
     static splitId( id=missionId ) {
         return super.splitId(id);
     }
 }
-
-var missionId = MissionId.makeId() ;
+var missionId = Id_mission.makeId() ;
 
 class Note { // convenience class
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.note, ""].join(";"),
-            endkey:   [ RecordFormat.type.note, "\\fff0"].join(";"),
+            startkey: Id_note.allStart(),
+            endkey:   Id_note.allEnd(),
             include_docs: true,
             binary: false,
             attachments: false,
@@ -1537,66 +1546,27 @@ class Note { // convenience class
         return db.allDocs(doc);
     }
 
-    static getRecordsId() {
-        let pspl = PatientId.splitId();
+    static getRecordsId(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
         };
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc() {
-        let pspl = PatientId.splitId();
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
             include_docs: true,
         };
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix() {
-        let pspl = PatientId.splitId();
+    static getRecordsIdPix(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
             include_docs: true,
             binary: true,
             attachments: true,
@@ -1605,7 +1575,7 @@ class Note { // convenience class
     }
 
     static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + NoteId.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
     }
 
     static select( nid=noteId ) {
@@ -1667,7 +1637,7 @@ class Note { // convenience class
                             });
                     reader.readAsDataURL(file); // start reading the file data.
                     }))
-                    .then( () => Note.getRecordsId() ) // refresh the list
+                    .then( () => Note.getRecordsId(patientId) ) // refresh the list
                     .catch( err => objectLog.err(err,"Photo drop") )
                     .finally( () => {
                         if (objectNoteList.category=='Uncategorized') {
@@ -1684,7 +1654,7 @@ class Note { // convenience class
             category = 'Uncategorized' ;
         }
         return {
-            _id: NoteId.makeId(),
+            _id: Id_note.makeId(),
             text: "",
             title: "",
             author: remoteCouch.username,
@@ -1704,7 +1674,7 @@ class Note { // convenience class
             img.handle();
             img.save(doc);
             db.put(doc)
-            .then( () => Note.getRecordsId() ) // to try to prime the list
+            .then( () => Note.getRecordsId(patientId) ) // to try to prime the list
             .catch( err => objectLog.err(err) )
             .finally( objectPage.show( null ) );
         }
@@ -1752,7 +1722,7 @@ class Operation { // convenience class
 
     static create() {
         let doc = {
-            _id: OperationId.makeId(),
+            _id: Id_operation.makeId(),
             author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
@@ -1792,8 +1762,8 @@ class Operation { // convenience class
         
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.operation, ""].join(";"),
-            endkey:   [ RecordFormat.type.operation, "\\fff0"].join(";"),
+            startkey: Id_operation.allStart(),
+            endkey:   Id_operation.allEnd(),
             include_docs: true,
         };
         return db.allDocs(doc);
@@ -1813,43 +1783,17 @@ class Operation { // convenience class
     }
 
     static getRecordsId(pid=patientId) {
-        let pspl = PatientId.splitId(pid);
         let doc = {
-            startkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_operation.patStart(pid),
+            endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
         return db.allDocs(doc) ;
     }
     static getRecordsIdDoc( pid=patientId ) {
-        let pspl = PatientId.splitId(pid);
         let doc = {
-            startkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_operation.patStart(pid),
+            endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
 
@@ -1885,7 +1829,7 @@ class Operation { // convenience class
     }
 
     static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + OperationId.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
     }
 }
 
@@ -2467,7 +2411,7 @@ class MissionList extends xPagelist {
     static subshow(extra="") {
         Mission.select() ;
         Mission.getRecordId()
-        .then( () => Note.getRecordsIdPix() )
+        .then( () => Note.getRecordsIdPix(patientId) )
         .then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
         .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
     }
@@ -2478,7 +2422,7 @@ class NoteListCategory extends Pagelist {
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
-            Note.getRecordsIdPix()
+            Note.getRecordsIdPix(patientId)
             .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
             .catch( (err) => {
                 objectLog.err(err,`Notelist (${extra})`);
@@ -2537,7 +2481,7 @@ class OperationEdit extends Pagelist {
         } else {
             objectPatientData = new OperationData(
             {
-                _id: OperationId.makeId(),
+                _id: Id_operation.makeId(),
                 type: "operation",
                 patient_id: patientId,
                 author: remoteCouch.username,
@@ -2552,7 +2496,7 @@ class OperationList extends Pagelist {
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
             objectTable = new OperationTable();
-            Operation.getRecordsIdDoc()
+            Operation.getRecordsIdDoc(patientId)
             .then( (docs) => objectTable.fill(docs.rows ) )
             .catch( (err) => objectLog.err(err) );
         } else {
@@ -2600,7 +2544,7 @@ class PatientMedical extends Pagelist {
             let args;
             Patient.getRecordId()
             .then( (doc) => args = [doc,structMedical] )
-            .then( _ => Operation.getRecordsIdDoc() )
+            .then( _ => Operation.getRecordsIdDoc(patientId) )
             .then( ( olist ) => {
                 olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
                 objectPatientData = new PatientData( ...args );
@@ -2639,9 +2583,9 @@ class PatientPhoto extends Pagelist {
             let onum ;
             Patient.getRecordIdPix()
             .then( (doc) => pdoc = doc )
-            .then( _ => Operation.getRecordsIdDoc() )
+            .then( _ => Operation.getRecordsIdDoc(patientId) )
             .then ( (doclist) => onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length )
-            .then( _ => Note.getRecordsIdDoc() )
+            .then( _ => Note.getRecordsIdDoc(patientId) )
             .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
                 objectLog.err(err);
@@ -3051,6 +2995,10 @@ class SearchTable extends SortTable {
                     case 'patient':
                         Patient.select( id );
                         objectPage.show( 'PatientPhoto' ) ;
+                        break ;
+                    case 'mission':
+                        Mission.select( id );
+                        objectPage.show( 'MissionInfo' ) ;
                         break ;
                     case 'operation':
                         Patient.select( doc.patient_id );

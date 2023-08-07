@@ -36,19 +36,11 @@ const remoteSecurity = {
     address: "", // set in SuperUser
     };
 
-// used for record keys ( see makeId, etc )
-const RecordFormat = {
-    type: {
-        patient: "p" ,
-        operation: "o" ,
-        note: "c" ,
-        mission: "m",
-        } ,
-    version: 0,
-};
-
 class Id {
     static version = 0;
+    static start="";
+    static end="\\fff0";
+    
     static splitId( id ) {
         if ( id ) {
             const spl = id.split(";");
@@ -63,6 +55,7 @@ class Id {
         }
         return null;
     }
+    
     static joinId( obj ) {
         return [
             obj.type,
@@ -73,43 +66,80 @@ class Id {
             obj.key
             ].join(";");
     }
-    static makeId( pid=patientId ) {
+    
+    static makeIdKey( pid, key=null ) {
         let obj = this.splitId( pid ) ;
-        obj.type = this.type;
-        obj.key = new Date().toISOString();
+		if ( key==null ) {
+			obj.key = new Date().toISOString();
+		} else {
+			obj.key = key;
+		}
+		obj.type = this.type;
         return this.joinId( obj );
     }
+    
+    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
+		return this.makeIdKey(pid);
+    }
+    
+    static allStart() { // Search entire database
+		return [this.type, this.start].join(";");
+	}
+    
+    static allEnd() { // Search entire database
+		return [this.type, this.end].join(";");
+	}
+
+    static patStart( pid=patientId ) { // Search just this patient's records
+		return this.makeIdKey( pid, this.start ) ;
+	}    
+
+    static patEnd( pid=patientId ) { // Search just this patient's records
+		return this.makeIdKey( pid, this.end ) ;
+	}    
 }
-        
-class PatientId extends Id{
+      
+class Id_patient extends Id{
     static type = "p";
-    static makeId( first, last, dob ) {
+    static makeId( doc ) {
+		// remove any ';' in the name
         return [
             this.type,
             this.version,
-            last,
-            first,
-            dob
+            (doc.LastName??"").replace(/;/g,"_"),
+            (doc.FirstName??"").replace(/;/g,"_"),
+            (doc.DOB??"").replace(/;/g,"_")
             ].join(";");
     }
-}
-
-class NoteId extends Id{
-    static type = "c";        
-}
-
-class OperationId extends Id{
-    static type = "o";
-}
-
-class MissionId extends PatientId{
-    static type = "m";
-    static makeId() {
-        return super.makeId("","","");
+    static splitId( id=patientId ) {
+        return super.splitId(id);
     }
 }
 
-var missionId = MissionId.makeId();
+class Id_note extends Id{
+    static type = "c";        
+    static splitId( id=noteId ) {
+        return super.splitId(id);
+    }
+}
+
+class Id_operation extends Id{
+    static type = "o";
+    static splitId( id=operationId ) {
+        return super.splitId(id);
+    }
+}
+
+class Id_mission extends Id_patient{
+    static type = "m";
+    static makeId() {
+        return super.makeId({});
+    }
+    static splitId( id=missionId ) {
+        return super.splitId(id);
+    }
+}
+var missionId = Id_mission.makeId() ;
 
 // used to generate data entry pages "PatientData" type
 const structDatabase = [
@@ -921,19 +951,12 @@ class Patient { // convenience class
             let pdoc;
             let ndocs;
             let odocs;
-            Patient.getRecordIdPix()
-                // get patient
-            .then( (doc) => {
-                pdoc = doc;
-                return Note.getRecordsIdDoc();
-                })
+            Patient.getRecordIdPix(patientId) // patient
+            .then( (doc) => pdoc = doc )
+            .then( _ => Note.getRecordsIdDoc(patientId) ) // notes
+            .then( (docs) => ndocs = docs.row )
+            .then( _ => Operation.getRecordsIdDoc(patientId) ) // operations
             .then( (docs) => {
-                // get notes
-                ndocs = docs.rows;
-                return Operation.getRecordsIdDoc();
-                })
-            .then( (docs) => {
-                // get operations
                 odocs = docs.rows;
                 // Confirm question
                 let c = `Delete patient \n   ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}\n    `;
@@ -973,8 +996,8 @@ class Patient { // convenience class
 
     static getAllId() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey: Id_patient.allEnd(),
         };
 
         return db.allDocs(doc);
@@ -982,8 +1005,8 @@ class Patient { // convenience class
         
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey: Id_patient.allEnd(),
             include_docs: true,
         };
 
@@ -992,8 +1015,8 @@ class Patient { // convenience class
         
     static getAllIdDocPix() {
         let doc = {
-            startkey: [ RecordFormat.type.patient, ""].join(";"),
-            endkey:   [ RecordFormat.type.patient, "\\fff0"].join(";"),
+            startkey: Id_patient.allStart(),
+            endkey: Id_patient.allEnd(),
             include_docs: true,
             binary: true,
             attachments: true,
@@ -1026,24 +1049,6 @@ class Patient { // convenience class
         }
     }
 
-    static splitId( pid = patientId ) {
-        if ( pid ) {
-            let spl = pid.split(";");
-            if ( spl.length !== 5 ) {
-                objectLog.err("Bad PatientId "+pid);
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-            };
-        }
-        return null;
-    }
-
     static isSelected() {
         return ( patientId != null ) && ( patientId != missionId ) ;
     }
@@ -1061,8 +1066,8 @@ class Patient { // convenience class
 class Note { // convenience class
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.note, ""].join(";"),
-            endkey:   [ RecordFormat.type.note, "\\fff0"].join(";"),
+            startkey: Id_note.allStart(),
+            endkey: Id_note.allEnd(),
             include_docs: true,
             binary: false,
             attachments: false,
@@ -1070,66 +1075,27 @@ class Note { // convenience class
         return db.allDocs(doc);
     }
 
-    static getRecordsId() {
-        let pspl = Patient.splitId();
+    static getRecordsId(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
         };
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc() {
-        let pspl = Patient.splitId();
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
             include_docs: true,
         };
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix() {
-        let pspl = Patient.splitId();
+    static getRecordsIdPix(pid=patientId) {
         let doc = {
-            startkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.note,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_note.patStart(pid),
+            endkey: Id_note.patEnd(pid),
             include_docs: true,
             binary: true,
             attachments: true,
@@ -1137,26 +1103,8 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static splitId( nid=noteId ) {
-        if ( nid ) {
-            let spl = nid.split(";");
-            if ( spl.length !== 6 ) {
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-                key: spl[5],
-            };
-        }
-        return null;
-    }
-
     static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + Note.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
     }
 
     static select( nid=noteId ) {
@@ -1201,7 +1149,7 @@ class Operation { // convenience class
 
     static create() {
         let doc = {
-            _id: OperationId.makeId(),
+            _id: Id_operation.makeId(),
             author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
@@ -1240,8 +1188,8 @@ class Operation { // convenience class
         
     static getAllIdDoc() {
         let doc = {
-            startkey: [ RecordFormat.type.operation, ""].join(";"),
-            endkey:   [ RecordFormat.type.operation, "\\fff0"].join(";"),
+            startkey: Id_operation.allStart(),
+            endkey: Id_operation.allEnd(),
             include_docs: true,
         };
         return db.allDocs(doc);
@@ -1261,43 +1209,17 @@ class Operation { // convenience class
     }
 
     static getRecordsId(pid=patientId) {
-        let pspl = Patient.splitId(pid);
         let doc = {
-            startkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_operation.patStart(pid),
+            endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
         return db.allDocs(doc) ;
     }
     static getRecordsIdDoc( pid=patientId ) {
-        let pspl = Patient.splitId(pid);
         let doc = {
-            startkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                ""].join(";"),
-            endkey: [
-                RecordFormat.type.operation,
-                RecordFormat.version,
-                pspl.last,
-                pspl.first,
-                pspl.dob,
-                "\\fff0"].join(";"),
+            startkey: Id_operation.patStart(pid),
+            endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
 
@@ -1332,26 +1254,8 @@ class Operation { // convenience class
             });
     }
 
-    static splitId( oid=operationId ) {
-        if ( oid ) {
-            let spl = oid.split(";");
-            if ( spl.length !== 6 ) {
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-                key: spl[5],
-            };
-        }
-        return null;
-    }
-
     static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + Operation.splitId(doc._id).key).substring(0,24) ;
+        return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
     }
 }
 
