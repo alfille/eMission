@@ -10,7 +10,6 @@ var objectTable = null;
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
-var embeddedState = false ;
 
 // globals cookie backed
 var objectPage ;
@@ -1357,7 +1356,7 @@ We are looking forward to your participation.
             300,300,
             4);
 
-        Page.show_screen( "user" ) ;
+        objectPage.show_screen( "user" ) ;
         window.print();
         objectPage.show("SendUser");
     }
@@ -1658,6 +1657,8 @@ class Page { // singleton class
         ImageImbedded.clearSrc() ;
         ImageImbedded.clearSrc() ;
 
+        this.show_screen( "screen" ); // basic page display setup
+
         // send to page-specific code
         const page_class = Pagelist.subclass(objectPage.current()) ;
         if ( page_class ) {
@@ -1668,7 +1669,7 @@ class Page { // singleton class
     }
 
     
-    static show_screen( type ) { // switch between screen and print
+    show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
         let showscreen = {
             ".work_screen": type=="screen",
@@ -1722,7 +1723,6 @@ class Pagelist {
     
     static show(extra="") {
         // set up display
-        Page.show_screen( "screen" );
         document.querySelector(".patientDataEdit").style.display="none"; 
         document.querySelectorAll(".topButtons")
             .forEach( tb => tb.style.display = "block" );
@@ -1749,23 +1749,11 @@ class Pagelist {
     } 
 }
 
-class xPagelist extends Pagelist {
-    // un-embeddable page
-    // e.g. cannot be used to search for a record
-    // exclude administrative pages
-    static show(extra="") {
-        if ( embeddedState ) {
-            objectPage.show("AllPatients");
-        }
-        super.show(extra);
-    }
-}
-
-class Administration extends xPagelist {
+class Administration extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
-class DatabaseInfo extends xPagelist {
+class DatabaseInfo extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -1777,7 +1765,7 @@ class DatabaseInfo extends xPagelist {
     }
 }
 
-class DBTable extends xPagelist {
+class DBTable extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -1790,7 +1778,7 @@ class DBTable extends xPagelist {
     }
 }
 
-class ErrorLog extends xPagelist {
+class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -1798,7 +1786,7 @@ class ErrorLog extends xPagelist {
     }
 }
 
-class SendUser extends xPagelist {
+class SendUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -1818,7 +1806,7 @@ class SendUser extends xPagelist {
     }
 }
 
-class SuperUser extends xPagelist {
+class SuperUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -1827,7 +1815,7 @@ class SuperUser extends xPagelist {
     }
 }
 
-class UserEdit extends xPagelist {
+class UserEdit extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -1851,7 +1839,7 @@ class UserEdit extends xPagelist {
     }
 }
 
-class UserList extends xPagelist {
+class UserList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -1870,7 +1858,7 @@ class UserList extends xPagelist {
     }
 }
 
-class UserNew extends xPagelist {
+class UserNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -1882,6 +1870,17 @@ class UserNew extends xPagelist {
             objectPatientData = new NewUserData( {}, structNewUser );
         }
     }
+}
+
+class PatientMerge extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    
+    static subshow(extra="") {
+		let u = new URL(location.href);
+		u.pathname="/index.html";
+		document.getElementById("fromframe").src=u.toString();
+		document.getElementById("toframe").src=u.toString();
+	}
 }
 
 function isAndroid() {
@@ -2234,7 +2233,7 @@ objectLog = new Log() ;
 
 function parseQuery() {
     // returns a dict of keys/values or null
-    let url = new URL(location.href);
+    const url = new URL(location.href);
     let r = {};
     for ( let [n,v] of url.searchParams) {
         r[n] = v;
@@ -2260,16 +2259,6 @@ function cookies_n_query() {
         Patient.select( qline.patientId );
         objectPage.next("PatientPhoto");
     }
-}
-
-function setEmbedded(focus="patient") {
-    // document.querySelector("body").style.transform="scale(0.7)";
-    embeddedState = true ;
-    document.querySelectorAll(".mainOnly")
-    .forEach( (v)=> v.style.display="none" ) ;
-    document.querySelectorAll(".mainOnly")
-    .forEach( (v)=> console.log(v) ) ;
-    objectPage.show( objectPage.show("AllPatients") );
 }
 
 // Application starting point

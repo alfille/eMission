@@ -11,7 +11,6 @@ var objectSearch = null;
 var objectRemote = null;
 var objectCollation = null;
 var objectLog = null;
-var embeddedState = false ;
 
 // globals cookie backed
 var objectPage ;
@@ -19,6 +18,8 @@ var patientId;
 var noteId;
 var operationId;
 var remoteCouch;
+
+// other globals
 var NoPhoto = "style/NoPhoto.png";
 var DCTOHClogo = "images/DCTOHC11.jpg";
 
@@ -1373,7 +1374,7 @@ class Patient { // convenience class
         let t = card.getElementsByTagName("table");
         Patient.getRecordIdPix()
         .then( (doc) => {
-            Page.show_screen( "patient" );
+            objectPage.show_screen( "patient" );
             let img = new ImageImbedded( card, doc, NoPhoto ) ;
             img.display();
             let link = new URL(window.location.href);
@@ -2132,6 +2133,7 @@ class Page { // singleton class
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+		// test that database is selected
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
             if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
@@ -2141,6 +2143,19 @@ class Page { // singleton class
 
         this.next(state) ; // update reversal list
 
+		if ( window.frameElement ) { // imbedded, only show SelectPatient
+			console.log("EMBEDDED");
+			if ( state != "SelectPatient" ) {
+				this.show("SelectPatient") ;
+			}
+		} else if ( this.current() == "SelectPatient" ) {
+			console.log("NOT EMBEDDED");
+			this.show("AllPatients");
+		} else {
+			console.log("AMBIGUOUS",window.frameElement,state);
+		}
+
+		// clear display objects
         objectPatientData = null;
         objectTable = null;
 
@@ -2148,11 +2163,13 @@ class Page { // singleton class
         ImageImbedded.clearSrc() ;
         ImageImbedded.clearSrc() ;
 
+        this.show_screen( "screen" ); // basic page display setup
+
         // send to page-specific code
         (Pagelist.subclass(objectPage.current())).show(extra);
     }
     
-    static show_screen( type ) { // switch between screen and print
+    show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
         let showscreen = {
             ".work_screen": type=="screen",
@@ -2210,15 +2227,14 @@ class Page { // singleton class
 class Pagelist {
     // list of subclasses = displayed "pages"
     // Note that these classes are never "instantiated -- only used statically
-    static pages = {} ; // [pagetitle]->class -- pagetitle ise used by HTML to toggle display of "pages"
+    static pages = {} ; // [pagetitle]->class -- pagetitle is used by HTML to toggle display of "pages"
     // prototype to add to pages
     static AddPage() { Pagelist.pages[this.name]=this; }
     // safeLanding -- safe to resume on this page
     static safeLanding = true ; // default
     
     static show(extra="") {
-        // set up display
-        Page.show_screen( "screen" );
+        // set up specific page display
         document.querySelector(".patientDataEdit").style.display="none"; 
         document.querySelectorAll(".topButtons")
             .forEach( tb => tb.style.display = "block" );
@@ -2235,6 +2251,7 @@ class Pagelist {
     }
     
     static subclass(pagetitle) {
+		console.log("SUBCLASS",pagetitle,Pagelist.pages);
         let cls = Pagelist.pages[pagetitle] ?? null ;
         if ( cls ) {
             return cls ;
@@ -2246,19 +2263,7 @@ class Pagelist {
     } 
 }
 
-class xPagelist extends Pagelist {
-    // un-embeddable page
-    // e.g. cannot be used to search for a record
-    // exclude administrative pages
-    static show(extra="") {
-        if ( embeddedState ) {
-            objectPage.show("AllPatients");
-        }
-        super.show(extra);
-    }
-}
-
-class Administration extends xPagelist {
+class Administration extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2295,6 +2300,7 @@ class AllOperations extends Pagelist {
 
 class AllPatients extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding = false ;
 
     static subshow(extra="") {
         objectTable = new PatientTable();
@@ -2321,11 +2327,56 @@ class AllPatients extends Pagelist {
     }
 }
 
+class SelectPatient extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+
+    static subshow(extra="") {
+        document.getElementById("headerbox").style.display = "none"; // make less confusing
+        objectTable = new SelectPatientTable();
+        let onum= {} ;
+        let nnum = {} ;
+        Operation.getAllIdDoc() // Operations
+        .then( doclist => doclist.rows
+			.forEach( d => {
+				let p = d.doc.patient_id;
+				if (p in onum ) {
+					++ onum[p];
+				} else {
+					onum[p] = 0 ; // excludes placeholders
+				}
+				}))
+		.then( _ => Note.getAllIdDoc() ) // Notes
+        .then( doclist => doclist.rows
+			.forEach( d => {
+				let p = d.doc.patient_id;
+				if (p in nnum ) {
+					++ nnum[p];
+				} else {
+					nnum[p] = 1 ;
+				}
+				}))
+        .then( _ => Patient.getAllIdDoc() ) // Patients
+        .then( (docs) => {
+            docs.rows
+            .forEach( d => {
+				d.doc.Operations = onum[d.id]??0 ;
+				d.doc.Notes = nnum[d.id]??0 ;
+			})
+            objectTable.fill(docs.rows );
+            })
+        .catch( (err) => objectLog.err(err) );
+    }
+}
+
 class DatabaseInfo extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
-class DBTable extends xPagelist {
+class PatientMerge extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
+
+class DBTable extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2338,7 +2389,7 @@ class DBTable extends xPagelist {
     }
 }
 
-class Download extends xPagelist {
+class Download extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2358,7 +2409,7 @@ class DownloadPPTX extends Download {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
-class ErrorLog extends xPagelist {
+class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2385,7 +2436,7 @@ class InvalidPatient extends Pagelist {
     }
 }
 
-class MissionInfo extends xPagelist {
+class MissionInfo extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2405,7 +2456,7 @@ class MissionInfo extends xPagelist {
     }
 }
 
-class MissionList extends xPagelist {
+class MissionList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2442,7 +2493,7 @@ class NoteList extends NoteListCategory {
     }
 }
 
-class NoteNew extends xPagelist {
+class NoteNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -2505,7 +2556,7 @@ class OperationList extends Pagelist {
     }
 }
 
-class OperationNew extends xPagelist {
+class OperationNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -2559,7 +2610,7 @@ class PatientMedical extends Pagelist {
     }
 }
 
-class PatientNew extends xPagelist {
+class PatientNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -2597,7 +2648,7 @@ class PatientPhoto extends Pagelist {
     }
 }
 
-class QuickPhoto extends xPagelist {
+class QuickPhoto extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 
@@ -2611,7 +2662,7 @@ class QuickPhoto extends xPagelist {
     }
 }
 
-class RemoteDatabaseInput extends xPagelist {
+class RemoteDatabaseInput extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
@@ -2836,6 +2887,30 @@ class PatientTable extends SortTable {
 
     editpage() {
         objectPage.show("PatientPhoto");
+    }
+}
+
+class SelectPatientTable extends SortTable {
+    constructor() {
+        super( 
+            ["LastName", "DOB","Operations","Notes" ], 
+            "SelectPatient",
+            [
+                ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
+            ] 
+            );
+    }
+
+    selectId() {
+        return patientId;
+    }
+
+    selectFunc(id) {
+        Patient.select(id) ;
+    }
+
+    editpage() {
+        //objectPage.show("PatientPhoto");
     }
 }
 
@@ -3315,20 +3390,10 @@ function cookies_n_query() {
     objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
-    if ( qline && ( "patientId" in qline ) ) {
+	if ( qline && ( "patientId" in qline ) ) {
         Patient.select( qline.patientId );
         objectPage.next("PatientPhoto");
     }
-}
-
-function setEmbedded(focus="patient") {
-    // document.querySelector("body").style.transform="scale(0.7)";
-    embeddedState = true ;
-    document.querySelectorAll(".mainOnly")
-    .forEach( (v)=> v.style.display="none" ) ;
-    document.querySelectorAll(".mainOnly")
-    .forEach( (v)=> console.log(v) ) ;
-    objectPage.show( objectPage.show("AllPatients") );
 }
 
 // Application starting point
@@ -3363,7 +3428,7 @@ window.onload = () => {
         // Set up text search
         objectSearch = new Search();
         objectSearch.fill()
-        .then ( () =>
+        .then ( _ =>
             // now start listening for any changes to the database
             db.changes({ since: 'now', live: true, include_docs: true, })
             .on('change', (change) => {

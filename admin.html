@@ -64,6 +64,10 @@
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                         <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage mainOnly"></button>
                     </div>
+                    <!-- top: PatientMerge -->
+                    <div class="PatientMerge pageOverlay">
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                    </div>
                 </div>
             </div>
                 <div id="titlebox">
@@ -77,6 +81,7 @@
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
                     <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'DatabaseInfo' )">Database Information</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMerge' )">Merge Patient Records</button>
                 </div>
             </div>
             <!-- body: DBTable -->
@@ -104,6 +109,21 @@
                     <div><label>User eMission link:<input type=text readonly=true id="SendUserLink"></label></div>
                     <div><a target="_blank" rel=noopener noreferrer href="" id="SendUserMail">Mail link</a></div>
                     <div><button type="button" class="divbutton" id="SendUserPrint">Print for sending</button></div>
+                </div>
+            </div>
+            <!-- body: PatientMerge -->
+            <div class="PatientMerge pageOverlay">
+                <div id="PatientMergeContent" class="buttonmenu" >
+					<div id="frameholder">
+						<fieldset id="fromframeset">
+							<legend>Choose FROM patient</legend>
+							<iframe name="fromframe" id="fromframe"></iframe>
+						</fieldset>
+						<fieldset id="toframeset">
+							<legend>Choose To patient</legend>
+							<iframe name="toframe" id="toframe"></iframe>
+						</fieldset>
+					</div>
                 </div>
             </div>
             <!-- body: ErrorLog -->

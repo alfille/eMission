@@ -1011,6 +1011,8 @@ class Page { // singleton class
         ImageImbedded.clearSrc() ;
         ImageImbedded.clearSrc() ;
 
+        this.show_screen( "screen" ); // basic page display setup
+
         // send to page-specific code
         const page_class = Pagelist.subclass(objectPage.current()) ;
         if ( page_class ) {
@@ -1020,9 +1022,9 @@ class Page { // singleton class
         }
     }
 
-    static show_screen( type ) { // switch between screen and print
+    screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
-        let showscreen = {
+        const showscreen = {
             ".work_screen": type=="screen",
             ".print_patient": type == "patient",
             ".print_user": type == "user",
@@ -1069,7 +1071,6 @@ class Pagelist {
     
     static show(extra="") {
         // set up display
-        Page.show_screen( "screen" );
         document.querySelectorAll(".topButtons")
             .forEach( tb => tb.style.display = "block" );
 
