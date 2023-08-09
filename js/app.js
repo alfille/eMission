@@ -20,6 +20,8 @@ var operationId;
 var remoteCouch;
 
 // other globals
+var in_frame = false ;
+var frame_name = "" ;
 var NoPhoto = "style/NoPhoto.png";
 var DCTOHClogo = "images/DCTOHC11.jpg";
 
@@ -1463,40 +1465,40 @@ class Id {
     
     static makeIdKey( pid, key=null ) {
         let obj = this.splitId( pid ) ;
-		if ( key==null ) {
-			obj.key = new Date().toISOString();
-		} else {
-			obj.key = key;
-		}
-		obj.type = this.type;
+        if ( key==null ) {
+            obj.key = new Date().toISOString();
+        } else {
+            obj.key = key;
+        }
+        obj.type = this.type;
         return this.joinId( obj );
     }
     
     static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
-		return this.makeIdKey(pid);
+        return this.makeIdKey(pid);
     }
     
     static allStart() { // Search entire database
-		return [this.type, this.start].join(";");
-	}
+        return [this.type, this.start].join(";");
+    }
     
     static allEnd() { // Search entire database
-		return [this.type, this.end].join(";");
-	}
+        return [this.type, this.end].join(";");
+    }
 
     static patStart( pid=patientId ) { // Search just this patient's records
-		return this.makeIdKey( pid, this.start ) ;
-	}    
+        return this.makeIdKey( pid, this.start ) ;
+    }    
 
     static patEnd( pid=patientId ) { // Search just this patient's records
-		return this.makeIdKey( pid, this.end ) ;
-	}    
+        return this.makeIdKey( pid, this.end ) ;
+    }    
 }
       
 class Id_patient extends Id{
     static type = "p";
     static makeId( doc ) {
-		// remove any ';' in the name
+        // remove any ';' in the name
         return [
             this.type,
             this.version,
@@ -2029,11 +2031,14 @@ class RemoteReplicant { // convenience class
 
 class Cookie { //convenience class
     static set( cname, value ) {
-      // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
-        window[cname] = value;
-        let date = new Date();
-        date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
-        document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
+        // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
+        if ( ! in_frame ) {
+            // Don't store values for in-frame instances -- it get's too confusing
+            window[cname] = value;
+            let date = new Date();
+            date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
+            document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
+        }
     }
 
     static del( cname ) {
@@ -2133,7 +2138,7 @@ class Page { // singleton class
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-		// test that database is selected
+        // test that database is selected
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
             if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
@@ -2143,19 +2148,15 @@ class Page { // singleton class
 
         this.next(state) ; // update reversal list
 
-		if ( window.frameElement ) { // imbedded, only show SelectPatient
-			console.log("EMBEDDED");
-			if ( state != "SelectPatient" ) {
-				this.show("SelectPatient") ;
-			}
-		} else if ( this.current() == "SelectPatient" ) {
-			console.log("NOT EMBEDDED");
-			this.show("AllPatients");
-		} else {
-			console.log("AMBIGUOUS",window.frameElement,state);
-		}
+        if ( in_frame ) { // imbedded, only show SelectPatient
+            if ( state != "SelectPatient" ) {
+                this.show("SelectPatient") ;
+            }
+        } else if ( this.current() == "SelectPatient" ) {
+            this.show("MainMenu");
+        }
 
-		// clear display objects
+        // clear display objects
         objectPatientData = null;
         objectTable = null;
 
@@ -2251,7 +2252,6 @@ class Pagelist {
     }
     
     static subclass(pagetitle) {
-		console.log("SUBCLASS",pagetitle,Pagelist.pages);
         let cls = Pagelist.pages[pagetitle] ?? null ;
         if ( cls ) {
             return cls ;
@@ -2332,36 +2332,38 @@ class SelectPatient extends Pagelist {
 
     static subshow(extra="") {
         document.getElementById("headerbox").style.display = "none"; // make less confusing
+        document.getElementById("titlebox").style.display = "none"; // make less confusing
+        document.getElementById("footerflex").style.display = "none"; // make less confusing
         objectTable = new SelectPatientTable();
         let onum= {} ;
         let nnum = {} ;
         Operation.getAllIdDoc() // Operations
         .then( doclist => doclist.rows
-			.forEach( d => {
-				let p = d.doc.patient_id;
-				if (p in onum ) {
-					++ onum[p];
-				} else {
-					onum[p] = 0 ; // excludes placeholders
-				}
-				}))
-		.then( _ => Note.getAllIdDoc() ) // Notes
+            .forEach( d => {
+                let p = d.doc.patient_id;
+                if (p in onum ) {
+                    ++ onum[p];
+                } else {
+                    onum[p] = 0 ; // excludes placeholders
+                }
+                }))
+        .then( _ => Note.getAllIdDoc() ) // Notes
         .then( doclist => doclist.rows
-			.forEach( d => {
-				let p = d.doc.patient_id;
-				if (p in nnum ) {
-					++ nnum[p];
-				} else {
-					nnum[p] = 1 ;
-				}
-				}))
+            .forEach( d => {
+                let p = d.doc.patient_id;
+                if (p in nnum ) {
+                    ++ nnum[p];
+                } else {
+                    nnum[p] = 1 ;
+                }
+                }))
         .then( _ => Patient.getAllIdDoc() ) // Patients
         .then( (docs) => {
             docs.rows
             .forEach( d => {
-				d.doc.Operations = onum[d.id]??0 ;
-				d.doc.Notes = nnum[d.id]??0 ;
-			})
+                d.doc.Operations = onum[d.id]??0 ;
+                d.doc.Notes = nnum[d.id]??0 ;
+            })
             objectTable.fill(docs.rows );
             })
         .catch( (err) => objectLog.err(err) );
@@ -2897,16 +2899,22 @@ class SelectPatientTable extends SortTable {
             "SelectPatient",
             [
                 ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
+                ["Operations","Ops",null],
             ] 
             );
+        this.pid = "";
     }
 
     selectId() {
-        return patientId;
+        return this.pid;
     }
 
     selectFunc(id) {
-        Patient.select(id) ;
+        this.pid = id
+        window.top.postMessage({
+            frame: frame_name,
+            pid: id,
+        },"*");
     }
 
     editpage() {
@@ -3390,15 +3398,22 @@ function cookies_n_query() {
     objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
-	if ( qline && ( "patientId" in qline ) ) {
+    if ( qline && ( "patientId" in qline ) ) {
         Patient.select( qline.patientId );
         objectPage.next("PatientPhoto");
+    }
+
+    // frame
+    if ( qline && ( "frame" in qline ) ) {
+        frame_name = qline.frame;
     }
 }
 
 // Application starting point
 window.onload = () => {
-    // Initial splash screen
+    if ( window.frameElement ) {
+        in_frame = true ;
+    }
 
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');

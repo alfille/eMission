@@ -68,40 +68,40 @@ class Id {
     
     static makeIdKey( pid, key=null ) {
         let obj = this.splitId( pid ) ;
-		if ( key==null ) {
-			obj.key = new Date().toISOString();
-		} else {
-			obj.key = key;
-		}
-		obj.type = this.type;
+        if ( key==null ) {
+            obj.key = new Date().toISOString();
+        } else {
+            obj.key = key;
+        }
+        obj.type = this.type;
         return this.joinId( obj );
     }
     
     static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
-		return this.makeIdKey(pid);
+        return this.makeIdKey(pid);
     }
     
     static allStart() { // Search entire database
-		return [this.type, this.start].join(";");
-	}
+        return [this.type, this.start].join(";");
+    }
     
     static allEnd() { // Search entire database
-		return [this.type, this.end].join(";");
-	}
+        return [this.type, this.end].join(";");
+    }
 
     static patStart( pid=patientId ) { // Search just this patient's records
-		return this.makeIdKey( pid, this.start ) ;
-	}    
+        return this.makeIdKey( pid, this.start ) ;
+    }    
 
     static patEnd( pid=patientId ) { // Search just this patient's records
-		return this.makeIdKey( pid, this.end ) ;
-	}    
+        return this.makeIdKey( pid, this.end ) ;
+    }    
 }
       
 class Id_patient extends Id{
     static type = "p";
     static makeId( doc ) {
-		// remove any ';' in the name
+        // remove any ';' in the name
         return [
             this.type,
             this.version,
@@ -1876,11 +1876,14 @@ class PatientMerge extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
     static subshow(extra="") {
-		let u = new URL(location.href);
-		u.pathname="/index.html";
-		document.getElementById("fromframe").src=u.toString();
-		document.getElementById("toframe").src=u.toString();
-	}
+        let u = new URL(location.href);
+        u.pathname="/index.html";
+        u.searchParams.append("frame","to");
+        document.getElementById("fromframe").src=u.toString();
+        u.searchParams.delete("frame");
+        u.searchParams.append("frame","from");
+        document.getElementById("toframe").src=u.toString();
+    }
 }
 
 function isAndroid() {

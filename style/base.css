@@ -415,6 +415,12 @@ legend {
   text-align: center;
   font-size: 12px;
 }
+#tofieldset,#fromfieldset {
+  width:45%;
+}
+#toframe,#fromframe {
+  width:100%;
+}
 #footerflex {
   display: flex;
   color: white;
@@ -431,7 +437,7 @@ legend {
 #frameholder {
   display:flex;
   flex-flow:row wrap;
-  justify-content:space-around;
+  justify-content:stretch;
 }
 
 /* flatpickr */
