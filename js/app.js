@@ -384,7 +384,7 @@ class Search { // singleton class
     }
 
     addDoc( doc ) {
-        if ( doc?.type in this.fieldlist ) {
+        if ( ! in_frame && (doc?.type in this.fieldlist) ) {
             this.index[doc.type].addDoc(
                 this.fieldlist[doc.type]
                 .concat("_id")
@@ -395,13 +395,19 @@ class Search { // singleton class
 
     removeDocById( doc_id ) {
         // we don't have full doc. Could figure type from ID, but easier (and more general) to remove from all.
-        this.types.forEach( ty => this.index[ty].removeDocByRef( doc_id ) );
+        if ( ! in_frame ) {
+            this.types.forEach( ty => this.index[ty].removeDocByRef( doc_id ) );
+        }
     }
 
     fill() {
-        // adds docs to index
-        return db.allDocs( { include_docs: true, } )
-        .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
+        if ( in_frame ) {
+            return Promise.resolve(true) ;
+        } else {
+            // adds docs to index
+            return db.allDocs( { include_docs: true, } )
+            .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
+        }
     }
 
     search( text="" ) {
@@ -2912,11 +2918,11 @@ class SelectPatientTable extends SortTable {
 
     selectFunc(id) {
         this.pid = id
-        window.top.postMessage({
+        db.get(id)
+        .then( doc => window.top.postMessage({
             frame: frame_name,
-            pid: id,
-        },"*");
-        console.log("POSTMESSAGE");
+            doc: doc,
+        },"*"));
     }
 
     editpage() {

@@ -1874,20 +1874,36 @@ class UserNew extends Pagelist {
 
 class PatientMerge extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static transfer = {};
+    static test="HI";
     
-	static gotMessage(e) {
-		console.log(e.data,e.origin,e.lastEventId);
-		switch ( e.data?.frame ) {
-			case 'from':
-				document.getElementById('fromlabel').innerText=e.data.pid;
-				break;
-			case 'to':
-				document.getElementById('tolabel').innerText=e.data.pid;
-				break;
-			}
-	}
+    static not_mergeable() {
+        return (PatientMerge.transfer?.to==undefined) || (PatientMerge.transfer?.from==undefined) || (PatientMerge.transfer.to == PatientMerge.transfer.from) ;
+    }
+    
+    static gotMessage(e) {
+        let target=null;
+        switch ( e.data?.frame ) {
+            case 'from':
+                target='fromlabel';
+                break;
+            case 'to':
+                target='tolabel';
+                break;
+            default:
+                return ;
+            }
+        document.getElementById(target).innerHTML=`Name: <B>${e.data.doc.FirstName} ${e.data.doc.LastName}</B><br>ID: <B>${e.data.doc._id}</B>` ;
+        PatientMerge.transfer[e.data.frame]=e.data.doc._id;
+        document.getElementById("patientMergeButton").disabled=PatientMerge.not_mergeable();
+            
+    }
 
     static subshow(extra="") {
+        document.getElementById('fromlabel').innerHTML="";
+        document.getElementById('tolabel').innerHTML="";
+
+        this.transfer = {} ;
         let u = new URL(location.href);
         u.pathname="/index.html";
         
@@ -1902,10 +1918,9 @@ class PatientMerge extends Pagelist {
     }
     
     static leave() {
-		document.getElementById('fromlabel').innerText="from";
-		document.getElementById('tolabel').innerText="to";
-		window.removeEventListener('message',this.gotMessage);
-	}
+        window.removeEventListener('message',this.gotMessage);
+        objectPage.show( 'back' );
+    }
 }
 
 function isAndroid() {

@@ -66,7 +66,8 @@
                     </div>
                     <!-- top: PatientMerge -->
                     <div class="PatientMerge pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton delete" id="patientMergeButton" onclick="PatientMerge.merge()" disabled>Merge Patient Records</button>
+                        <button type="button" class="divbutton return" onclick="PatientMerge.leave()">Return</button>
                     </div>
                 </div>
             </div>
@@ -115,20 +116,20 @@
             <div class="PatientMerge pageOverlay">
                 <div id="PatientMergeContent" class="buttonmenu" >
                     <div id="frameholder">
-						<fieldset id="fromfieldset">
-							<div class="framesource">
-								<legend>Choose FROM patient</legend>
-								<label id="fromlabel">from</label>
-								<iframe name="fromframe" id="fromframe"></iframe>
-							</div>
-						</fieldset>
-						<fieldset id="tofieldset">
-							<div class="framesource">
-								<legend>Choose To patient</legend>
-								<label id="tolabel">to</label>
-								<iframe name="toframe" id="toframe"></iframe>
-							</div>
-						</fieldset>
+                        <fieldset id="fromfieldset">
+                            <div class="framesource">
+                                <legend>Choose FROM patient</legend>
+                                <label id="fromlabel"></label>
+                                <iframe name="fromframe" id="fromframe"></iframe>
+                            </div>
+                        </fieldset>
+                        <fieldset id="tofieldset">
+                            <div class="framesource">
+                                <legend>Choose To patient</legend>
+                                <label id="tolabel"></label>
+                                <iframe name="toframe" id="toframe"></iframe>
+                            </div>
+                        </fieldset>
                     </div>
                 </div>
             </div>
