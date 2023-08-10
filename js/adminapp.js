@@ -1875,15 +1875,37 @@ class UserNew extends Pagelist {
 class PatientMerge extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     
+	static gotMessage(e) {
+		console.log(e.data,e.origin,e.lastEventId);
+		switch ( e.data?.frame ) {
+			case 'from':
+				document.getElementById('fromlabel').innerText=e.data.pid;
+				break;
+			case 'to':
+				document.getElementById('tolabel').innerText=e.data.pid;
+				break;
+			}
+	}
+
     static subshow(extra="") {
         let u = new URL(location.href);
         u.pathname="/index.html";
-        u.searchParams.append("frame","to");
-        document.getElementById("fromframe").src=u.toString();
-        u.searchParams.delete("frame");
+        
         u.searchParams.append("frame","from");
+        document.getElementById("fromframe").src=u.toString();
+        
+        u.searchParams.delete("frame");
+        u.searchParams.append("frame","to");
         document.getElementById("toframe").src=u.toString();
+        
+        window.addEventListener('message',this.gotMessage);
     }
+    
+    static leave() {
+		document.getElementById('fromlabel').innerText="from";
+		document.getElementById('tolabel').innerText="to";
+		window.removeEventListener('message',this.gotMessage);
+	}
 }
 
 function isAndroid() {

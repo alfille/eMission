@@ -2899,7 +2899,8 @@ class SelectPatientTable extends SortTable {
             "SelectPatient",
             [
                 ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
-                ["Operations","Ops",null],
+                ["Operations","Op",null],
+                ["Notes","Note",null],
             ] 
             );
         this.pid = "";
@@ -2915,6 +2916,7 @@ class SelectPatientTable extends SortTable {
             frame: frame_name,
             pid: id,
         },"*");
+        console.log("POSTMESSAGE");
     }
 
     editpage() {
