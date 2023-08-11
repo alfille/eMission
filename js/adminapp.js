@@ -1106,46 +1106,21 @@ class Note { // convenience class
         return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
     }
 
-    static select( nid=noteId ) {
-        // Check patient existence
-        db.get(nid)
-        .then( doc => {
-            if ( doc.patient_id != patientId ) {
-                Patient.select( doc.patient_id);
-            }
-            Cookie.set( "noteId", nid );
-            })
-        .catch( err => objectLog.err(err,"note select"));
-    }
-
-    static unselect() {
-        Cookie.del ( "noteId" );
-    }
-
+    static template(pid) {
+        return {
+            _id: Id_note.makeId(pid),
+            text: "",
+            title: "Patient Merge Note",
+            author: remoteCouch.username,
+            type: "note",
+            category: 'Uncategorized',
+            patient_id: patientId,
+            date: new Date().toISOString(),
+        };
+	}
 }
 
 class Operation { // convenience class
-    static select( oid=operationId ) {
-        // Check patient existence
-        operationId=oid ;
-        db.get(oid)
-        .then( doc => {
-            if ( doc.patient_id != patientId ) {
-                Patient.select( doc.patient_id);
-            }
-            Cookie.set ( "operationId", oid  );
-            })
-        .catch( err => {
-            objectLog.err(err,"operation select");
-            Operation.unselect();
-            });             
-    }
-
-    static unselect() {
-        operationId = null;
-        Cookie.del( "operationId" );
-    }
-
     static create() {
         let doc = {
             _id: Id_operation.makeId(),
@@ -1902,6 +1877,7 @@ class PatientMerge extends Pagelist {
     static subshow(extra="") {
         document.getElementById('fromlabel').innerHTML="";
         document.getElementById('tolabel').innerHTML="";
+        document.getElementById("patientMergeButton").disabled=this.not_mergeable();
 
         this.transfer = {} ;
         let u = new URL(location.href);
@@ -1921,6 +1897,30 @@ class PatientMerge extends Pagelist {
         window.removeEventListener('message',this.gotMessage);
         objectPage.show( 'back' );
     }
+    
+    static merge() {
+		if ( ! PatientMerge.not_mergeable() ) {
+			let fromdoc = null;
+			let todoc=null;
+			db.get(PatientMerge.transfer.from)
+			.then(d => fromdoc = d )
+			.then(_ => db.get(PatientMerge.transfer.to))
+			.then(d => todoc = d )
+			.then(_ => console.log("FROM",fromdoc))
+			.then(_ => console.log("FROMK",
+				Object.keys(fromdoc)
+				.filter(k=>k.slice(0,1)!="_")
+				.map(k=>`${k}:${fromdoc[k]}`)
+				.join("  ")
+				))
+			.then(_ => console.log("to",todoc))
+			;
+			// notes
+			// operations
+			// patient record -> summary note
+		}
+		PatientMerge.leave();
+	}
 }
 
 function isAndroid() {
