@@ -306,10 +306,10 @@ class Operation { // convenience class
         .then( doclist => { 
             const pids = new Set() ;
             doclist.rows
-            .filter( r => r.doc.Procedure !== "Enter new procedure" )
+            .filter( r => ! Operation.nullOp(r.doc) )
             .forEach( r => pids.add( r.doc.patient_id ) ) ;
             return doclist.rows
-                   .filter( r => (r.doc.Procedure !== "Enter new procedure") || !pids.has( r.doc.patient_id ) ) ;
+                   .filter( r => ! Operation.nullOp(r.doc) || !pids.has( r.doc.patient_id ) ) ;
             });
     }
 
@@ -334,8 +334,12 @@ class Operation { // convenience class
         return db.allDocs(doc);
     }
 
+
     static dateFromDoc( doc ) {
         return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
+    }
+    nullOp( doc ) {
+        return doc.Procedure == "Enter new procedure" ;
     }
 }
 
@@ -618,7 +622,7 @@ class CSV { // convenience class
         Operation.getAllIdDoc()
         .then( doclist => {
             doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
-            olist = doclist.rows.filter( r => r.doc.Procedure !== "Enter new procedure" ) ;
+            olist = doclist.rows.filter( r => ! Operation.nullOp(r.doc) ) ;
             })
         .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
         .then( nlist => {
@@ -914,7 +918,7 @@ class PPTX {
     oplist( olist ) {
         return PromiseSeq( 
             olist.rows
-            .filter( r => (r.doc.Procedure !== "Enter new procedure"))
+            .filter( r => ! Operation.nullOp(r.doc) )
             .sort((a,b)=>Operation.dateFromDoc(a.doc).localeCompare(Operation.dateFromDoc(b.doc)))
             .map( r => {
                 return _ => this.operation(r.doc) ;
@@ -1022,7 +1026,7 @@ class Page { // singleton class
         }
     }
 
-    screen( type ) { // switch between screen and print
+    show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
         const showscreen = {
             ".work_screen": type=="screen",

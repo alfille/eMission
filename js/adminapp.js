@@ -1105,20 +1105,9 @@ class Note { // convenience class
     static dateFromDoc( doc ) {
         return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
     }
-
-    static template(pid) {
-        return {
-            _id: Id_note.makeId(pid),
-            text: "",
-            title: "Patient Merge Note",
-            author: remoteCouch.username,
-            type: "note",
-            category: 'Uncategorized',
-            patient_id: patientId,
-            date: new Date().toISOString(),
-        };
-	}
 }
+
+
 
 class Operation { // convenience class
     static create() {
@@ -1136,6 +1125,10 @@ class Operation { // convenience class
             patient_id: patientId,
         };
         return db.put( doc );
+    }
+    
+    nullOp( doc ) {
+        return doc.Procedure == "Enter new procedure" ;
     }
 
     static del() {
@@ -1175,10 +1168,10 @@ class Operation { // convenience class
         .then( doclist => { 
             const pids = new Set() ;
             doclist.rows
-            .filter( r => r.doc.Procedure !== "Enter new procedure" )
+            .filter( r => ! Operation.nullOp(r.doc.Procedure) )
             .forEach( r => pids.add( r.doc.patient_id ) ) ;
             return doclist.rows
-                   .filter( r => (r.doc.Procedure !== "Enter new procedure") || !pids.has( r.doc.patient_id ) ) ;
+                   .filter( r => ! Operation.nullOp(r.doc) || !pids.has( r.doc.patient_id ) ) ;
             });
     }
 
@@ -1202,7 +1195,7 @@ class Operation { // convenience class
         return db.allDocs(doc)
         .then( (doclist) => {
             let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
+                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc.Procedure ) )
                 .map( row => row.doc );
             switch ( newlist.length ) {
                 case 0 :
@@ -1899,28 +1892,41 @@ class PatientMerge extends Pagelist {
     }
     
     static merge() {
-		if ( ! PatientMerge.not_mergeable() ) {
-			let fromdoc = null;
-			let todoc=null;
-			db.get(PatientMerge.transfer.from)
-			.then(d => fromdoc = d )
-			.then(_ => db.get(PatientMerge.transfer.to))
-			.then(d => todoc = d )
-			.then(_ => console.log("FROM",fromdoc))
-			.then(_ => console.log("FROMK",
-				Object.keys(fromdoc)
-				.filter(k=>k.slice(0,1)!="_")
-				.map(k=>`${k}:${fromdoc[k]}`)
-				.join("  ")
-				))
-			.then(_ => console.log("to",todoc))
-			;
-			// notes
-			// operations
-			// patient record -> summary note
-		}
-		PatientMerge.leave();
-	}
+        if ( ! PatientMerge.not_mergeable() ) {
+            let fromdoc = null;
+            db.get(PatientMerge.transfer.from,{attachments:true})
+            .then(d => fromdoc = d )
+            .then(_ => console.log("FROM",fromdoc))
+            .then(_ => {
+                // Make old patient record a note (to document merge and save old data)
+                let doc = {
+                    _id: Id_note.makeId(PatientMerge.transfer.to),
+                    title:"Patient Merge Note",
+                    text:Object.keys(fromdoc)
+                        .filter(k=>k.slice(0,1)!="_")
+                        .map(k=>`${k}:${fromdoc[k]}`)
+                        .join("  "),
+                    type:"note",
+                    author:fromdoc?.author ?? "",
+                    category:"Uncategorized",
+                    patient_id:PatientMerge.transfer.to,
+                    date: new Date().toISOString(),
+                    _attachments:{}, 
+                };
+                if ( "_attachments" in fromdoc ) {
+                    Object.assign(doc._attachments,fromdoc._attachments);
+                } else {
+                    delete doc._attachments;
+                }
+                console.log("New NOTE",doc);
+            })
+            ;
+            // notes
+            // operations
+            // patient record -> summary note
+        }
+        PatientMerge.leave();
+    }
 }
 
 function isAndroid() {

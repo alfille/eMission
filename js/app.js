@@ -1746,6 +1746,10 @@ class Operation { // convenience class
         return db.put( doc );
     }
 
+    nullOp( doc ) {
+        return doc.Procedure == "Enter new procedure" ;
+    }
+
     static del() {
         if ( operationId ) {
             let pdoc;
@@ -1784,10 +1788,10 @@ class Operation { // convenience class
         .then( doclist => { 
             const pids = new Set() ;
             doclist.rows
-            .filter( r => r.doc.Procedure !== "Enter new procedure" )
+            .filter( r => ! Operation.nullOp(r.doc) )
             .forEach( r => pids.add( r.doc.patient_id ) ) ;
             return doclist.rows
-                   .filter( r => (r.doc.Procedure !== "Enter new procedure") || !pids.has( r.doc.patient_id ) ) ;
+                   .filter( r => ! Operation.nullOp(r.doc.Procedure) || !pids.has( r.doc.patient_id ) ) ;
             });
     }
 
@@ -1811,7 +1815,7 @@ class Operation { // convenience class
         return db.allDocs(doc)
         .then( (doclist) => {
             let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && ( row.doc.Procedure === "Enter new procedure" ) )
+                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
                 .map( row => row.doc );
             switch ( newlist.length ) {
                 case 0 :
@@ -2643,7 +2647,7 @@ class PatientPhoto extends Pagelist {
             Patient.getRecordIdPix()
             .then( (doc) => pdoc = doc )
             .then( _ => Operation.getRecordsIdDoc(patientId) )
-            .then ( (doclist) => onum = doclist.rows.filter( r=> r.doc.Procedure !== "Enter new procedure").length )
+            .then ( (doclist) => onum = doclist.rows.filter( r=> ! Operation.nullOp(r.doc) ).length )
             .then( _ => Note.getRecordsIdDoc(patientId) )
             .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
