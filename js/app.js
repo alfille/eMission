@@ -3466,24 +3466,30 @@ window.onload = () => {
                     objectSearch.addDoc(change.doc);
                 }
                 // update screen display
-                switch ( change?.doc?.type ) {
-                    case "patient":
-                        if ( objectPage.test("AllPatients") ) {
-                            objectPage.show("AllPatients");
-                        }
-                        break;
-                    case "note":
-                        if ( objectPage.test("NoteList") && change.doc?.patient_id==patientId ) {
-                            objectPage.show("NoteList");
-                        } else if ( objectPage.test("MissionList") && change.doc?.patient_id==missionId ) {
-                            objectPage.show("MissionList");
-                        }
-                        break;
-                    case "operation":
-                        if ( objectPage.test("OperationList") && change.doc?.patient_id==patientId ) {
-                            objectPage.show("OperationList");
-                        }
-                        break;
+                if ( in_frame ) {
+                    objectPage.show("SelectPatient");
+                } else {
+                    switch ( change?.doc?.type ) {
+                        case "patient":
+                            if ( objectPage.test("AllPatients") ) {
+                                objectPage.show("AllPatients");
+                            }
+                            break;
+                        case "note":
+                            if ( objectPage.test("NoteList") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("NoteList");
+                            } else if ( objectPage.test("MissionList") && change.doc?.patient_id==missionId ) {
+                                objectPage.show("MissionList");
+                            }
+                            break;
+                        case "operation":
+                            if ( objectPage.test("OperationList") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("OperationList");
+                            } else if ( objectPage.test("AllOperations") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("AllOperations");
+                            }
+                            break;
+                    }
                 }
                 })
             )
