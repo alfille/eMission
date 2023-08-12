@@ -1127,7 +1127,7 @@ class Operation { // convenience class
         return db.put( doc );
     }
     
-    nullOp( doc ) {
+    static nullOp( doc ) {
         return doc.Procedure == "Enter new procedure" ;
     }
 
@@ -1893,11 +1893,8 @@ class PatientMerge extends Pagelist {
     
     static merge() {
         if ( ! PatientMerge.not_mergeable() ) {
-            let fromdoc = null;
             db.get(PatientMerge.transfer.from,{attachments:true})
-            .then(d => fromdoc = d )
-            .then(_ => console.log("FROM",fromdoc))
-            .then(_ => {
+            .then( fromdoc => {
                 // Make old patient record a note (to document merge and save old data)
                 let doc = {
                     _id: Id_note.makeId(PatientMerge.transfer.to),
@@ -1918,12 +1915,38 @@ class PatientMerge extends Pagelist {
                 } else {
                     delete doc._attachments;
                 }
-                console.log("New NOTE",doc);
+                return Promise.all([db.put(doc),db.remove(fromdoc)]);
             })
+            .then( _ => Note.getRecordsId( PatientMerge.transfer.from ) )
+            .then( nlist => Promise.all( nlist.rows.map( r => 
+                // convert notes to new id and delete old
+                db.get(r.id,{attachments:true})
+                .then(doc => {
+                    let newdoc = Object.assign({},doc);
+                    delete newdoc._rev;
+                    newdoc.patient_id = PatientMerge.transfer.to;
+                    newdoc._id = Id_note.makeIdKey( PatientMerge.transfer.to, Id_note.splitId(doc._id).key);
+                    return Promise.all([db.put(newdoc),db.remove(doc)]);
+                    })
+                 )))
+            .then( _ => Operation.getRecordsId( PatientMerge.transfer.from ) )
+            .then( olist => Promise.all( olist.rows.map( r => 
+                // convert operations to new id and delete old
+                db.get(r.id,{attachments:true})
+                .then(doc => {
+                    if ( Operation.nullOp(doc) ) {
+                        // no real operations -- just delete
+                        return db.remove(doc);
+                    } else {
+                        let newdoc = Object.assign({},doc);
+                        delete newdoc._rev;
+                        newdoc.patient_id = PatientMerge.transfer.to;
+                        newdoc._id = Id_operation.makeIdKey( PatientMerge.transfer.to, Id_operation.splitId(doc._id).key);
+                        return Promise.all([db.put(newdoc),db.remove(doc)]);
+                    }}) 
+                )))
+            .then( l => console.log(l) )
             ;
-            // notes
-            // operations
-            // patient record -> summary note
         }
         PatientMerge.leave();
     }

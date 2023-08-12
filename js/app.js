@@ -1746,7 +1746,7 @@ class Operation { // convenience class
         return db.put( doc );
     }
 
-    nullOp( doc ) {
+    static nullOp( doc ) {
         return doc.Procedure == "Enter new procedure" ;
     }
 
