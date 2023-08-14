@@ -1387,6 +1387,7 @@ class Patient { // convenience class
             img.display();
             let link = new URL(window.location.href);
             link.searchParams.append( "patientId", patientId );
+
             new QR(
                 card.querySelector(".qrCard"),
                 link.href,
@@ -1407,7 +1408,7 @@ class Patient { // convenience class
             t[1].rows[4].cells[1].innerText = doc.Meds??"";
             t[1].rows[5].cells[1].innerText = ""; // equipment
             }) 
-        .then( _ => db.query("Pid2Name",{key:doc._id}) )
+        .then( _ => db.query("Pid2Name",{key:patientId}) )
         .then( (doc) => t[0].rows[0].cells[1].innerText = doc.rows[0].value[0] )
         .then( _ => Operation.getRecordsIdDoc(patientId) )
         .then( (docs) => {
@@ -1859,7 +1860,7 @@ class Mission { // convenience class
         // returns a promise, but can't fail!
         return db.get( missionId, { attachments: true, binary: true } )
         .then( doc => Promise.resolve(doc) )
-        .catch( () => Promise.resolve({
+        .catch( _ => Promise.resolve({
             EndDate:null,
             Link:"",
             LocalContact:"",
