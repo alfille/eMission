@@ -1786,13 +1786,14 @@ class Operation { // convenience class
     static getAllIdDocCurated() {
         // only real cases or placeholder if no others for that paitent
         return Operation.getAllIdDoc()
-        .then( doclist => { 
-            const pids = new Set() ;
-            doclist.rows
-            .filter( r => ! Operation.nullOp(r.doc) )
-            .forEach( r => pids.add( r.doc.patient_id ) ) ;
+        .then( doclist => {
+            const pids = new Set(
+                doclist.rows
+                .filter( r => ! Operation.nullOp(r.doc) )
+                .map( r => r.doc.patient_id ) 
+                );
             return doclist.rows
-                   .filter( r => ! Operation.nullOp(r.doc.Procedure) || !pids.has( r.doc.patient_id ) ) ;
+                   .filter( r => (! Operation.nullOp(r.doc)) || (!pids.has( r.doc.patient_id )) ) ;
             });
     }
 

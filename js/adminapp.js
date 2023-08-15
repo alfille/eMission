@@ -1162,19 +1162,6 @@ class Operation { // convenience class
         return db.allDocs(doc);
     }
 
-    static getAllIdDocCurated() {
-        // only real cases or placeholder if no others for that paitent
-        return Operation.getAllIdDoc()
-        .then( doclist => { 
-            const pids = new Set() ;
-            doclist.rows
-            .filter( r => ! Operation.nullOp(r.doc.Procedure) )
-            .forEach( r => pids.add( r.doc.patient_id ) ) ;
-            return doclist.rows
-                   .filter( r => ! Operation.nullOp(r.doc) || !pids.has( r.doc.patient_id ) ) ;
-            });
-    }
-
     static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_operation.patStart(pid),
@@ -1195,7 +1182,7 @@ class Operation { // convenience class
         return db.allDocs(doc)
         .then( (doclist) => {
             let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc.Procedure ) )
+                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
                 .map( row => row.doc );
             switch ( newlist.length ) {
                 case 0 :
