@@ -108,7 +108,7 @@ class Patient { // convenience class
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
                 // highlight the list row
-                document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
+                TitleBox([doc.rows[0].value[1]]) ;
                 })
             .catch( (err) => {
                 objectLog.err(err,"patient select");
@@ -334,7 +334,7 @@ class Mission { // convenience class
     static select() {
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.Name ) ;
+        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
     }
     
 
@@ -1170,6 +1170,14 @@ class Log{
 
 
 objectLog = new Log() ;
+
+function TitleBox( titlearray=null, show="PatientPhoto" ) {
+    if ( titlearray == null ) {
+        document.getElementById( "titlebox" ).innerHTML = "" ;
+    } else {
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+    }
+}
 
 // Create pouchdb indexes.
 // Used for links between records and getting list of choices

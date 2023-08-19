@@ -1039,7 +1039,7 @@ class Patient { // convenience class
             // Check patient existence
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
-                document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
+                TitleBox([doc.rows[0].value[1]]);
                 })
             .catch( (err) => {
                 objectLog.err(err,"patient select");
@@ -1058,7 +1058,7 @@ class Patient { // convenience class
         Note.unselect();
         objectNoteList.category = 'Uncategorized' ;
         Operation.unselect();
-        document.getElementById( "titlebox" ).innerHTML = "";
+        TitleBox();
     }
 }
 
@@ -1322,7 +1322,7 @@ class Mission { // convenience class
         Patient.unselect();
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.Name ) ;
+        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
     }
     
     static getRecordId() {
@@ -2137,8 +2137,8 @@ class DatabaseTable extends SortTable {
         this.loadedId = this.databaseId ;
         // set titlebox
         objectCollation.db.get(this.databaseId)
-        .then( (doc) => document.getElementById( "titlebox" ).innerHTML = [doc.Name,doc.Location,doc.Organization].join(" ") )
-        .catch( _ => document.getElementById( "titlebox" ).innerHTML = [remoteCouch.address, remoteCouch.database].join(" ") ) ;
+        .then( (doc) => TitleBox([doc.Name,doc.Location,doc.Organization]) )
+        .catch( _ => TitleBox([remoteCouch.address, remoteCouch.database],"MissionInfo") ) ;
         this.selectFunc( this.databaseId ) ;
     }
 
@@ -2286,6 +2286,14 @@ class Log{
 }
 
 objectLog = new Log() ;
+
+function TitleBox( titlearray=null, show="PatientPhoto" ) {
+    if ( titlearray == null ) {
+        document.getElementById( "titlebox" ).innerHTML = "" ;
+    } else {
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+    }
+}
 
 function parseQuery() {
     // returns a dict of keys/values or null

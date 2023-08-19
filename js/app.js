@@ -1318,7 +1318,7 @@ class Patient { // convenience class
                 if ( objectPage.test('AllPatients') ) {
                     objectTable.highlight();
                 }
-                document.getElementById( "titlebox" ).innerHTML = doc.rows[0].value[1];
+                TitleBox([doc.rows[0].value[1]]);
                 })
             .catch( (err) => {
                 objectLog.err(err,"patient select");
@@ -1346,7 +1346,7 @@ class Patient { // convenience class
                 }
             }
         }
-        document.getElementById( "titlebox" ).innerHTML = "";
+        TitleBox();
     }
 
     static menu( doc, notelist, onum=0 ) {
@@ -1853,7 +1853,7 @@ class Mission { // convenience class
         Patient.unselect();
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => document.getElementById( "titlebox" ).innerHTML = doc.Name ) ;
+        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
     }
     
     static getRecordId() {
@@ -2721,6 +2721,14 @@ function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
 
+function TitleBox( titlearray=null, show="PatientPhoto" ) {
+    if ( titlearray == null ) {
+        document.getElementById( "titlebox" ).innerHTML = "" ;
+    } else {
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+    }
+}
+
 class SortTable {
     constructor( collist, tableId, aliaslist=[] ) {
         this.tbl = document.getElementById(tableId);
@@ -2947,8 +2955,8 @@ class DatabaseTable extends SortTable {
         this.loadedId = this.databaseId ;
         // set titlebox
         objectCollation.db.get(this.databaseId)
-        .then( (doc) => document.getElementById( "titlebox" ).innerHTML = [doc.Name,doc.Location,doc.Organization].join(" ") )
-        .catch( _ => document.getElementById( "titlebox" ).innerHTML = [remoteCouch.address, remoteCouch.database].join(" ") ) ;
+        .then( (doc) => TitleBox([doc.Name,doc.Location,doc.Organization],"MissionInfo") )
+        .catch( _ => TitleBox([remoteCouch.address, remoteCouch.database],"MissionInfo") ) ;
         this.selectFunc( this.databaseId ) ;
     }
 
