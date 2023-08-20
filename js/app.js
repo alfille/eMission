@@ -2982,6 +2982,7 @@ class DatabaseTable extends SortTable {
     }
 
     selectFunc(did) {
+        console.log("SELECT");
         if ( this.databaseId != did ) {
             // change database
             this.unselect();
@@ -2995,8 +2996,7 @@ class DatabaseTable extends SortTable {
                 objectTable.highlight();
             }
             })
-        .catch( _ => this.unselect() )
-        .finally( _ => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
+        .catch( _ => this.unselect() )        .finally( _ => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
     }
 
     editpage() {

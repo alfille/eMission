@@ -1720,19 +1720,6 @@ class DatabaseInfo extends Pagelist {
     }
 }
 
-class DBTable extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-
-    static subshow(extra="") {
-        objectTable = new DatabaseTable();
-        Collation.getAllIdDoc()
-        .then( (docs) => {
-            objectTable.fill(docs.rows) ;
-            })
-        .catch( (err) => objectLog.err(err) );
-    }
-}
-
 class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
@@ -2123,82 +2110,6 @@ class PatientTable extends SortTable {
 
     editpage() {
         objectPage.show("PatientPhoto");
-    }
-}
-
-class DatabaseTable extends SortTable {
-    constructor() {
-        super( 
-            ["Name","Organization","Location","StartDate"], 
-            "DBTable" 
-            );
-        // starting databaseId
-        this.databaseId = this.makeId( remoteCouch.database ) ;
-        this.loadedId = this.databaseId ;
-        // set titlebox
-        objectCollation.db.get(this.databaseId)
-        .then( (doc) => TitleBox([doc.Name,doc.Location,doc.Organization]) )
-        .catch( _ => TitleBox([remoteCouch.address, remoteCouch.database],"MissionInfo") ) ;
-        this.selectFunc( this.databaseId ) ;
-    }
-
-    makeId( db ) {
-        return '0'+db;
-    }
-
-    unselect() {
-        this.databaseId = null;
-        if ( objectPage.test("DBTable") ) {
-            let pt = document.getElementById("DBTable");
-            if ( pt ) {
-                let rows = pt.rows;
-                for ( let i = 0; i < rows.length; ++i ) {
-                    rows[i].classList.remove('choice');
-                }
-            }
-        }
-    }
-
-    selectId() {
-        return this.databaseId;
-    }
-
-    selectFunc(did) {
-        if ( this.databaseId != did ) {
-            // change database
-            this.unselect();
-        }
-        this.databaseId = did ;
-        objectCollation.db.get(did)
-        .then( (doc) => {
-            this.databaseId = did;
-            // highlight the list row
-            if ( objectPage.test('DBTable') && objectTable ) {
-                objectTable.highlight();
-            }
-            })
-        .catch( _ => this.unselect() )
-        .finally( _ => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
-    }
-
-    editpage() {
-        // select this database and reload
-        if ( this.databaseId != this.loadedId ) {
-            // changed!
-            objectCollation.db.get(this.databaseId)
-            .then( (doc) => {
-                remoteCouch.address = doc.server ;
-                remoteCouch.database = doc.dbname ;
-                Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
-                })
-            .catch( (err) => objectLog.err(err,"Loading patient database") )
-            .finally( () => {
-                objectPage.reset();
-                location.reload(); // force reload
-                }) ;
-        } else {
-            objectPage.show( "MainMenu" ) ;
-        }        
     }
 }
 

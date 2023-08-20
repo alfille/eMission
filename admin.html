@@ -24,11 +24,6 @@
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
                     </div>
-                    <!-- top: DBTable -->
-                    <div class="DBTable topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )">Return</button>
-                        <button type="button" class="divbutton" onclick="objectTable.editpage()" id="switchdatabase" title="Switch to another database">Change Mission</button>
-                    </div>
                     <!-- top: UserList -->
                     <div class="UserList topButtons pageOverlay">
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
@@ -83,13 +78,6 @@
                     <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'DatabaseInfo' )">Database Information</button>
                     <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMerge' )">Merge Patient Records</button>
-                </div>
-            </div>
-            <!-- body: DBTable -->
-            <div class="DBTable pageOverlay">
-                Choose a medical mission to use:
-                <div id="DBTableContent" >
-                    <table id="DBTable"></table>
                 </div>
             </div>
             <!-- body: UserList -->
