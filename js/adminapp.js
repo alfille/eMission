@@ -141,30 +141,6 @@ class Id_mission extends Id_patient{
 var missionId = Id_mission.makeId() ;
 
 // used to generate data entry pages "PatientData" type
-const structDatabase = [
-    {
-        name: "username",
-        hint: "Your user name for access",
-        type: "text",
-    },
-    {
-        name: "password",
-        hint: "Your password for access",
-        type: "password",
-    },    
-    {
-        name: "address",
-        alias: "Remote database server address",
-        hint: "https://location -- don't include database name",
-        type: "text",
-    },
-    {
-        name: "database",
-        hint: 'Name of patient information database (e.g. "ukraine"',
-        type: "text",
-    },
-];
-
 const structDatabaseInfo = [
     {
         name: "db_name",
@@ -945,46 +921,6 @@ class DateMath { // convenience class
 }
 
 class Patient { // convenience class
-    static del() {
-        if ( Patient.isSelected() ) {        
-            let pdoc;
-            let ndocs;
-            let odocs;
-            Patient.getRecordIdPix(patientId) // patient
-            .then( (doc) => pdoc = doc )
-            .then( _ => Note.getRecordsIdDoc(patientId) ) // notes
-            .then( (docs) => ndocs = docs.row )
-            .then( _ => Operation.getRecordsIdDoc(patientId) ) // operations
-            .then( (docs) => {
-                odocs = docs.rows;
-                // Confirm question
-                let c = `Delete patient \n   ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}\n    `;
-                if (ndocs.length == 0 ) {
-                    c += "(no associated notes on this patient) \n   ";
-                } else {
-                    c += `also delete ${ndocs.length} associated notes\n   `;
-                }
-                if (odocs.length == 0 ) {
-                    c += "(no associated operations on this patient) \n   ";
-                } else {
-                    c += `also delete ${odocs.length} associated operations\n   `;
-                }
-                c += "Are you sure?";
-                if ( confirm(c) ) {
-                    return true;
-                } else {
-                    throw "No delete";
-                }           
-                })
-            .then( () => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( () => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( () => db.remove(pdoc) )
-            .then( () => Patient.unselect() )
-            .catch( (err) => objectLog.err(err) ) 
-            .finally( () => objectPage.show( "AllPatients" ) );
-        }
-    }
-
     static getRecordId(id=patientId ) {
         return db.get( id );
     }
@@ -1022,43 +958,6 @@ class Patient { // convenience class
         };
 
         return db.allDocs(doc);
-    }
-
-    static select( pid = patientId ) {
-        if ( patientId != pid ) {
-            // change patient -- notes dont apply
-            Note.unselect();
-            objectNoteList.category = 'Uncategorized' ;
-        }
-
-        patientId = pid ;
-        if ( pid == missionId ) {
-            Mission.select() ;
-        } else {
-            Cookie.set( "patientId", pid );
-            // Check patient existence
-            db.query("Pid2Name",{key:pid})
-            .then( (doc) => {
-                TitleBox([doc.rows[0].value[1]]);
-                })
-            .catch( (err) => {
-                objectLog.err(err,"patient select");
-                Patient.unselect();
-                });
-        }
-    }
-
-    static isSelected() {
-        return ( patientId != null ) && ( patientId != missionId ) ;
-    }
-
-    static unselect() {
-        patientId = null;
-        Cookie.del ( "patientId" );
-        Note.unselect();
-        objectNoteList.category = 'Uncategorized' ;
-        Operation.unselect();
-        TitleBox();
     }
 }
 
@@ -1131,28 +1030,6 @@ class Operation { // convenience class
         return doc.Procedure == "Enter new procedure" ;
     }
 
-    static del() {
-        if ( operationId ) {
-            let pdoc;
-            Patient.getRecordId()
-            .then( (doc) => { 
-                pdoc = doc;
-                return db.get( operationId );
-                })
-            .then( (doc) => {
-                if ( confirm(`Delete operation <${doc.Procedure}>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
-                    return doc;
-                } else {
-                    throw "No delete";
-                }           
-                })
-            .then( (doc) =>db.remove(doc) )
-            .then( () => Operation.unselect() )
-            .catch( (err) => objectLog.err(err) )
-        }
-        return true;
-    }    
-        
     static getAllIdDoc() {
         let doc = {
             startkey: Id_operation.allStart(),
@@ -1319,7 +1196,6 @@ We are looking forward to your participation.
 
 class Mission { // convenience class
     static select() {
-        Patient.unselect();
         patientId = missionId;
         Mission.getRecordId()
         .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
@@ -2088,31 +1964,6 @@ class SortTable {
     }
 }
 
-class PatientTable extends SortTable {
-    constructor() {
-        super( 
-            ["LastName", "Procedure","Date-Time","Surgeon" ], 
-            "AllPatients",
-            [
-                ["LastName","Name", (doc)=> `${doc.LastName}, ${doc.FirstName}`],
-                ['Date-Time','Date',(doc)=>doc["Date-Time"].substring(0,10)],
-            ] 
-            );
-    }
-
-    selectId() {
-        return patientId;
-    }
-
-    selectFunc(id) {
-        Patient.select(id) ;
-    }
-
-    editpage() {
-        objectPage.show("PatientPhoto");
-    }
-}
-
 class UserTable extends SortTable {
     constructor() {
         super(
@@ -2218,22 +2069,12 @@ function parseQuery() {
 }
 
 function cookies_n_query() {
-    Cookie.get ( "patientId" );
-    Cookie.get ( "noteId" );
     objectPage = new Page();
-    Cookie.get ( "operationId" );
-
     
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
     objectRemote = new RemoteReplicant( qline ) ;
-    
-    // first try the search field
-    if ( qline && ( "patientId" in qline ) ) {
-        Patient.select( qline.patientId );
-        objectPage.next("PatientPhoto");
-    }
 }
 
 // Application starting point
@@ -2268,6 +2109,7 @@ window.onload = () => {
 
         // set link for mission
         Mission.link();
+        Mission.select();
 
         // now jump to proper page
         objectPage.show( null ) ;
