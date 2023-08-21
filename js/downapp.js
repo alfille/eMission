@@ -334,7 +334,7 @@ class Mission { // convenience class
     static select() {
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
+        .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
     
 

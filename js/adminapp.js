@@ -28,12 +28,48 @@ const remoteUser = {
     password: "",
     address: "",
     };
-const remoteSecurity = {
-    database: "" , // set in SuperUser
-    username: "", // set in SuperUser
-    password: "", // set in SuperUser
-    address: "", // set in SuperUser
-    };
+
+class remoteSecurity {
+    constructor() {
+        this.database = null;
+        this.username=null;
+        this.address = null;
+        this.password = null;
+    }
+    
+    setup( user, pass ) {
+        this.username = user;
+        this.password = pass ;
+        this.database = remoteCouch.database ;
+        this.address = remoteCouch.address;
+        this.header = new Headers( {
+            "Content-Type" : "application/json",
+            "Authorization": `Basic ${btoa([this.username,this.password].join(":"))}`, });
+    }
+    
+    getUsers() {
+        // gets Permitted users for this database
+        return fetch( new URL(this.database+"/_security",this.address), {
+            mode: "cors",
+            credentials: "include",
+            method: "GET",
+            headers: this.header,
+            orogin: new URL(this.address),
+            })
+        .then( r => r.json() );
+    }
+    
+    object() {
+        return {
+            username: this.username,
+            password: this.password,
+            database: this.database,
+            address: this.address,
+        } ;
+    }
+};
+
+var objectSecurity = new remoteSecurity();
 
 class Id {
     static version = 0;
@@ -834,11 +870,8 @@ class SuperUserData extends PatientDataEditMode {
             User.db = objectRemote.openRemoteDB( remoteUser );
 
             // admin access to this database
-            remoteSecurity.username = remoteUser.username;
-            remoteSecurity.password = remoteUser.password;
-            remoteSecurity.address  = remoteCouch.address;
-            remoteSecurity.database = remoteCouch.database;        
-            security_db = objectRemote.openRemoteDB( remoteSecurity );
+            objectSecurity.setup( remoteUser.username, remoteUser.password ) ;
+            security_db = objectRemote.openRemoteDB( objectSecurity.object() );
 
             objectPage.show( "UserList" ); })
         .catch( err => {
@@ -1198,7 +1231,7 @@ class Mission { // convenience class
     static select() {
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
+        .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
     
     static getRecordId() {
@@ -1665,9 +1698,17 @@ class UserList extends Pagelist {
         if ( User.db == null ) {
             objectPage.show( "SuperUser" );
         } else {
+            let sec = objectSecurity.getUsers()
+            let rows = [] ;
             objectTable = new UserTable();
             User.getAllIdDoc()
-            .then( docs => objectTable.fill(docs.rows ) )
+            .then( docs => rows = docs.rows )
+            .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
+            .then( _ => objectSecurity.getUsers() )
+            .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
+                if ( sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
+                })))
+            .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
                 objectLog.err(err);
                 objectPage.show ( "SuperUser" );
@@ -1967,7 +2008,7 @@ class SortTable {
 class UserTable extends SortTable {
     constructor() {
         super(
-            ["name", "roles", "email", "type", ], 
+            ["name", "mission", "email", ], 
             "UserList"
             );
     }

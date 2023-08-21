@@ -1853,7 +1853,7 @@ class Mission { // convenience class
         Patient.unselect();
         patientId = missionId;
         Mission.getRecordId()
-        .then( doc => TitleBox([doc.Name],"MissionInfo") ) ;
+        .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
     
     static getRecordId() {
@@ -2982,7 +2982,6 @@ class DatabaseTable extends SortTable {
     }
 
     selectFunc(did) {
-        console.log("SELECT");
         if ( this.databaseId != did ) {
             // change database
             this.unselect();
