@@ -2014,7 +2014,7 @@ class RemoteReplicant { // convenience class
                     },
                 });
         } else {
-            objectLog.err("Bad DB");
+            objectLog.err("Bad DB specification");
             return null;
         }
     }

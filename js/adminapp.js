@@ -8,7 +8,6 @@ var objectNoteList={};
     objectNoteList.category = 'Uncategorized' ;
 var objectTable = null;
 var objectRemote = null;
-var objectCollation = null;
 var objectLog = null;
 
 // globals cookie backed
@@ -29,7 +28,7 @@ const remoteUser = {
     address: "",
     };
 
-class remoteSecurity {
+class RemoteSecurity {
     constructor() {
         this.database = null;
         this.username=null;
@@ -54,10 +53,30 @@ class remoteSecurity {
             credentials: "include",
             method: "GET",
             headers: this.header,
-            orogin: new URL(this.address),
+            origin: new URL(this.address),
             })
-        .then( r => r.json() );
+        .then( r => r.json() )
+        ;
     }
+    
+    setUser(name,rolearray=[]){
+		this.getUsers()
+		.then( u => {
+			// remove name
+			["admins","members"].forEach( role => u[role].names=u[role].names.filter(n=>n!=name));
+			// Add name
+			rolearray.forEach( role => u[role].names=u[role].names.concat(name) );
+			return u;
+			})
+		.then( u => fetch(new URL(this.database+"/_security",this.address), {
+            mode: "cors",
+            credentials: "include",
+            method: "PUT",
+            headers: this.header,
+            origin: new URL(this.address),
+            body: JSON.stringify(u),
+            }))
+	}
     
     object() {
         return {
@@ -69,7 +88,7 @@ class remoteSecurity {
     }
 };
 
-var objectSecurity = new remoteSecurity();
+var objectSecurity = new RemoteSecurity();
 
 class Id {
     static version = 0;
@@ -212,7 +231,7 @@ const structDatabaseInfo = [
 const structNewUser = [
     {
         name: "name",
-        hint: "User Name (can be email address)",
+        hint: "User Name",
         type: "text",
     },
     {
@@ -221,10 +240,10 @@ const structNewUser = [
         type: "password",
     } ,
     {
-        name: "roles",
-        hint: "Regular user or administrator",
-        type: "radio",
-        roles: ["user","admin"],
+        name: "status",
+        hint: "Role in Mission",
+        type: "checkbox",
+        choices: ["admin","member"],
     },
     {
         name: "email",
@@ -237,7 +256,7 @@ const structNewUser = [
 const structEditUser = [
     {
         name: "name",
-        hint: "User Name (can be email address)",
+        hint: "User Name",
         type: "text",
         readonly: "true",
     },
@@ -247,10 +266,10 @@ const structEditUser = [
         type: "password",
     } ,
     {
-        name: "roles",
-        hint: "Regular user or administrator",
-        type: "radio",
-        roles: ["user","admin"],
+        name: "status",
+        hint: "Role in Mission",
+        type: "checkbox",
+        choices: ["admin","member"],
     },
     {
         name: "email",
@@ -867,7 +886,7 @@ class SuperUserData extends PatientDataEditMode {
             // remote User database
             remoteUser.username = this.doc[0].username;
             remoteUser.password = this.doc[0].password;
-            User.db = objectRemote.openRemoteDB( remoteUser );
+            User.user_db = objectRemote.openRemoteDB( remoteUser );
 
             // admin access to this database
             objectSecurity.setup( remoteUser.username, remoteUser.password ) ;
@@ -886,13 +905,13 @@ class NewUserData extends PatientDataEditMode {
         this.loadDocData();
         this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
         this.doc[0].type = "user";
-        this.doc[0].roles = [ this.doc[0].roles ];
+		let status = this.doc[0].status.map(s=>s+"s") ;
+		delete this.doc[0].status // note stored in database -- put in permissions
         User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
-        User.db.put( this.doc[0] )
-        .then( response => {
-            User.select( response.id );
-            objectPage.show( "SendUser" );
-            })
+        User.user_db.put( this.doc[0] )
+        .then( response => User.select( response.id ))
+		.then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
+		.then( _ => objectPage.show( "SendUser" ) )
         .catch( err => {
             objectLog.err(err);
             objectPage.show( "UserList" );
@@ -903,10 +922,12 @@ class NewUserData extends PatientDataEditMode {
 class EditUserData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-            this.doc[0].roles = [ this.doc[0].roles ];
+			let status = this.doc[0].status.map(s=>s+"s") ;
+			delete this.doc[0].status // note stored in database -- put in permissions
             User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
-            User.db.put( this.doc[0] )
-            .then( () => objectPage.show( "SendUser" ) )
+            User.user_db.put( this.doc[0] )
+            .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
+            .then( _ => objectPage.show( "SendUser" ) )
             .catch( err => {
                 objectLog.err(err);
                 objectPage.show( "UserList" );
@@ -1124,15 +1145,15 @@ class Operation { // convenience class
 }
 
 class User { // convenience class
-    static db = null ; // the special user couchdb database for access control
+    static user_db = null ; // the special user couchdb database for access control
     static id = null; // not cookie backed
     static password = {}; // userid/password pairs from this session since you can't get them back from the database (encrypted)
     static del() {
         if ( User.id ) {
-            User.db.get( User.id )
+            User.user_db.get( User.id )
             .then( (doc) => {
                 if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
-                    return User.db.remove(doc) ;
+                    return User.user_db.remove(doc) ;
                 } else {
                     throw "No delete";
                 }
@@ -1165,7 +1186,7 @@ class User { // convenience class
             binary: true,
             attachments: true,
         } ;
-        return User.db.allDocs(doc);
+        return User.user_db.allDocs(doc);
     }
 
     static send( doc ) {
@@ -1381,14 +1402,14 @@ class RemoteReplicant { // convenience class
                     },
                 });
         } else {
-            objectLog.err("Bad DB");
+            objectLog.err("Bad DB specficication");
             return null;
         }
     }
             
     closeRemoteDB() {
         return Promise.all( [
-            User.db ? User.db.close() : Promise.resolve(true),
+            User.user_db ? User.user_db.close() : Promise.resolve(true),
             security_db ? security_db.close() : Promise.resolve(true),
             ]);
     }
@@ -1642,12 +1663,12 @@ class SendUser extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        if ( User.db == null ) {
+        if ( User.user_db == null ) {
             objectPage.show( "SuperUser" );
         } else if ( User.id == null || !(User.id in User.password) ) {
             objectPage.show( "UserList" );
         } else {
-            User.db.get( User.id )
+            User.user_db.get( User.id )
             .then( doc => User.send( doc ) )
             .catch( err => {
                 objectLog.err(err);
@@ -1671,14 +1692,17 @@ class UserEdit extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        if ( User.db == null ) {
+        if ( User.user_db == null ) {
             objectPage.show( "SuperUser" );
         } else if ( User.id == null ) {
             objectPage.show( "UserList" );
         } else {
-            User.db.get( User.id )
+			let sec=null;
+			objectSecurity.getUsers()
+			.then( s => sec=s )
+			.then( _ => User.user_db.get( User.id ) )
             .then( doc => {
-                doc.roles = doc.roles[0]; // unarray
+                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names.includes(doc.name)); // unarray
                 objectPatientData = new EditUserData( doc, structEditUser );
                 })
             .catch( err => {
@@ -1695,7 +1719,7 @@ class UserList extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        if ( User.db == null ) {
+        if ( User.user_db == null ) {
             objectPage.show( "SuperUser" );
         } else {
             let sec = objectSecurity.getUsers()
@@ -1706,7 +1730,7 @@ class UserList extends Pagelist {
             .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
             .then( _ => objectSecurity.getUsers() )
             .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
-                if ( sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
+               if ( sec[role].names && sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
                 })))
             .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
@@ -1722,11 +1746,11 @@ class UserNew extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        if ( User.db == null ) {
+        if ( User.user_db == null ) {
             objectPage.show( "SuperUser" );
         } else {
             User.unselect();
-            objectPatientData = new NewUserData( {}, structNewUser );
+            objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
         }
     }
 }
@@ -2032,22 +2056,6 @@ function cloneClass( fromClass, target ) {
     c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
 }    
 
-class Collation {
-    constructor() {
-        this.db = new PouchDB( 'databases' );
-        PouchDB.replicate( 'https://emissionsystem.org:6984/databases', this.db, { live:true, retry:true } ) ;
-    }
-
-    static getAllIdDoc() {
-        let doc = {
-            startkey: '0',
-            endkey:   '1',
-            include_docs: true,
-        };
-        return objectCollation.db.allDocs(doc);
-    }
-}
-
 class Log{
     constructor() {
         this.list = [];
@@ -2135,9 +2143,6 @@ window.onload = () => {
 
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
-
-    // database list
-    objectCollation = new Collation();
 
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
