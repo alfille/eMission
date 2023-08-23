@@ -27,12 +27,6 @@ var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
-const remoteUser = {
-    database: "_users" ,
-    username: "admin",
-    password: "", // set in SuperUser
-    address: "", // set in SuperUser
-    };
 
 // used to generate data entry pages "PatientData" type
 const structNewPatient = [
@@ -1097,6 +1091,7 @@ class PatientDataRaw { // singleton class
                 }
                 if ( struct[idx].type != "image" ) {
                     if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
+                        console.log("CHANGE",postVal,doc,name.split("."),name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ));
                         changed[ipair] = true;
                         Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
                     }
@@ -2712,6 +2707,11 @@ class UserList extends Administration {
     static safeLanding  = false ; // don't return here
 }
 
+class MissionMembers extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+
 class UserNew extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
@@ -2791,7 +2791,7 @@ class SortTable {
             .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
             this.collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
-                c.innerText=(this.aliases[colname].value)(record) ;
+                c.innerHTML=(this.aliases[colname].value)(record) ;
             });
         });
         this.highlight();
@@ -2995,7 +2995,7 @@ class DatabaseTable extends SortTable {
                 objectTable.highlight();
             }
             })
-        .catch( _ => this.unselect() )        .finally( _ => document.getElementById("switchdatabase").disabled = (this.databaseId==null) || (this.databaseId==this.loadedId) ) ;
+        .catch( _ => this.unselect() )
     }
 
     editpage() {

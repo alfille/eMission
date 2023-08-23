@@ -633,6 +633,7 @@ class PatientDataRaw { // singleton class
                     }
                     break;
                 default:
+                // includes password
                     inp = document.createElement( item.type=="textarea" ? "textarea" : "input" );
                     inp.title = item.hint;
                     inp.readOnly = true;
@@ -815,6 +816,7 @@ class PatientDataRaw { // singleton class
                     case "textarea":
                         postVal = li.querySelector("textarea").value;
                         break;
+                    case "password":
                     default:
                         postVal = li.querySelector("input").value;
                         break;
@@ -878,6 +880,11 @@ class DatabaseData extends PatientDataEditMode {
 }
 
 class SuperUserData extends PatientDataEditMode {
+    constructor( nextpage, click, ...args) {
+        super(click, ...args);
+        this.nextpage=nextpage
+    }
+    
     savePatientData() {
         this.loadDocData();
 
@@ -892,10 +899,10 @@ class SuperUserData extends PatientDataEditMode {
             objectSecurity.setup( remoteUser.username, remoteUser.password ) ;
             security_db = objectRemote.openRemoteDB( objectSecurity.object() );
 
-            objectPage.show( "UserList" ); })
+            objectPage.show( this.nextpage ); })
         .catch( err => {
             alert( err );
-            objectPage.show( "SuperUser" );
+            objectPage.show( "SuperUser",this.nextpage );
             });
     }
 }
@@ -1664,7 +1671,7 @@ class SendUser extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            objectPage.show( "SuperUser" );
+            objectPage.show( "SuperUser","SendUser" );
         } else if ( User.id == null || !(User.id in User.password) ) {
             objectPage.show( "UserList" );
         } else {
@@ -1681,9 +1688,9 @@ class SendUser extends Pagelist {
 class SuperUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
-    static subshow(extra="") {
+    static subshow(extra="UserList") {
         remoteUser.address = remoteCouch.address;
-        objectPatientData = new SuperUserData( Object.assign({},remoteUser), structSuperUser );
+        objectPatientData = new SuperUserData( extra, Object.assign({},remoteUser), structSuperUser );
     }
 }
 
@@ -1693,7 +1700,7 @@ class UserEdit extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            objectPage.show( "SuperUser" );
+            objectPage.show( "SuperUser","UserEdit" );
         } else if ( User.id == null ) {
             objectPage.show( "UserList" );
         } else {
@@ -1702,7 +1709,7 @@ class UserEdit extends Pagelist {
 			.then( s => sec=s )
 			.then( _ => User.user_db.get( User.id ) )
             .then( doc => {
-                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names.includes(doc.name)); // unarray
+                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names.includes(doc.name));
                 objectPatientData = new EditUserData( doc, structEditUser );
                 })
             .catch( err => {
@@ -1720,9 +1727,8 @@ class UserList extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            objectPage.show( "SuperUser" );
+            objectPage.show( "SuperUser","UserList" );
         } else {
-            let sec = objectSecurity.getUsers()
             let rows = [] ;
             objectTable = new UserTable();
             User.getAllIdDoc()
@@ -1735,7 +1741,34 @@ class UserList extends Pagelist {
             .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show ( "SuperUser" );
+                objectPage.show ( "SuperUser","UserList" );
+                });
+        }
+    }
+}
+
+class MissionMembers extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+
+    static subshow(extra="") {
+        if ( User.user_db == null ) {
+            objectPage.show( "SuperUser","MissionMembers" );
+        } else {
+            let rows = [] ;
+            objectTable = new MissionMembersTable();
+            User.getAllIdDoc()
+            .then( docs => rows = docs.rows )
+            .then( _ => objectSecurity.getUsers() )
+            .then( sec => rows.forEach( row => row.doc.mission = 
+                ["members","admins"]
+                .filter( role => sec[role].name && sec[role].names.includes(row.doc.name))
+                .map( r => r.slice(0,-1) )
+                ))
+            .then( _ => objectTable.fill(rows ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show ( "SuperUser","MissionMembers" );
                 });
         }
     }
@@ -1747,7 +1780,7 @@ class UserNew extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            objectPage.show( "SuperUser" );
+            objectPage.show( "SuperUser","UserNew" );
         } else {
             User.unselect();
             objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
@@ -1933,7 +1966,7 @@ class SortTable {
             .forEach( (e) => row.addEventListener( e, () => this.selectandedit( record._id ) ) ) ;
             this.collist.forEach( (colname,i) => {
                 let c = row.insertCell(i);
-                c.innerText=(this.aliases[colname].value)(record) ;
+                c.innerHTML=(this.aliases[colname].value)(record) ;
             });
         });
         this.highlight();
@@ -2037,6 +2070,30 @@ class UserTable extends SortTable {
             );
     }
 
+    selectId() {
+        return User.id;
+    }
+
+    selectFunc(id) {
+        User.select(id) ;
+    }
+
+    editpage() {
+        objectPage.show("UserEdit");
+    }
+}
+
+class MissionMembersTable extends SortTable {
+    constructor() {
+        super(
+            ["name", "mission", "email", ], 
+            "UserList",
+            [
+                ["mission","Mission", (doc)=>doc.mission.map(role=>`<label>${role}<input type="checkbox"</label>`).join("")],
+            ] 
+            );
+    }
+    
     selectId() {
         return User.id;
     }
