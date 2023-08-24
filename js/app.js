@@ -2070,168 +2070,6 @@ class Cookie { //convenience class
 
 }
 
-class Page { // singleton class
-    constructor() {
-        // get page history from cookies
-        const path = Cookie.get( "displayState" );
-        this.path=[];
-        if ( Array.isArray(path) ) {
-            // review pages to make sure "landable"            
-            for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
-                if ( this.path.includes(p) ) {
-                    break ;
-                } else {
-                    this.path.push(p);
-                }
-            }
-        }
-        // default last choice
-        this.path.push("MainMenu");
-    }
-    
-    reset() {
-        // resets to just MainMenu
-        this.path = [ "MainMenu" ] ;
-        Cookie.set ( "displayState", this.path ) ;
-    }
-
-    back() {
-        this.path.shift() ;
-        if ( this.path.length == 0 ) {
-            this.reset();
-        }
-        if ( Pagelist.subclass(this.path[0]).safeLanding ) {
-            Cookie.set ( "displayState", this.path ) ;
-        } else {
-            this.back() ;
-        }
-    }
-
-    current() {
-        if ( this.path.length == 0 ) {
-            this.reset();
-        }
-        return this.path[0];
-    }
-
-    next( page = null ) {
-        if ( page == "back" ) {
-            this.back();
-        } else if ( page == null ) {
-            return ;
-        } else {
-            let iop = this.path.indexOf( page ) ;
-            if ( iop < 0 ) {
-                // add to from of page list
-                this.path.unshift( page ) ;
-            } else {
-                // trim page list back to prior occurence of this page (no loops, finite size)
-                this.path = this.path.slice( iop ) ;
-            }
-            Cookie.set ( "displayState", this.path ) ;
-        }
-    }
-
-    test( page ) {
-        return this.current()==page ;
-    }
-
-    forget() {
-        this.back();
-    }
-
-    link() {
-        window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
-    } 
-    
-    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        // test that database is selected
-        if ( db == null || remoteCouch.database=='' ) {
-            // can't bypass this! test if database exists
-            if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
-                this.show("RemoteDatabaseInput");
-            }
-        }
-
-        this.next(state) ; // update reversal list
-
-        if ( in_frame ) { // imbedded, only show SelectPatient
-            if ( state != "SelectPatient" ) {
-                this.show("SelectPatient") ;
-            }
-        } else if ( this.current() == "SelectPatient" ) {
-            this.show("MainMenu");
-        }
-
-        // clear display objects
-        objectPatientData = null;
-        objectTable = null;
-
-        // clear old image urls
-        ImageImbedded.clearSrc() ;
-        ImageImbedded.clearSrc() ;
-
-        this.show_screen( "screen" ); // basic page display setup
-
-        // send to page-specific code
-        (Pagelist.subclass(objectPage.current())).show(extra);
-    }
-    
-    show_screen( type ) { // switch between screen and print
-        document.getElementById("splash_screen").style.display = "none";
-        let showscreen = {
-            ".work_screen": type=="screen",
-            ".print_patient": type == "patient",
-            ".print_user": type == "user",
-        };
-        for ( let cl in showscreen ) {
-            document.querySelectorAll(cl)
-            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
-            );
-        }
-    }    
-
-    static setButtons() {
-        // Add Extra buttons
-        document.querySelector("#moreTop").querySelectorAll("button")
-        .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
-
-        // set Help buttons
-        document.querySelectorAll(".Qmark").forEach( h => {
-            h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>objectPage.link());
-            });
-
-        // set Search buttons
-        document.querySelectorAll(".Search").forEach( s => {
-            s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>objectPage.show('SearchList'));
-            });
-
-        // set Quick Photo buttons
-        document.querySelectorAll(".Qphoto").forEach( q => {
-            q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
-            });
-
-        // set edit details for PatientData edit pages -- only for "top" portion
-        document.querySelectorAll(".edit_data").forEach( e => {
-            e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>objectPatientData.clickEdit());
-            });
-
-        // set save details for PatientData save pages
-        document.querySelectorAll(".savedata").forEach( s => {
-            s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>objectPatientData.savePatientData());
-            });
-        // remove redundant mission buttons
-        [...document.querySelectorAll(".topButtons")]
-        .filter(d => d.querySelector(".missionLogo"))
-        .forEach( d => d.removeChild(d.querySelector(".missionButton")));
-    }
-}
-
 class Pagelist {
     // list of subclasses = displayed "pages"
     // Note that these classes are never "instantiated -- only used statically
@@ -2716,6 +2554,170 @@ class UserNew extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
     static safeLanding  = false ; // don't return here
 }
+
+class Page { // singleton class
+    constructor() {
+        // get page history from cookies
+        const path = Cookie.get( "displayState" );
+        this.path=[];
+        if ( Array.isArray(path) ) {
+            // review pages to make sure "landable"            
+            for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
+                if ( this.path.includes(p) ) {
+                    break ;
+                } else {
+                    this.path.push(p);
+                }
+            }
+        }
+        // default last choice
+        this.path.push("MainMenu");
+    }
+    
+    reset() {
+        // resets to just MainMenu
+        this.path = [ "MainMenu" ] ;
+        Cookie.set ( "displayState", this.path ) ;
+    }
+
+    back() {
+        this.path.shift() ;
+        if ( this.path.length == 0 ) {
+            this.reset();
+        }
+        if ( Pagelist.subclass(this.path[0]).safeLanding ) {
+            Cookie.set ( "displayState", this.path ) ;
+        } else {
+            this.back() ;
+        }
+    }
+
+    current() {
+        if ( this.path.length == 0 ) {
+            this.reset();
+        }
+        return this.path[0];
+    }
+
+    next( page = null ) {
+        if ( page == "back" ) {
+            this.back();
+        } else if ( page == null ) {
+            return ;
+        } else {
+            let iop = this.path.indexOf( page ) ;
+            if ( iop < 0 ) {
+                // add to from of page list
+                this.path.unshift( page ) ;
+            } else {
+                // trim page list back to prior occurence of this page (no loops, finite size)
+                this.path = this.path.slice( iop ) ;
+            }
+            Cookie.set ( "displayState", this.path ) ;
+        }
+    }
+
+    test( page ) {
+        return this.current()==page ;
+    }
+
+    forget() {
+        this.back();
+    }
+
+    link() {
+        window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
+    } 
+    
+    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+        // test that database is selected
+        if ( db == null || remoteCouch.database=='' ) {
+            // can't bypass this! test if database exists
+            if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
+                this.show("RemoteDatabaseInput");
+            }
+        }
+
+        this.next(state) ; // update reversal list
+
+        if ( in_frame ) { // imbedded, only show SelectPatient
+            if ( state != "SelectPatient" ) {
+                this.show("SelectPatient") ;
+            }
+        } else if ( this.current() == "SelectPatient" ) {
+            this.show("MainMenu");
+        }
+
+        // clear display objects
+        objectPatientData = null;
+        objectTable = null;
+
+        // clear old image urls
+        ImageImbedded.clearSrc() ;
+        ImageImbedded.clearSrc() ;
+
+        this.show_screen( "screen" ); // basic page display setup
+
+        // send to page-specific code
+        (Pagelist.subclass(objectPage.current())).show(extra);
+    }
+    
+    show_screen( type ) { // switch between screen and print
+        document.getElementById("splash_screen").style.display = "none";
+        let showscreen = {
+            ".work_screen": type=="screen",
+            ".print_patient": type == "patient",
+            ".print_user": type == "user",
+        };
+        for ( let cl in showscreen ) {
+            document.querySelectorAll(cl)
+            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
+            );
+        }
+    }    
+
+    static setButtons() {
+        // Add Extra buttons
+        document.querySelector("#moreTop").querySelectorAll("button")
+        .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
+
+        // set Help buttons
+        document.querySelectorAll(".Qmark").forEach( h => {
+            h.title = "Open explanation in another tab" ;
+            h.addEventListener("click",()=>objectPage.link());
+            });
+
+        // set Search buttons
+        document.querySelectorAll(".Search").forEach( s => {
+            s.title = "Search everywhere for a word or phrase" ;
+            s.addEventListener("click",()=>objectPage.show('SearchList'));
+            });
+
+        // set Quick Photo buttons
+        document.querySelectorAll(".Qphoto").forEach( q => {
+            q.title = "Quick photo using camera or from gallery" ;
+            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
+            });
+
+        // set edit details for PatientData edit pages -- only for "top" portion
+        document.querySelectorAll(".edit_data").forEach( e => {
+            e.title = "Unlock record to allow changes" ;
+            e.addEventListener("click",()=>objectPatientData.clickEdit());
+            });
+
+        // set save details for PatientData save pages
+        document.querySelectorAll(".savedata").forEach( s => {
+            s.title = "Save your changes to this record" ;
+            s.addEventListener("click",()=>objectPatientData.savePatientData());
+            });
+        // remove redundant mission buttons
+        [...document.querySelectorAll(".topButtons")]
+        .filter(d => d.querySelector(".missionLogo"))
+        .forEach( d => d.removeChild(d.querySelector(".missionButton")));
+    }
+}
+
+objectPage = new Page();
 
 function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
@@ -3409,7 +3411,7 @@ function clearLocal() {
 function cookies_n_query() {
     Cookie.get ( "patientId" );
     Cookie.get ( "noteId" );
-    objectPage = new Page();
+    //objectPage = new Page();
     Cookie.get ( "operationId" );
 
     

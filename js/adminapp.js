@@ -1762,7 +1762,7 @@ class MissionMembers extends Pagelist {
             .then( _ => objectSecurity.getUsers() )
             .then( sec => rows.forEach( row => row.doc.mission = 
                 ["members","admins"]
-                .filter( role => sec[role].name && sec[role].names.includes(row.doc.name))
+                .filter( role => sec[role].names && sec[role].names.includes(row.doc.name))
                 .map( r => r.slice(0,-1) )
                 ))
             .then( _ => objectTable.fill(rows ) )
@@ -2089,9 +2089,27 @@ class MissionMembersTable extends SortTable {
             ["name", "mission", "email", ], 
             "UserList",
             [
-                ["mission","Mission", (doc)=>doc.mission.map(role=>`<label>${role}<input type="checkbox"</label>`).join("")],
+                ["mission","Mission", (doc)=>doc.mission.map(role=>`<label>${role}<input type="checkbox" onclick="()=>console.log(doc.name)"></label>`).join("")],
             ] 
             );
+    }
+    
+    fill( doclist ) {
+        // typically called with doc.rows from allDocs
+        let tbody = this.tbl.querySelector('tbody');
+        tbody.innerHTML = "";
+        //let collist = this.collist;
+        doclist.forEach( (doc) => {
+            let row = tbody.insertRow(-1);
+            let record = doc.doc;
+            row.setAttribute("data-id",record._id);
+            /* Select and edit -- need to make sure selection is complete*/
+            this.collist.forEach( (colname,i) => {
+                let c = row.insertCell(i);
+                c.innerHTML=(this.aliases[colname].value)(record) ;
+            });
+        });
+        this.highlight();
     }
     
     selectId() {
