@@ -2561,12 +2561,14 @@ class Page { // singleton class
         const path = Cookie.get( "displayState" );
         this.path=[];
         if ( Array.isArray(path) ) {
-            // review pages to make sure "landable"            
-            for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
-                if ( this.path.includes(p) ) {
-                    break ;
-                } else {
-                    this.path.push(p);
+            if ( objectPage ) {
+                // review pages to make sure "landable"          
+                for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
+                    if ( this.path.includes(p) ) {
+                        break ;
+                    } else {
+                        this.path.push(p);
+                    }
                 }
             }
         }

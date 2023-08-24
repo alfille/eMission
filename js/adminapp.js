@@ -60,15 +60,16 @@ class RemoteSecurity {
     }
     
     setUser(name,rolearray=[]){
-		this.getUsers()
-		.then( u => {
-			// remove name
-			["admins","members"].forEach( role => u[role].names=u[role].names.filter(n=>n!=name));
-			// Add name
-			rolearray.forEach( role => u[role].names=u[role].names.concat(name) );
-			return u;
-			})
-		.then( u => fetch(new URL(this.database+"/_security",this.address), {
+        // set both admin and member 
+        this.getUsers()
+        .then( u => {
+            // remove name
+            ["admins","members"].forEach( role => u[role].names=u[role].names.filter(n=>n!=name));
+            // Add name
+            rolearray.forEach( role => u[role].names=u[role].names.concat(name) );
+            return u;
+            })
+        .then( u => fetch(new URL(this.database+"/_security",this.address), {
             mode: "cors",
             credentials: "include",
             method: "PUT",
@@ -76,7 +77,29 @@ class RemoteSecurity {
             origin: new URL(this.address),
             body: JSON.stringify(u),
             }))
-	}
+    }
+    
+    setRole( name, role, state ) {
+        // set just admin or member (for checkbox)
+        this.getUsers()
+        .then( u => {
+            // remove name
+            u[role].names=u[role].names.filter(n=>n!=name);
+            if ( state ) {
+                u[role].names=u[role].names.concat(name);
+            }
+            return u;
+            })
+        .then( u => fetch(new URL(this.database+"/_security",this.address), {
+            mode: "cors",
+            credentials: "include",
+            method: "PUT",
+            headers: this.header,
+            origin: new URL(this.address),
+            body: JSON.stringify(u),
+            }))
+    }
+        
     
     object() {
         return {
@@ -495,6 +518,7 @@ class PatientDataRaw { // singleton class
             // get value and make type-specific input field with filled in value
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
+            console.log(item.name,item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ));
             switch( item.type ) {
                 case "image":
                     inp = document.createElement("div");
@@ -816,12 +840,13 @@ class PatientDataRaw { // singleton class
                     case "textarea":
                         postVal = li.querySelector("textarea").value;
                         break;
-                    case "password":
                     default:
                         postVal = li.querySelector("input").value;
                         break;
                 }
-                if ( struct[idx].type != "image" ) {
+                if ( struct[idx].type == "password" && postVal=="" ) {
+                    // do nothing -- don't over-write password
+                } else if ( struct[idx].type != "image" ) {
                     if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
                         changed[ipair] = true;
                         Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
@@ -912,13 +937,13 @@ class NewUserData extends PatientDataEditMode {
         this.loadDocData();
         this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
         this.doc[0].type = "user";
-		let status = this.doc[0].status.map(s=>s+"s") ;
-		delete this.doc[0].status // note stored in database -- put in permissions
+        let status = this.doc[0].status.map(s=>s+"s") ;
+        delete this.doc[0].status // note stored in database -- put in permissions
         User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
         User.user_db.put( this.doc[0] )
         .then( response => User.select( response.id ))
-		.then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
-		.then( _ => objectPage.show( "SendUser" ) )
+        .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
+        .then( _ => objectPage.show( "SendUser" ) )
         .catch( err => {
             objectLog.err(err);
             objectPage.show( "UserList" );
@@ -929,8 +954,8 @@ class NewUserData extends PatientDataEditMode {
 class EditUserData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-			let status = this.doc[0].status.map(s=>s+"s") ;
-			delete this.doc[0].status // note stored in database -- put in permissions
+            let status = this.doc[0].status.map(s=>s+"s") ;
+            delete this.doc[0].status // note stored in database -- put in permissions
             User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
             User.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
@@ -1704,10 +1729,10 @@ class UserEdit extends Pagelist {
         } else if ( User.id == null ) {
             objectPage.show( "UserList" );
         } else {
-			let sec=null;
-			objectSecurity.getUsers()
-			.then( s => sec=s )
-			.then( _ => User.user_db.get( User.id ) )
+            let sec=null;
+            objectSecurity.getUsers()
+            .then( s => sec=s )
+            .then( _ => User.user_db.get( User.id ) )
             .then( doc => {
                 doc.status = ["member","admin"].filter(role=>sec[role+"s"].names.includes(doc.name));
                 objectPatientData = new EditUserData( doc, structEditUser );
@@ -2089,7 +2114,7 @@ class MissionMembersTable extends SortTable {
             ["name", "mission", "email", ], 
             "UserList",
             [
-                ["mission","Mission", (doc)=>doc.mission.map(role=>`<label>${role}<input type="checkbox" onclick="()=>console.log(doc.name)"></label>`).join("")],
+                ["mission","Mission", (doc)=>["member","admin"].map(role=>`<label>${role}<input type="checkbox" onclick="objectSecurity.setRole('${doc.name}','${role}s',this.checked)" ${doc.mission.includes(role)?'checked':''}></label>`).join("")],
             ] 
             );
     }
