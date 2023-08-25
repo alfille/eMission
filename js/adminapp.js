@@ -2113,7 +2113,7 @@ class MissionMembersTable extends SortTable {
             ["name", "mission", "email", ], 
             "UserList",
             [
-                ["mission","Mission", (doc)=>["member","admin"].map(role=>`<label>${role}<input type="checkbox" onclick="objectSecurity.setRole('${doc.name}','${role}s',this.checked)" ${doc.mission.includes(role)?'checked':''}></label>`).join("")],
+                ["mission","Mission", (doc)=>["member","admin"].map(role=>`<label class="nowrap">${role}<input type="checkbox" onclick="objectSecurity.setRole('${doc.name}','${role}s',this.checked)" ${doc.mission.includes(role)?'checked':''}></label>`).join("")],
             ] 
             );
     }
