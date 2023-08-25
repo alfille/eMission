@@ -954,6 +954,7 @@ class NewUserData extends PatientDataEditMode {
 class EditUserData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
+			console.log("Save",this.doc[0])
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
             User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
@@ -1202,12 +1203,10 @@ class User { // convenience class
         if ( objectPage.test("UserList") ) {
             objectTable.highlight();
         }
-        document.getElementById("editreviewuser").disabled = false;
     }    
 
     static unselect() {
         User.id = null;
-        document.getElementById("editreviewuser").disabled = true;
     }
 
     static getAllIdDoc() {
@@ -1734,7 +1733,7 @@ class UserEdit extends Pagelist {
             .then( s => sec=s )
             .then( _ => User.user_db.get( User.id ) )
             .then( doc => {
-                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names.includes(doc.name));
+                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names && sec[role+"s"].names.includes(doc.name));
                 objectPatientData = new EditUserData( doc, structEditUser );
                 })
             .catch( err => {
