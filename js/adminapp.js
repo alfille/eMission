@@ -64,7 +64,6 @@ class RemoteSecurity {
         this.getUsers()
         .then( u => {
             // remove name
-            console.log("Gotten",u);
             ["admins","members"].forEach( role => u[role].names=u[role]?.names ? u[role].names.filter(n=>n!=name) : []);
             // Add name
             rolearray.forEach( role => u[role].names=u[role].names.concat(name) );
@@ -519,7 +518,6 @@ class PatientDataRaw { // singleton class
             // get value and make type-specific input field with filled in value
             let inp = null;
             let preVal = item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ;
-            //console.log(item.name,item.name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ));
             switch( item.type ) {
                 case "image":
                     inp = document.createElement("div");
@@ -939,13 +937,12 @@ class NewUserData extends PatientDataEditMode {
         this.doc[0]._id = "org.couchdb.user:"+this.doc[0].name;
         this.doc[0].type = "user";
         if ( ! ("roles" in this.doc[0]) ) {
-			// needs "roles" for valid user entry
-			this.doc[0].roles=[];
-		}
+            // needs "roles" for valid user entry
+            this.doc[0].roles=[];
+        }
         let status = this.doc[0].status.map(s=>s+"s") ;
         delete this.doc[0].status // note stored in database -- put in permissions
         User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
-        console.log(this.doc[0]);
         User.user_db.put( this.doc[0] )
         .then( response => User.select( response.id ))
         .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
@@ -960,7 +957,6 @@ class NewUserData extends PatientDataEditMode {
 class EditUserData extends PatientData {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-			console.log("Save",this.doc[0])
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
             User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
@@ -1217,11 +1213,7 @@ class User { // convenience class
 
     static getAllIdDoc() {
         let doc = {
-            startkey: "org.couchdb.user:",
-            endkey: "org.couchdb.user:\\fff0",
             include_docs: true,
-            binary: true,
-            attachments: true,
         } ;
         return User.user_db.allDocs(doc);
     }

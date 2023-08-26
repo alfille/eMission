@@ -1096,7 +1096,6 @@ class PatientDataRaw { // singleton class
                 }
                 if ( struct[idx].type != "image" ) {
                     if ( postVal != name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ) ) {
-                        console.log("CHANGE",postVal,doc,name.split("."),name.split(".").reduce( (arr,arg) => arr && arr[arg] , doc ));
                         changed[ipair] = true;
                         Object.assign( doc, name.split(".").reduceRight( (x,n) => ({[n]:x}) , postVal ));
                     }
