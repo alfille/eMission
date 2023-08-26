@@ -188,7 +188,7 @@ const structDatabase = [
     {
         name: "password",
         hint: "Your password for access",
-        type: "password",
+        type: "text",
     },    
     {
         name: "address",
@@ -209,6 +209,11 @@ const structMission = [
         hint: "logo for this organization/mission -- ~150x50 pixels",
         type: "image",
         none: DCTOHClogo,
+    } , 
+    {
+        name: "Name",
+        hint: "Name of Mission",
+        type: "text",
     } , 
     {
         name: "Organization",
@@ -2951,7 +2956,7 @@ class SelectPatientTable extends SortTable {
 class DatabaseTable extends SortTable {
     constructor() {
         super( 
-            ["Name","Organization","Location","StartDate"], 
+            ["Name","Organization","Location","Mission"], 
             "DBTable" 
             );
         // starting databaseId
