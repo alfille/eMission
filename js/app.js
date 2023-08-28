@@ -193,7 +193,7 @@ const structDatabase = [
     {
         name: "address",
         alias: "Remote database server address",
-        hint: "https://location -- don't include database name",
+        hint: "emissionsystem.org -- don't include database name",
         type: "text",
     },
     {
@@ -1156,7 +1156,7 @@ class DatabaseData extends PatientDataEditMode {
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
         objectPage.reset();
-        location.reload(); // force reload
+        window.location.href="/index.html"; // force reload
     }
 }
 
@@ -3019,7 +3019,7 @@ class DatabaseTable extends SortTable {
             .catch( (err) => objectLog.err(err,"Loading patient database") )
             .finally( () => {
                 objectPage.reset();
-                location.reload(); // force reload
+                window.location.href="/index.html"; // force reload
                 }) ;
         } else {
             objectPage.show( "MainMenu" ) ;
