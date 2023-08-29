@@ -325,7 +325,8 @@ class Operation { // convenience class
     static dateFromDoc( doc ) {
         return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
     }
-    nullOp( doc ) {
+    
+    static nullOp( doc ) {
         return doc.Procedure == "Enter new procedure" ;
     }
 }
