@@ -2632,7 +2632,7 @@ class Page { // singleton class
     }
 
     link() {
-        window.open( `https://emissionsystem.org/help/${this.current()}.md`, '_blank' );
+        window.open( `https://emissionsystem.org/help/${this.current()}.html`, '_blank' );
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
