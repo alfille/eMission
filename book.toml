@@ -5,5 +5,10 @@ multilingual = false
 src = "src"
 title = "eMission Help"
 logo="images/emission11-web-white.jpg"
+
 [output.html]
 default-theme = "navy"
+
+[output.html.fold]
+enable=true
+

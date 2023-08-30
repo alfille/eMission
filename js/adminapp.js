@@ -1557,7 +1557,7 @@ class Page { // singleton class
     }
 
     link() {
-        window.open( `https://emissionsystem.org/help/${this.current()}.html`, '_blank' );
+        window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements

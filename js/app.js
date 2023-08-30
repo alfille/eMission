@@ -2120,6 +2120,15 @@ class Administration extends Pagelist {
     }
 }
 
+class Help extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+
+    static subshow(extra="") {
+        window.open( new URL(`/book/index.html`,location.href).toString(), '_blank' );
+        objectPage.show("MainMenu");
+    }
+}
+
 class MainMenu extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
@@ -2632,7 +2641,7 @@ class Page { // singleton class
     }
 
     link() {
-        window.open( `https://emissionsystem.org/help/${this.current()}.html`, '_blank' );
+        window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
     show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements

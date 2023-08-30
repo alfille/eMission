@@ -2,7 +2,7 @@
   - [Get Started](GetStarted.md)
   - [Add A Patient](AddPatient.md)
   - [Edit A Note](NoteEdit.md)
-# All Pages
+# Page Help
 - [Common Elements](Layout.md)
   - [Header](Header.md)
   - [Patient Bar](PatientBar.md)
@@ -30,7 +30,7 @@
   - [Mission Notes](MissionList.md)
   - [Switch Mission](DBTable.md)
 - [Search](SearchList.md)
-- [Download Menu](Download.md)
+- [Download](Download.md)
   - [Speadsheet](DownloadCSV.md)
   - [Presentation (PowerPoint)](DownloadPPTX.md)
   - [Backup](DownloadJSON.md)
@@ -42,11 +42,11 @@
   - [Database Console](Fauxton.md)
   - [Database Information](DatabaseInfo.md)
   - [Merge Patient Records](PatientMerge.md)
-# Administrator
-# Manager
-# Technical Aspects
+# For New Mission Organizers
+# For Managers
+# For Developers
 - [Security](Security.md)
-# License, Usage and Support
+# License Support
 [General Description]()
 - [Legal and Stuff]()
    - [License]()
