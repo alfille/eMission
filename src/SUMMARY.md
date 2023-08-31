@@ -12,6 +12,7 @@
 - [Main Menu](MainMenu.md)
   - [First Time Greeting](FirstTime.md)
   - [Error Messages](ErrorLog.md)
+  - [Manually enter credentials](RemoteDatabaseInput.md)
 - [Patient](Patient.md)
   - [Patient Menu](PatientPhoto.md)
   - [Patient List](AllPatients.md)
