@@ -56,7 +56,8 @@
     {
       "src": "images/emission_64x64.png",
       "type": "image/png",
-      "sizes": "64x64"
+      "sizes": "64x64",
+      "purpose":"any"
     },
     {
       "src": "images/emission_512x512.png",
