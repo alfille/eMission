@@ -2,6 +2,7 @@
   - [Get Started](GetStarted.md)
   - [Add A Patient](AddPatient.md)
   - [Edit A Note](NoteEdit.md)
+  - [Troubleshooting](Problems.md)
 # Page Help
 - [Common Elements](Layout.md)
   - [Header](Header.md)
@@ -20,6 +21,7 @@
   - [New Patient](PatientNew.md)
   - [Demographics](PatientDemographics.md)
   - [Medical Info](PatientMedical.md)
+  - [Bad Patient](InvalidPatient.md)
 - [Notes](Notes.md)
   - [New Note](NoteNew.md)
   - [New Photo](QuickPhoto.md)
