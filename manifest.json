@@ -16,6 +16,7 @@
   ],
   "name": "eMission",
   "handle_links": "auto",
+  "id":"eMission",
   "orientation": "natural",
   "offline_enabled": true,
   "permissions": [
