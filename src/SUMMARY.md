@@ -55,6 +55,10 @@
 # For Managers
 # For Developers
 - [Security](Security.md)
+- [Architecture](architecture.md)
+  - [Caching](caching.md)
+- [Database Schema](schema.md)
+  - [Server configuration](couchdb_config.md)
 # License Support
 [General Description]()
 - [Legal and Stuff]()

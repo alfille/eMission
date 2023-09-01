@@ -1,31 +1,36 @@
 # Getting Started with eMission
 
-## Install
- 
-There is nothing to install, _per se,_ eMission runs completely in your browser
+## Get an invitation
 
-  * Chrome, Firefox, Safari, Edge, Opera,...
-![](images/Browser.png)
+There is nothing to install -- just a web page in your browser (like *Edge*, *Chrome*, *Safari*, *Firefox*, ...)
 
-## Device
+You will receive the address, user name, database name and password from your mission leader.
 
-Lots of choices:
+Possible ways are:
 
-* Smart phone (iPhone or Android for example) or Tablet
-* Laptop (Mac, Windows, Chromebook) or computer
+* An email or letter like this: ![](images/SendUser1.png)
+* A text with the QR code ![](images/QR.png)
+* If you don't get a link, visit https://emissionsystem.org and you will get a chance to [enter the information directly](RemoteDatabaseInput.html).
 
-## Invitation
+## Get the medical records
 
-* Name, password and link from your mission leader. This will be an email or letter with either:
-  * QR code ![](images/QR.png)
-  * or text credentials![](images/Email.png)
-* Internet access (for the first time)
-  * The link will load all the information automatically into your browser
+This is automatic (but may take a little while)
 
-## It's free
+The *Sync status* will show the current state of data transfer. *resting* when complete.
 
-No license to agree to. No fee. Even the source code is free and available.
+## What next?
 
-## It's convenient
+You are all set to start working with __eMission__ -- for instance [All Patients](AllPatients.html) will take you to a list of patients.
 
-Internet access is only needed intermittently and data usage is relatively low.
+## Coming back
+
+How do you get back to __eMission__ the next time?
+
+A local copy of the program and data stays in your browser. You can get back to it by:
+
+* Keeping the browser tab open, or
+* Reopening the tab in any of these ways:
+  * Add to favorites
+  * Look in your browser history
+  * Click on the original invitation again
+

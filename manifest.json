@@ -2,22 +2,24 @@
   "author":"Paul H Alfille MD",
   "background": 
     {
-	  "service_worker": "sw.js",
-	  "type":"module"
+      "service_worker": "sw.js",
+      "type":"module"
     }, 
   "background_color": "#1c6ef2",
   "description": "Medical mission simple database -- details, notes and pictures",
   "dir": "ltr",
   "display": "standalone",
+  "display_override": ["browser","fullscreen","minimal-ui"],
   "name": "eMission",
+  "handle_links":"auto",
   "orientation": "natural",
-  "offline_enabled":true,	
+  "offline_enabled":true,   
   "permissions":["storage","cookies","unlimitedstorage"],
   "scope": "/",
   "short_name": "eMission",
   "start_url": "/index.html",
   "theme_color": "#45d1d3",
-  "categories": [],
+  "categories": ["medical"],
   "screenshots": [],
   "icons": [
     {
