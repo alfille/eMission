@@ -1,4 +1,6 @@
+- [Welcome](Welcome.md)
 - [Overview of eMission](Overview.md)
+- [How do I?](Tasks.md)
   - [Get Started](GetStarted.md)
   - [Add A Patient](AddPatient.md)
   - [Edit A Note](NoteEdit.md)

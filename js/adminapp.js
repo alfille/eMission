@@ -1221,7 +1221,7 @@ class User { // convenience class
     static send( doc ) {
         document.getElementById("SendUserMail").href = "";
         document.getElementById("SendUserPrint").onclick=null;
-        let url = new URL( window.location.href );
+        let url = new URL( "/index.html", window.location.href );
         url.searchParams.append( "address", remoteCouch.address );
         url.searchParams.append( "database", remoteCouch.database );
         url.searchParams.append( "password", User.password[User.id] );
@@ -1232,7 +1232,7 @@ class User { // convenience class
             200,200,
             4);
         document.getElementById("SendUserEmail").value = doc.email;
-        document.getElementById("SendUserLink").value = url.href;
+        document.getElementById("SendUserLink").value = url.toString();
 
         let bodytext=
 `Welcome, ${doc.name}, to eMission.
