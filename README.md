@@ -22,7 +22,7 @@ A spreadsheet was not adequate -- he wanted to use his phone, include pictures, 
 ------------------------------
 ![](src/images/gman.jpg)
 
-## Scope (i.e. what eMission does)
+- [ ] ## Scope (i.e. what eMission does)
 
 - Keeps track of patients, problems, images and demographics
 - Records operative procedures with description, data, images, tailored checklists

@@ -61,11 +61,9 @@
   - [Caching](caching.md)
 - [Database Schema](schema.md)
   - [Server configuration](couchdb_config.md)
-# License Support
-[General Description]()
-- [Legal and Stuff]()
-   - [License]()
-   - [Access to Source Code]()
+- [Source and Licence](Source.md)
+   - [License](License.md)
+   - [Packages Used](Packages.md)
    - [Author]()
    - [Acknowledgements]()
    
