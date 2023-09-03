@@ -17,7 +17,7 @@ He needed a way to:
 * keep a visual record of the injuries and document followup
 
 
-A spreadsheet was not adequate -- poor phone interface, poor support for images, poorly multi-user and problematic security. Hence the __eMission__ project was born.
+A spreadsheet was not adequate -- he wanted to use his phone, include pictures, and be more secure. Hence the __eMission__ project was born.
 
 ------------------------------
 ![](src/images/gman.jpg)
