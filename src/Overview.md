@@ -11,6 +11,8 @@ eMission is a simple patient database for use by humanitarian medical missions.
 * The team can share the information
 * Security is build in
 
+![](images/59190f77-41a3-4ce7-b583-27e8f020d4dd.webp)
+
 ## Examples:
 
 *To preserve patient confidentiality, only Fantasy creatures are shown*

@@ -501,7 +501,7 @@ class ImageImbedded {
         target.style.display = "none";
     }
 
-    display() {
+    display_image() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
             img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
@@ -517,7 +517,7 @@ class ImageImbedded {
         
     revert() {
         this.fromDoc();
-        this.display();
+        this.display_image();
     }
 
     addListen() {
@@ -538,7 +538,7 @@ class ImageImbedded {
     remove() {
         this.upload="remove";
         this.src=this.backup ?? null ;
-        this.display();
+        this.display_image();
     }
 
     getImage() {
@@ -556,7 +556,7 @@ class ImageImbedded {
         this.upload = files.files[0];
         this.src = URL.createObjectURL(this.upload);
         this.addSrc();
-        this.display();
+        this.display_image();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{ // empty
                 }
@@ -585,32 +585,12 @@ class ImageImbedded {
     }
 }
 
-class ImagePlus extends ImageImbedded {
-    constructor(...args) {
-        super(...args);
+class ImageNote extends ImageImbedded {
+    constructor( ...args ) {
+        super( ...args );
         this.text = this.doc?.text ?? "";
         this.title = this.doc?.title ?? "";
         this.category = this.doc?.category ?? "";
-    }
-
-    display() {
-        super.display();
-        this.parent.querySelector(".entryfield_text").innerText = this.text;
-        this.parent.querySelector(".entryfield_title").innerText = this.title;
-        this.parent.querySelector("select").value = this.category;
-    }
-
-    save(doc) {
-        super.save(doc);
-        doc.text = this.parent.querySelector(".entryfield_text").innerText;
-        doc.title = this.parent.querySelector(".entryfield_title").innerText;
-        doc.category = this.parent.querySelector("select").value;
-    }
-}
-
-class ImageNote extends ImagePlus {
-    constructor( ...args ) {
-        super( ...args );
         this.buttonsdisabled( false );
     }
     
@@ -623,6 +603,12 @@ class ImageNote extends ImagePlus {
         } else {
             objectPage.show( 'NoteListCategory', objectNoteList.category);
         }
+    }
+
+    display_text() {
+        this.parent.querySelector(".entryfield_text").innerText = this.text;
+        this.parent.querySelector(".entryfield_title").innerText = this.title;
+        this.parent.querySelector("select").value = this.category;
     }
 
     store() {
@@ -639,7 +625,8 @@ class ImageNote extends ImagePlus {
     edit() {
         this.addListen();
         this.buttonsdisabled( true );
-        this.display();
+        this.display_image();
+        this.display_text();
     }
 
     addListen() {
@@ -658,6 +645,13 @@ class ImageNote extends ImagePlus {
     buttonsdisabled( bool ) {
         document.querySelectorAll(".libutton" ).forEach( b => b.disabled=bool );
         document.querySelectorAll(".divbutton").forEach( b => b.disabled=bool );
+    }
+
+    save(doc) {
+        super.save(doc);
+        doc.text = this.parent.querySelector(".entryfield_text").innerText;
+        doc.title = this.parent.querySelector(".entryfield_title").innerText;
+        doc.category = this.parent.querySelector("select").value;
     }
 
     delete() {
@@ -775,7 +769,7 @@ class PatientDataRaw { // singleton class
                     inp = document.createElement("div");
                     cloneClass( ".imagetemplate", inp ) ;
                     this.images[localname] = new ImageImbedded( inp, doc, item?.none ) ;
-                    this.images[localname].display() ;
+                    this.images[localname].display_image() ;
                     lab.appendChild(inp);
                     if ( click ) {
                         this.clickEditItem(ipair,li);
@@ -986,7 +980,7 @@ class PatientDataRaw { // singleton class
         switch ( struct[idx].type ) {
             case "image":
                 cloneClass(".imagetemplate_edit",li.querySelector("div"));
-                this.images[localname].display();
+                this.images[localname].display_image();
                 this.images[localname].addListen();
                 break;
             case "radio":
@@ -1353,7 +1347,7 @@ class Patient { // convenience class
         let inp = new ImageImbedded( d, doc, NoPhoto );
 
         cloneClass( ".imagetemplate", d );
-        inp.display();
+        inp.display_image();
         Patient.buttonSub( "nOps", onum );
         NoteLister.categorize(notelist);
         Patient.buttonSub( "nAll", notelist.rows.length );
@@ -1383,7 +1377,7 @@ class Patient { // convenience class
         .then( (doc) => {
             objectPage.show_screen( "patient" );
             let img = new ImageImbedded( card, doc, NoPhoto ) ;
-            img.display();
+            img.display_image();
             let link = new URL(window.location.href);
             link.searchParams.append( "patientId", patientId );
 
@@ -1687,7 +1681,7 @@ class Note { // convenience class
             .catch( err => objectLog.err(err) )
             .finally( objectPage.show( null ) );
         }
-        img.display();
+        img.display_image();
         img.addListen(handle);
         img.getImage();
     }
@@ -3300,7 +3294,7 @@ class NoteLister {
         if ( "doc" in note ) {
             cloneClass( ".notetemplate", li );
             img=new ImageNote(li,note.doc);
-            img.display();
+            img.display_image();
         }    
         
         let edit_note = () => {

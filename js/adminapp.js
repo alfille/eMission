@@ -363,7 +363,7 @@ class ImageImbedded {
         target.style.display = "none";
     }
 
-    display() {
+    display_image() {
         let img = this.parent.querySelector( "img");
         if ( img ) {
             img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
@@ -379,7 +379,7 @@ class ImageImbedded {
         
     revert() {
         this.fromDoc();
-        this.display();
+        this.display_image();
     }
 
     addListen() {
@@ -400,7 +400,7 @@ class ImageImbedded {
     remove() {
         this.upload="remove";
         this.src=this.backup ?? null ;
-        this.display();
+        this.display_image();
     }
 
     getImage() {
@@ -418,7 +418,7 @@ class ImageImbedded {
         this.upload = files.files[0];
         this.src = URL.createObjectURL(this.upload);
         this.addSrc();
-        this.display();
+        this.display_image();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{ // empty
                 }
@@ -523,7 +523,7 @@ class PatientDataRaw { // singleton class
                     inp = document.createElement("div");
                     cloneClass( ".imagetemplate", inp ) ;
                     this.images[localname] = new ImageImbedded( inp, doc, item?.none ) ;
-                    this.images[localname].display() ;
+                    this.images[localname].display_image() ;
                     lab.appendChild(inp);
                     if ( click ) {
                         this.clickEditItem(ipair,li);
@@ -735,7 +735,7 @@ class PatientDataRaw { // singleton class
         switch ( struct[idx].type ) {
             case "image":
                 cloneClass(".imagetemplate_edit",li.querySelector("div"));
-                this.images[localname].display();
+                this.images[localname].display_image();
                 this.images[localname].addListen();
                 break;
             case "radio":
