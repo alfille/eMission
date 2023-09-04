@@ -11,6 +11,6 @@ Or choose from:
 
 * [Overview](Overview.html)
 * [Getting Started](GettingStarted.html)
-* Publications and success stories
-* Contact information
+* [Publications and success stories](Publications.html)
+* [Contact information](Author.html)
 * [Source code](https://github.com/alfille/eMission)

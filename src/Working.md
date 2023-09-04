@@ -40,7 +40,6 @@ Used for viewing or entering data in a record.
 
 ![](images/Work_data.png)
 
-* Used for entering data into a record
 * Different types of data can be represented, including pictures, text, checkboxes, and dates
 * For safety, the form comes up in *view mode*
   * To edit, press **Edit** at the top

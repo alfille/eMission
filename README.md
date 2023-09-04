@@ -8,7 +8,7 @@ eMission is a database for medical mission work. Intentionally simple. Supports 
 ## Inspiration
 Dr. Gennadiy Fuzaylov, a pediatric anesthesiologist at Massachusetts General Hospital and veteran of over 60 medical missions to the Ukraine and  Columbia and found keeping track of patients, procedures and results was increasingly difficult. 
 
-![[Doctors Collaborating To Help Children](https://dcthc.org)](src/images/dctohc.png)
+![[Doctors Collaborating To Help Children](http://dctohc.org/)](src/images/dctohc_logo.png)
 
 He needed a way to:
 
@@ -22,7 +22,7 @@ A spreadsheet was not adequate -- he wanted to use his phone, include pictures, 
 ------------------------------
 ![](src/images/gman.jpg)
 
-- [ ] ## Scope (i.e. what eMission does)
+## Scope (i.e. what eMission does)
 
 - Keeps track of patients, problems, images and demographics
 - Records operative procedures with description, data, images, tailored checklists

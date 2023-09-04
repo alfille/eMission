@@ -11,3 +11,5 @@ But to get started, a couple of common tasks are presented in detail. You can go
 
 * [Create a new patient](AddPatient.html)
 * [Add a note and/or picture](NoteEdit.html)
+
+The **right** and **left** arrow keys can also be used to move through the pages sequentially.

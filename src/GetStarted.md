@@ -8,15 +8,17 @@ You will receive the address, user name, database name and password from your mi
 
 Possible ways are:
 
-* An email or letter like this: ![](images/SendUser1.png)
-* A text with the QR code ![](images/QR.png)
+* An email or letter like this: 
+![](images/SendUser1.png)
+* A text with the QR code 
+![](images/QR.png)
 * If you don't get a link, visit https://emissionsystem.org and you will get a chance to [enter the information directly](RemoteDatabaseInput.html).
 
 ## Get the medical records
 
 This is automatic (but may take a little while)
 
-The *Sync status* will show the current state of data transfer. *resting* when complete.
+The *Sync status* will show the current state of data transfer. *quiescent* when complete.
 
 ## What next?
 

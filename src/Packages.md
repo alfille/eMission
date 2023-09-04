@@ -1,6 +1,6 @@
 # Packages Used
 
-All these packages are Open Source. The code is actually included on the site rather than from an external source which ensures availability and security.
+All these packages are Open Source. The client-side code is actually included in the repository rather than from an external source which ensures availability and security.
 
 ## Client Side
 
@@ -11,7 +11,15 @@ All these packages are Open Source. The code is actually included on the site ra
 |[qrenc](https://www.npmjs.com/package/qrenc)|4|MIT|QR code generator|
 |[Elasticlunr](http://elasticlunr.com/)|0.96|MIT|Text search|
 |[flatpickr](https://flatpickr.js.org/)||MIT|Date routines|
-|[PptxGenJS jszip]|(https://github.com/gitbrent/PptxGenJS/)||MIT|Powerpoint generator|
+|[PptxGenJS jszip](https://github.com/gitbrent/PptxGenJS/)||MIT|Powerpoint generator|
 
 ## Server Side
 
+|Package |Version |Licence |Perpose |
+|---|---|---|---|
+|[CouchDB](https://couchdb.apache.org/)|3.3|Apache-2.0|Replicating database|
+|[mdbook](https://rust-lang.github.io/mdBook/)||MPL-2.0|Documentation framework|
+|[lighttpd](https://www.lighttpd.net/)|1.4.70|BSD ?|Web server|
+
+
+**eMission** shows the power of leveraging Open Source code!

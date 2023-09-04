@@ -53,17 +53,14 @@
     - [Database Console](Fauxton.md)
     - [Database Information](DatabaseInfo.md)
     - [Merge Patient Records](PatientMerge.md)
-# For New Mission Organizers
-# For Managers
-# For Developers
-- [Security](Security.md)
+- [News and  Publications](Publications.md)
 - [Architecture](architecture.md)
+  - [Security](Security.md)
   - [Caching](caching.md)
-- [Database Schema](schema.md)
+  - [Database Schema](schema.md)
   - [Server configuration](couchdb_config.md)
 - [Source and Licence](Source.md)
    - [License](License.md)
    - [Packages Used](Packages.md)
-   - [Author]()
-   - [Acknowledgements]()
+   - [Author and Support](Author.md)
    
