@@ -179,30 +179,6 @@ const structOperation = [
     },
 ];
 
-const structDatabase = [
-    {
-        name: "username",
-        hint: "Your user name for access",
-        type: "text",
-    },
-    {
-        name: "password",
-        hint: "Your password for access",
-        type: "text",
-    },    
-    {
-        name: "address",
-        alias: "Remote database server address",
-        hint: "emissionsystem.org -- don't include database name",
-        type: "text",
-    },
-    {
-        name: "database",
-        hint: 'Name of patient information database (e.g. "ukraine"',
-        type: "text",
-    },
-];
-
 const structMission = [
     {
         name: "Logo",
@@ -1140,17 +1116,6 @@ class MissionData extends PatientData {
 class OperationData extends PatientData {
     savePatientData() {
         this.saveChanged( "OperationList" );
-    }
-}
-
-class DatabaseData extends PatientDataEditMode {
-    savePatientData() {
-        if ( this.loadDocData()[0] ) {
-            this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
-            Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
-        }
-        objectPage.reset();
-        window.location.href="/index.html"; // force reload
     }
 }
 
@@ -2113,6 +2078,42 @@ class Administration extends Pagelist {
         window.location.href="/admin.html" ;
     }
 }
+class DatabaseInfo extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
+class MissionMembers extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+class PrintYourself extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
+class PatientMerge extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
+class RemoteDatabaseInput extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+class SendUser extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+class SuperUser extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
+class UserEdit extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+class UserList extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
+class UserNew extends Administration {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+}
 
 class Help extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
@@ -2121,10 +2122,6 @@ class Help extends Pagelist {
         window.open( new URL(`/book/index.html`,location.href).toString(), '_blank' );
         objectPage.show("MainMenu");
     }
-}
-
-class MainMenu extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class AllOperations extends Pagelist {
@@ -2179,57 +2176,6 @@ class AllPatients extends Pagelist {
     }
 }
 
-class SelectPatient extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-
-    static subshow(extra="") {
-        document.getElementById("headerbox").style.display = "none"; // make less confusing
-        document.getElementById("titlebox").style.display = "none"; // make less confusing
-        document.getElementById("footerflex").style.display = "none"; // make less confusing
-        objectTable = new SelectPatientTable();
-        let onum= {} ;
-        let nnum = {} ;
-        Operation.getAllIdDoc() // Operations
-        .then( doclist => doclist.rows
-            .forEach( d => {
-                let p = d.doc.patient_id;
-                if (p in onum ) {
-                    ++ onum[p];
-                } else {
-                    onum[p] = 0 ; // excludes placeholders
-                }
-                }))
-        .then( _ => Note.getAllIdDoc() ) // Notes
-        .then( doclist => doclist.rows
-            .forEach( d => {
-                let p = d.doc.patient_id;
-                if (p in nnum ) {
-                    ++ nnum[p];
-                } else {
-                    nnum[p] = 1 ;
-                }
-                }))
-        .then( _ => Patient.getAllIdDoc() ) // Patients
-        .then( (docs) => {
-            docs.rows
-            .forEach( d => {
-                d.doc.Operations = onum[d.id]??0 ;
-                d.doc.Notes = nnum[d.id]??0 ;
-            })
-            objectTable.fill(docs.rows );
-            })
-        .catch( (err) => objectLog.err(err) );
-    }
-}
-
-class DatabaseInfo extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-}
-
-class PatientMerge extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-}
-
 class DBTable extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
@@ -2250,15 +2196,12 @@ class Download extends Pagelist {
         window.location.href="/download.html" ;
     }
 }
-
 class DownloadCSV extends Download {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
-
 class DownloadJSON extends Download {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
-
 class DownloadPPTX extends Download {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
@@ -2288,6 +2231,10 @@ class InvalidPatient extends Pagelist {
     static subshow(extra="") {
         Patient.unselect();
     }
+}
+
+class MainMenu extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
 
 class MissionInfo extends Pagelist {
@@ -2516,14 +2463,6 @@ class QuickPhoto extends Pagelist {
     }
 }
 
-class RemoteDatabaseInput extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-
-    static subshow(extra="") {
-        objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
-    }
-}
-
 class SearchList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
@@ -2533,33 +2472,47 @@ class SearchList extends Pagelist {
     }
 }
 
-class SendUser extends Administration {
+class SelectPatient extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-}
 
-class SuperUser extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-}
-
-class UserEdit extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-}
-
-class UserList extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-}
-
-class MissionMembers extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-}
-
-class UserNew extends Administration {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
+    static subshow(extra="") {
+        document.getElementById("headerbox").style.display = "none"; // make less confusing
+        document.getElementById("titlebox").style.display = "none"; // make less confusing
+        document.getElementById("footerflex").style.display = "none"; // make less confusing
+        objectTable = new SelectPatientTable();
+        let onum= {} ;
+        let nnum = {} ;
+        Operation.getAllIdDoc() // Operations
+        .then( doclist => doclist.rows
+            .forEach( d => {
+                let p = d.doc.patient_id;
+                if (p in onum ) {
+                    ++ onum[p];
+                } else {
+                    onum[p] = 0 ; // excludes placeholders
+                }
+                }))
+        .then( _ => Note.getAllIdDoc() ) // Notes
+        .then( doclist => doclist.rows
+            .forEach( d => {
+                let p = d.doc.patient_id;
+                if (p in nnum ) {
+                    ++ nnum[p];
+                } else {
+                    nnum[p] = 1 ;
+                }
+                }))
+        .then( _ => Patient.getAllIdDoc() ) // Patients
+        .then( (docs) => {
+            docs.rows
+            .forEach( d => {
+                d.doc.Operations = onum[d.id]??0 ;
+                d.doc.Notes = nnum[d.id]??0 ;
+            })
+            objectTable.fill(docs.rows );
+            })
+        .catch( (err) => objectLog.err(err) );
+    }
 }
 
 class Page { // singleton class
@@ -3438,7 +3391,10 @@ function cookies_n_query() {
     // frame
     if ( qline && ( "frame" in qline ) ) {
         frame_name = qline.frame;
-    }
+    } else if ( Object.keys(qline).length > 0 ) {
+		// reload without search params -- placed in Cookies
+		window.location.href = "/index.html" ;
+	}
 }
 
 // Application starting point

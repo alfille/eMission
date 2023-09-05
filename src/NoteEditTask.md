@@ -1,4 +1,4 @@
-# Edit An Existing Note
+# Edit A Note
 
 Notes (and associated pictures) form an important element of the medical record. Notes are linked to a specific patient (or the mission experience).
 
@@ -20,13 +20,12 @@ Two things happened:
 
 ![](images/Note2b.png)
 
-1. The *Date* field can be altered. It defaults to the date of note creation.
-2. The *Category* (e.g. Preop, Postop, ...) can be chosen
-3. The *Text* can be changed -- free form text of any length
-  * The *Title* can be edited -- free form text
+1. The date field can be altered. It defaults to the date of note creation.
+2. The note category (e.g. Preop, Postop, ...) can be chosen
+3. The note text can be changed. This is free form text of any length
 4. A set of control buttons are displayed:
   * **Save** your changes (and finish the edit)
   * **Cancel** any changes
-  * **Camera** add or change the picture
-  * **xCamera** remove the picture
-  * **Delete** delete the entire note
+  * **Camera** Add or change the picture
+  * **xCamera** Remove the picture
+  * **Delete** remove the entire note

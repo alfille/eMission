@@ -14,8 +14,8 @@
             <div id="headerbox">
                 <div class="headerboxlink mainOnly"><img src="images/emission11-web-white.jpg"></div>
                 <div id="buttonheader">
-                    <!-- top: SuperUser DatabaseInfo SendUser -->
-                    <div class= "SuperUser DatabaseInfo SendUser topButtons pageOverlay">
+                    <!-- top: SuperUser DatabaseInfo SendUser PrintYourself -->
+                    <div class= "SuperUser DatabaseInfo SendUser PrintYourself topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
@@ -68,6 +68,12 @@
                         <button type="button" class="divbutton delete" id="patientMergeButton" onclick="PatientMerge.merge()" disabled>Merge Patient Records</button>
                         <button type="button" class="divbutton return" onclick="PatientMerge.leave()">Return</button>
                     </div>
+                    <!-- top: RemoteDatabaseInput -->
+                    <div class="RemoteDatabaseInput topButtons pageOverlay">
+                        <button type="button" class="divbutton edit_data">Edit</button>
+                        <button type="button" class="divbutton" onClick="objectPage.show( 'PrintYourself' )" title="Print current credentials for storage">Print Your Credentials</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
+                    </div>
                 </div>
             </div>
                 <div id="titlebox">
@@ -91,12 +97,12 @@
                     <table id="UserList"></table>
                 </div>
             </div>
-            <!-- body: DatabaseInfo SuperUser UserNew UserEdit -->
-            <div class="PatientData DatabaseInfo SuperUser UserNew UserEdit pageOverlay">
+            <!-- body: DatabaseInfo SuperUser UserNew UserEdit RemoteDatabaseInput -->
+            <div class="PatientData DatabaseInfo SuperUser UserNew UserEdit RemoteDatabaseInput pageOverlay">
                 <div id="PatientDataContent" ></div>
             </div>
-            <!-- body: SendUser -->
-            <div class="SendUser pageOverlay">
+            <!-- body: SendUser PrintYourself -->
+            <div class="SendUser PrintYourself pageOverlay">
                 <div id="SendUserContent" class="buttonmenu" >
                     <div><canvas id="SendUserQR" height=180 width=180>QR code</canvas></div>
                     <div><laMarkbel>User email:<input type=text readonly=true id="SendUserEmail"></label></div>

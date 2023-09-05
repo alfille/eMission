@@ -381,7 +381,7 @@ class Mission { // convenience class
 
 class RemoteReplicant { // convenience class
     // Access to remote (cloud) version of database
-    constructor( qline ) {
+    constructor() {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.problem = false ; // separates real connection problem from just network offline
@@ -396,24 +396,6 @@ class RemoteReplicant { // convenience class
                 address: "",
                 };
         }
-
-        // Get Remote DB fron command line if available
-        if ( this.remoteFields.every( k => k in qline ) ) {
-            let updateCouch = false ;
-            this.remoteFields.forEach( f => {
-                const q = qline[f] ;
-                if ( remoteCouch[f] != q ) {
-                    updateCouch = true ;
-                    remoteCouch[f] = q ;
-                }
-                });
-            // Changed, so reset page
-            if ( updateCouch ) {
-                objectPage.reset() ;               
-                Cookie.set( "remoteCouch", remoteCouch );
-            }
-        }
-        
 
         // set up monitoring
         window.addEventListener("offline", _ => this.not_present() );
@@ -1245,13 +1227,14 @@ function cookies_n_query() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new RemoteReplicant( qline ) ;
-    
-    // first try the search field
-    if ( qline && ( "patientId" in qline ) ) {
-        Patient.select( qline.patientId );
-        objectPage.next("PatientPhoto");
-    }
+    if ( Object.keys(qline).length > 0 ) {
+		// non-empty search field -- send back to index.html
+		let u = new URL(window.location.href) ;
+		u.pathname = "/index.html" ;
+		window.location.href = u.toString()
+	}
+
+    objectRemote = new RemoteReplicant() ;
 }
 
 // Application starting point

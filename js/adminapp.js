@@ -219,6 +219,30 @@ class Id_mission extends Id_patient{
 var missionId = Id_mission.makeId() ;
 
 // used to generate data entry pages "PatientData" type
+const structDatabase = [
+    {
+        name: "username",
+        hint: "Your user name for access",
+        type: "text",
+    },
+    {
+        name: "password",
+        hint: "Your password for access",
+        type: "text",
+    },    
+    {
+        name: "address",
+        alias: "Remote database server address",
+        hint: "emissionsystem.org -- don't include database name",
+        type: "text",
+    },
+    {
+        name: "database",
+        hint: 'Name of patient information database (e.g. "ukraine"',
+        type: "text",
+    },
+];
+
 const structDatabaseInfo = [
     {
         name: "db_name",
@@ -892,7 +916,18 @@ class DatabaseInfoData extends PatientData {
     savePatientData() {}
 }
 
-class DatabaseData extends PatientDataEditMode {
+class DatabaseData extends PatientDataRaw {
+    // starts with "EDIT" clicked
+    constructor(...args) {
+		if ( remoteCouch.database=="" ) {
+			// First time
+			super(true,...args); // clicked = true
+			this.clickEditButtons() ;
+		} else {
+			super(false,...args); // clicked = false
+		}
+    }
+
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
@@ -941,8 +976,13 @@ class NewUserData extends PatientDataEditMode {
             this.doc[0].roles=[];
         }
         let status = this.doc[0].status.map(s=>s+"s") ;
-        delete this.doc[0].status // note stored in database -- put in permissions
-        User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
+        delete this.doc[0].status // not stored in database -- put in permissions
+		this.doc[0].quad = {
+			'username':this.doc[0].name,
+			'password':this.doc[0].password,
+			'database':remoteCouch.database,
+			'address' :remoteCouch.address,
+		};
         User.user_db.put( this.doc[0] )
         .then( response => User.select( response.id ))
         .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
@@ -959,7 +999,12 @@ class EditUserData extends PatientData {
         if ( this.loadDocData()[0] ) {
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
-            User.password[this.doc[0]._id] = this.doc[0].password; // for informing user
+            this.doc[0].quad = {
+				'username':this.doc[0].name,
+				'password':this.doc[0].password,
+				'database':remoteCouch.database,
+				'address' :remoteCouch.address,
+			};
             User.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
             .then( _ => objectPage.show( "SendUser" ) )
@@ -967,7 +1012,7 @@ class EditUserData extends PatientData {
                 objectLog.err(err);
                 objectPage.show( "UserList" );
                 });
-        } else if ( User.id in User.password ) {
+        } else if ( quad in this.doc[0] ) {
             objectPage.show( "SendUser" );
         } else {
             // no password to send
@@ -1182,7 +1227,6 @@ class Operation { // convenience class
 class User { // convenience class
     static user_db = null ; // the special user couchdb database for access control
     static id = null; // not cookie backed
-    static password = {}; // userid/password pairs from this session since you can't get them back from the database (encrypted)
     static del() {
         if ( User.id ) {
             User.user_db.get( User.id )
@@ -1217,25 +1261,27 @@ class User { // convenience class
         } ;
         return User.user_db.allDocs(doc);
     }
+    
+    static simple_url() {
+		let url = new URL( "/index.html", window.location.href ) ;
+		if ( url.hostname == 'localhost' ) {
+			url = new URL( "/index.html", remoteCouch.address ) ;
+			url.port = '';
+		}
+		return url
+	}
 
-    static send( doc ) {
-        document.getElementById("SendUserMail").href = "";
-        document.getElementById("SendUserPrint").onclick=null;
-        let url = new URL( "/index.html", window.location.href );
-        url.searchParams.append( "address", remoteCouch.address );
-        url.searchParams.append( "database", remoteCouch.database );
-        url.searchParams.append( "password", User.password[User.id] );
-        url.searchParams.append( "username", doc.name );
-        new QR(
-            document.getElementById("SendUserQR"),
-            url.href,
-            200,200,
-            4);
-        document.getElementById("SendUserEmail").value = doc.email;
-        document.getElementById("SendUserLink").value = url.toString();
+	static make_url( user_dict ) {
+		let url = User.simple_url() ;
+        url.searchParams.append( "address", user_dict.address );
+        url.searchParams.append( "database", user_dict.database );
+        url.searchParams.append( "password", user_dict.password );
+        url.searchParams.append( "username", user_dict.username );
+        return url ;
+	}
 
-        let bodytext=
-`Welcome, ${doc.name}, to eMission.
+	static bodytext( user_dict ) {
+		return `Welcome, ${user_dict.username}, to eMission.
 
   eMission: software for managing medical missions
       in resource-poor environments.
@@ -1244,36 +1290,52 @@ class User { // convenience class
 You have an account:
 
   web address: ${remoteCouch.address}
-     username: ${doc.name}
-     password: ${User.password[User.id]}
+     username: ${user_dict.username}
+     password: ${user_dict.password}
      database: ${remoteCouch.database}
 
 Full link (paste into your browser address bar):
-  ${url.href}
+  ${User.make_url( user_dict ).toString()}
 
 We are looking forward to your participation.
 `
         ;
+	}
 
-        let mail_url = new URL( "mailto:" + doc.email );
-        mail_url.searchParams.append( "subject", "Welcome to eMission" );
-        mail_url.searchParams.append( "body", bodytext );
-        document.getElementById("SendUserMail").href = mail_url.href;
-        document.getElementById("SendUserPrint").onclick=()=>User.printCard(url,bodytext);
+    static send( doc ) {
+		if ( 'quad' in doc ) {
+			document.getElementById("SendUserMail").href = "";
+			document.getElementById("SendUserPrint").onclick=null;
+			let url = User.make_url(doc.quad);
+			new QR(
+				document.getElementById("SendUserQR"),
+				url.toString(),
+				200,200,
+				4);
+			document.getElementById("SendUserEmail").value = doc.email;
+			document.getElementById("SendUserLink").value = url.toString();
+
+			let mail_url = new URL( "mailto:" + doc.email );
+			mail_url.searchParams.append( "subject", "Welcome to eMission" );
+			mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
+			document.getElementById("SendUserMail").href = mail_url.toString();
+			document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad,"SendUser");
+		}
     }
 
-    static printCard(url,bodytext="") {
+    static printUserCard(user_dict,nextpage) {
         let card = document.getElementById("printUser");
-        card.querySelector("#printUserText").innerText=bodytext;
+        let url = User.make_url(user_dict);
+        objectPage.show_screen( "user" ) ;
+        card.querySelector("#printUserText").innerText=User.bodytext( user_dict ) ;
         new QR(
             card.querySelector(".qrUser"),
-            url.href,
+            url.toString(),
             300,300,
             4);
 
-        objectPage.show_screen( "user" ) ;
         window.print();
-        objectPage.show("SendUser");
+        objectPage.show(nextpage);
     }
 }
 
@@ -1326,7 +1388,7 @@ class Mission { // convenience class
 }
 
 class RemoteReplicant { // convenience class
-    constructor( qline ) {
+    constructor() {
         this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.problem = false ;
@@ -1342,23 +1404,6 @@ class RemoteReplicant { // convenience class
                 };
         }
 
-        // Get Remote DB fron command line if available
-        if ( this.remoteFields.every( k => k in qline ) ) {
-            let updateCouch = false ;
-            this.remoteFields.forEach( f => {
-                const q = qline[f] ;
-                if ( remoteCouch[f] != q ) {
-                    updateCouch = true ;
-                    remoteCouch[f] = q ;
-                }
-                });
-            // Changed, so reset page
-            if ( updateCouch ) {
-                objectPage.reset() ;               
-                Cookie.set( "remoteCouch", remoteCouch );
-            }
-        }
-        
         window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
         window.addEventListener("online", _ => this.status( this.problem?"problem":"good", "--network present--" ) );
         navigator.onLine ? 
@@ -1399,19 +1444,19 @@ class RemoteReplicant { // convenience class
     status( state, msg ) {
         switch (state) {
             case "disconnect":
-                document.body.style.background="#8ed191"; // grey
+                document.body.style.background="#d72e18"; // grey
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }
                 break ;
             case "problem":
-                document.body.style.background="#d72e18"; // orange
+                document.body.style.background="#7071d3"; // Orange
                 objectLog.err(msg,"Network status");
                 this.problem = true ;
                 break ;
             case "good":
             default:
-                document.body.style.background="#19a720"; // heppy green
+                document.body.style.background="#172bae"; // happy blue
                 if ( this.lastState !== state ) {
                     objectLog.err(msg,"Network status");
                 }
@@ -1507,6 +1552,9 @@ class Page { // singleton class
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
         this.path = Cookie.get( "displayState" );
+        if ( this.path == null ) {
+			this.reset() ;
+		}
     }
     
     reset() {
@@ -1560,12 +1608,16 @@ class Page { // singleton class
         window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
-    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+    show( state = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
-            this.show("FirstTime");
+			if ( state != "RemoteDatabaseInput" ) {
+				this.show("RemoteDatabaseInput");
+			}
         }
 
+				console.log(state);
         this.next(state) ; // update reversal list
+				console.log(state);
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
@@ -1663,6 +1715,14 @@ class Pagelist {
     } 
 }
 
+class RemoteDatabaseInput extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+
+    static subshow(extra="") {
+        objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
+    }
+}
+
 class Administration extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
@@ -1684,88 +1744,6 @@ class ErrorLog extends Pagelist {
 
     static subshow(extra="") {
         objectLog.show() ;
-    }
-}
-
-class SendUser extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.user_db == null ) {
-            objectPage.show( "SuperUser","SendUser" );
-        } else if ( User.id == null || !(User.id in User.password) ) {
-            objectPage.show( "UserList" );
-        } else {
-            User.user_db.get( User.id )
-            .then( doc => User.send( doc ) )
-            .catch( err => {
-                objectLog.err(err);
-                objectPage.show( "UserList" );
-                });
-        }
-    }
-}
-
-class SuperUser extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-
-    static subshow(extra="UserList") {
-        remoteUser.address = remoteCouch.address;
-        objectPatientData = new SuperUserData( extra, Object.assign({},remoteUser), structSuperUser );
-    }
-}
-
-class UserEdit extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.user_db == null ) {
-            objectPage.show( "SuperUser","UserEdit" );
-        } else if ( User.id == null ) {
-            objectPage.show( "UserList" );
-        } else {
-            let sec=null;
-            objectSecurity.getUsers()
-            .then( s => sec=s )
-            .then( _ => User.user_db.get( User.id ) )
-            .then( doc => {
-                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names && sec[role+"s"].names.includes(doc.name));
-                objectPatientData = new EditUserData( doc, structEditUser );
-                })
-            .catch( err => {
-                objectLog.err(err);
-                User.unselect();
-                objectPage.show( "UserList" );
-                });
-        }
-    }
-}
-
-class UserList extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.user_db == null ) {
-            objectPage.show( "SuperUser","UserList" );
-        } else {
-            let rows = [] ;
-            objectTable = new UserTable();
-            User.getAllIdDoc()
-            .then( docs => rows = docs.rows )
-            .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
-            .then( _ => objectSecurity.getUsers() )
-            .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
-               if ( sec[role].names && sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
-                })))
-            .then( _ => objectTable.fill(rows ) )
-            .catch( (err) => {
-                objectLog.err(err);
-                objectPage.show ( "SuperUser","UserList" );
-                });
-        }
     }
 }
 
@@ -1792,20 +1770,6 @@ class MissionMembers extends Pagelist {
                 objectLog.err(err);
                 objectPage.show ( "SuperUser","MissionMembers" );
                 });
-        }
-    }
-}
-
-class UserNew extends Pagelist {
-    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
-
-    static subshow(extra="") {
-        if ( User.user_db == null ) {
-            objectPage.show( "SuperUser","UserNew" );
-        } else {
-            User.unselect();
-            objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
         }
     }
 }
@@ -1919,6 +1883,117 @@ class PatientMerge extends Pagelist {
             ;
         }
         PatientMerge.leave();
+    }
+}
+
+class PrintYourself extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+
+    static subshow(extra="MainMenu") {
+		User.printUserCard(remoteCouch,extra);
+	}
+}
+
+class SendUser extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+
+    static subshow(extra="") {
+        if ( User.user_db == null ) {
+            objectPage.show( "SuperUser","SendUser" );
+        } else if ( User.id == null ) {
+            objectPage.show( "UserList" );
+        } else {
+            User.user_db.get( User.id )
+            .then( doc => User.send( doc ) )
+            .catch( err => {
+                objectLog.err(err);
+                objectPage.show( "UserList" );
+                });
+        }
+    }
+}
+
+class SuperUser extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+
+    static subshow(extra="UserList") {
+        remoteUser.address = remoteCouch.address;
+        objectPatientData = new SuperUserData( extra, Object.assign({},remoteUser), structSuperUser );
+    }
+}
+
+class UserEdit extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+
+    static subshow(extra="") {
+        if ( User.user_db == null ) {
+            objectPage.show( "SuperUser","UserEdit" );
+        } else if ( User.id == null ) {
+            objectPage.show( "UserList" );
+        } else {
+            let sec=null;
+            objectSecurity.getUsers()
+            .then( s => sec=s )
+            .then( _ => User.user_db.get( User.id ) )
+            .then( doc => {
+				// membership in this mission
+                doc.status = ["member","admin"].filter(role=>sec[role+"s"].names && sec[role+"s"].names.includes(doc.name));
+                if ( 'quad' in doc ) {
+					// stored credentials
+					// username cannot be changed (restriction in _user table)
+					// address and database are set but not used
+					doc.password = doc.quad.password ;
+				}
+                objectPatientData = new EditUserData( doc, structEditUser );
+                })
+            .catch( err => {
+                objectLog.err(err);
+                User.unselect();
+                objectPage.show( "UserList" );
+                });
+        }
+    }
+}
+
+class UserList extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+
+    static subshow(extra="") {
+        if ( User.user_db == null ) {
+            objectPage.show( "SuperUser","UserList" );
+        } else {
+            let rows = [] ;
+            objectTable = new UserTable();
+            User.getAllIdDoc()
+            .then( docs => rows = docs.rows )
+            .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
+            .then( _ => objectSecurity.getUsers() )
+            .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
+               if ( sec[role].names && sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
+                })))
+            .then( _ => objectTable.fill(rows ) )
+            .catch( (err) => {
+                objectLog.err(err);
+                objectPage.show ( "SuperUser","UserList" );
+                });
+        }
+    }
+}
+
+class UserNew extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
+
+    static subshow(extra="") {
+        if ( User.user_db == null ) {
+            objectPage.show( "SuperUser","UserNew" );
+        } else {
+            User.unselect();
+            objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
+        }
     }
 }
 
@@ -2220,7 +2295,14 @@ function cookies_n_query() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new RemoteReplicant( qline ) ;
+    
+    if ( Object.keys(qline).length > 0 ) {
+		// non-empty search field -- send back to index.html
+		let u = new URL(window.location.href) ;
+		u.pathname = "/index.html" ;
+		window.location.href = u.toString()
+	}
+    objectRemote = new RemoteReplicant() ;
 }
 
 // Application starting point
@@ -2254,6 +2336,10 @@ window.onload = () => {
         Mission.link();
         Mission.select();
 
+        // now jump to proper page
+        objectPage.show( null ) ;
+
+	} else if ( objectPage.current() == "RemoteDatabaseInput" ) {
         // now jump to proper page
         objectPage.show( null ) ;
 
