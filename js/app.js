@@ -1108,7 +1108,23 @@ class PatientDataEditMode extends PatientDataRaw {
 }
 
 class MissionData extends PatientData {
-    savePatientData() {
+    saveChanged ( state ) {
+        let changed = this.loadDocData();
+        if ( changed[0] ) {
+            db.put( this.doc[0] )
+            .then( _ => objectCollation.db.get( '0'+remoteCouch.database ) )
+            .then( doc => {
+                doc.dbname = remoteCouch.database;
+                doc.server = remoteCouch.address;
+                ["Organizatoin","Name","Location","StartDate","endDate","Mission","Link"].forEach(k=> doc[k]=this.doc[0][k]);
+                return doc ;
+                })
+            .then( doc => objectCollation.db.put(doc) )
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( state ) );
+        }
+    }
+     savePatientData() {
         this.saveChanged( "MainMenu" );
     }
 }    
@@ -2181,7 +2197,11 @@ class DBTable extends Pagelist {
 
     static subshow(extra="") {
         objectTable = new DatabaseTable();
-        Collation.getAllIdDoc()
+        objectCollation.db.allDocs( {
+            startkey: '0',
+            endkey:   '1',
+            include_docs: true,
+            })
         .then( (docs) => {
             objectTable.fill(docs.rows) ;
             })
@@ -3285,16 +3305,7 @@ class NoteLister {
 class Collation {
     constructor() {
         this.db = new PouchDB( 'databases' );
-        PouchDB.replicate( 'https://emissionsystem.org:6984/databases', this.db, { live:true, retry:true } ) ;
-    }
-
-    static getAllIdDoc() {
-        let doc = {
-            startkey: '0',
-            endkey:   '1',
-            include_docs: true,
-        };
-        return objectCollation.db.allDocs(doc);
+        PouchDB.sync( 'https://emissionsystem.org:6984/databases', this.db, { live:true, retry:true } ) ;
     }
 }
 
