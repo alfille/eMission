@@ -919,13 +919,13 @@ class DatabaseInfoData extends PatientData {
 class DatabaseData extends PatientDataRaw {
     // starts with "EDIT" clicked
     constructor(...args) {
-		if ( remoteCouch.database=="" ) {
-			// First time
-			super(true,...args); // clicked = true
-			this.clickEditButtons() ;
-		} else {
-			super(false,...args); // clicked = false
-		}
+        if ( remoteCouch.database=="" ) {
+            // First time
+            super(true,...args); // clicked = true
+            this.clickEditButtons() ;
+        } else {
+            super(false,...args); // clicked = false
+        }
     }
 
     savePatientData() {
@@ -977,12 +977,12 @@ class NewUserData extends PatientDataEditMode {
         }
         let status = this.doc[0].status.map(s=>s+"s") ;
         delete this.doc[0].status // not stored in database -- put in permissions
-		this.doc[0].quad = {
-			'username':this.doc[0].name,
-			'password':this.doc[0].password,
-			'database':remoteCouch.database,
-			'address' :remoteCouch.address,
-		};
+        this.doc[0].quad = {
+            'username':this.doc[0].name,
+            'password':this.doc[0].password,
+            'database':remoteCouch.database,
+            'address' :remoteCouch.address,
+        };
         User.user_db.put( this.doc[0] )
         .then( response => User.select( response.id ))
         .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
@@ -1000,11 +1000,11 @@ class EditUserData extends PatientData {
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
             this.doc[0].quad = {
-				'username':this.doc[0].name,
-				'password':this.doc[0].password,
-				'database':remoteCouch.database,
-				'address' :remoteCouch.address,
-			};
+                'username':this.doc[0].name,
+                'password':this.doc[0].password,
+                'database':remoteCouch.database,
+                'address' :remoteCouch.address,
+            };
             User.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
             .then( _ => objectPage.show( "SendUser" ) )
@@ -1227,6 +1227,7 @@ class Operation { // convenience class
 class User { // convenience class
     static user_db = null ; // the special user couchdb database for access control
     static id = null; // not cookie backed
+    static print_flag = false ;
     static del() {
         if ( User.id ) {
             User.user_db.get( User.id )
@@ -1263,25 +1264,25 @@ class User { // convenience class
     }
     
     static simple_url() {
-		let url = new URL( "/index.html", window.location.href ) ;
-		if ( url.hostname == 'localhost' ) {
-			url = new URL( "/index.html", remoteCouch.address ) ;
-			url.port = '';
-		}
-		return url
-	}
+        let url = new URL( "/index.html", window.location.href ) ;
+        if ( url.hostname == 'localhost' ) {
+            url = new URL( "/index.html", remoteCouch.address ) ;
+            url.port = '';
+        }
+        return url
+    }
 
-	static make_url( user_dict ) {
-		let url = User.simple_url() ;
+    static make_url( user_dict ) {
+        let url = User.simple_url() ;
         url.searchParams.append( "address", user_dict.address );
         url.searchParams.append( "database", user_dict.database );
         url.searchParams.append( "password", user_dict.password );
         url.searchParams.append( "username", user_dict.username );
         return url ;
-	}
+    }
 
-	static bodytext( user_dict ) {
-		return `Welcome, ${user_dict.username}, to eMission.
+    static bodytext( user_dict ) {
+        return `Welcome, ${user_dict.username}, to eMission.
 
   eMission: software for managing medical missions
       in resource-poor environments.
@@ -1300,27 +1301,27 @@ Full link (paste into your browser address bar):
 We are looking forward to your participation.
 `
         ;
-	}
+    }
 
     static send( doc ) {
-		if ( 'quad' in doc ) {
-			document.getElementById("SendUserMail").href = "";
-			document.getElementById("SendUserPrint").onclick=null;
-			let url = User.make_url(doc.quad);
-			new QR(
-				document.getElementById("SendUserQR"),
-				url.toString(),
-				200,200,
-				4);
-			document.getElementById("SendUserEmail").value = doc.email;
-			document.getElementById("SendUserLink").value = url.toString();
+        if ( 'quad' in doc ) {
+            document.getElementById("SendUserMail").href = "";
+            document.getElementById("SendUserPrint").onclick=null;
+            let url = User.make_url(doc.quad);
+            new QR(
+                document.getElementById("SendUserQR"),
+                url.toString(),
+                200,200,
+                4);
+            document.getElementById("SendUserEmail").value = doc.email;
+            document.getElementById("SendUserLink").value = url.toString();
 
-			let mail_url = new URL( "mailto:" + doc.email );
-			mail_url.searchParams.append( "subject", "Welcome to eMission" );
-			mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
-			document.getElementById("SendUserMail").href = mail_url.toString();
-			document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad,"SendUser");
-		}
+            let mail_url = new URL( "mailto:" + doc.email );
+            mail_url.searchParams.append( "subject", "Welcome to eMission" );
+            mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
+            document.getElementById("SendUserMail").href = mail_url.toString();
+            document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad,"SendUser");
+        }
     }
 
     static printUserCard(user_dict,nextpage) {
@@ -1334,8 +1335,20 @@ We are looking forward to your participation.
             300,300,
             4);
 
-        window.print();
-        objectPage.show(nextpage);
+        User.print_flag = true ;
+        setTimeout( () => User._print(nextpage),1000 );
+        document.addEventListener("DOMContentLoaded", ()=>User._print(nextpage) );
+    }
+    
+    static _print(nextpage) {
+        
+        if ( User.print_flag ) {
+            console.log("_print",nextpage);
+            User.print_flag = false ;
+            document.removeEventListener("DOMContentLoaded", ()=>User.print() );
+            window.print();
+            objectPage.show(nextpage);
+        }
     }
 }
 
@@ -1553,8 +1566,8 @@ class Page { // singleton class
         // since any unrecognized entries send us back to app.js
         this.path = Cookie.get( "displayState" );
         if ( this.path == null ) {
-			this.reset() ;
-		}
+            this.reset() ;
+        }
     }
     
     reset() {
@@ -1610,14 +1623,14 @@ class Page { // singleton class
     
     show( state = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
-			if ( state != "RemoteDatabaseInput" ) {
-				this.show("RemoteDatabaseInput");
-			}
+            if ( state != "RemoteDatabaseInput" ) {
+                this.show("RemoteDatabaseInput");
+            }
         }
 
-				console.log(state);
+                console.log(state);
         this.next(state) ; // update reversal list
-				console.log(state);
+                console.log(state);
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
@@ -1890,8 +1903,8 @@ class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="MainMenu") {
-		User.printUserCard(remoteCouch,extra);
-	}
+        User.printUserCard(remoteCouch,extra);
+    }
 }
 
 class SendUser extends Pagelist {
@@ -1938,14 +1951,14 @@ class UserEdit extends Pagelist {
             .then( s => sec=s )
             .then( _ => User.user_db.get( User.id ) )
             .then( doc => {
-				// membership in this mission
+                // membership in this mission
                 doc.status = ["member","admin"].filter(role=>sec[role+"s"].names && sec[role+"s"].names.includes(doc.name));
                 if ( 'quad' in doc ) {
-					// stored credentials
-					// username cannot be changed (restriction in _user table)
-					// address and database are set but not used
-					doc.password = doc.quad.password ;
-				}
+                    // stored credentials
+                    // username cannot be changed (restriction in _user table)
+                    // address and database are set but not used
+                    doc.password = doc.quad.password ;
+                }
                 objectPatientData = new EditUserData( doc, structEditUser );
                 })
             .catch( err => {
@@ -2297,11 +2310,11 @@ function cookies_n_query() {
     const qline = parseQuery();
     
     if ( Object.keys(qline).length > 0 ) {
-		// non-empty search field -- send back to index.html
-		let u = new URL(window.location.href) ;
-		u.pathname = "/index.html" ;
-		window.location.href = u.toString()
-	}
+        // non-empty search field -- send back to index.html
+        let u = new URL(window.location.href) ;
+        u.pathname = "/index.html" ;
+        window.location.href = u.toString()
+    }
     objectRemote = new RemoteReplicant() ;
 }
 
@@ -2339,7 +2352,7 @@ window.onload = () => {
         // now jump to proper page
         objectPage.show( null ) ;
 
-	} else if ( objectPage.current() == "RemoteDatabaseInput" ) {
+    } else if ( objectPage.current() == "RemoteDatabaseInput" ) {
         // now jump to proper page
         objectPage.show( null ) ;
 

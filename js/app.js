@@ -1193,6 +1193,7 @@ class DateMath { // convenience class
 }
 
 class Patient { // convenience class
+    static print_flag = false ;
     static del() {
         if ( Patient.isSelected() ) {        
             let pdoc;
@@ -1402,15 +1403,25 @@ class Patient { // convenience class
                 t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
                 t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
             }
-            window.print();
-            objectPage.show("PatientPhoto");
+            // From stackoverflow.com/questions/47133740/rendering-css-on-javascript-print
+            Patient.print_flag = true ;
+            setTimeout( () => Patient._print(),1000 );
+            document.addEventListener("DOMContentLoaded", ()=>Patient._print() );
             })
         .catch( (err) => {
             objectLog.err(err);
             objectPage.show( "InvalidPatient" );
             });
     }
-   
+    
+    static _print() {
+        if ( Patient.print_flag ) {
+            Patient.print_flag = false ;
+            document.removeEventListener("DOMContentLoaded", ()=>Patient.print() );
+            window.print();
+            objectPage.show("PatientPhoto");
+        }
+    }
 }
 
 class Id {
@@ -3403,9 +3414,9 @@ function cookies_n_query() {
     if ( qline && ( "frame" in qline ) ) {
         frame_name = qline.frame;
     } else if ( Object.keys(qline).length > 0 ) {
-		// reload without search params -- placed in Cookies
-		window.location.href = "/index.html" ;
-	}
+        // reload without search params -- placed in Cookies
+        window.location.href = "/index.html" ;
+    }
 }
 
 // Application starting point
