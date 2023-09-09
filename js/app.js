@@ -2657,7 +2657,7 @@ class Page { // singleton class
             }
             if ( type!=="screen" ) {
                 window.print() ;
-                objectPage.show("back") ;
+                setTimeout(()=>objectPage.show("back"),5000) ;
             }
         }
     }    
