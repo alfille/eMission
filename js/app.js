@@ -2657,19 +2657,20 @@ class Page { // singleton class
     
     show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
-        document.getElementById( "userstatus" ).value = type;
+        let U = document.getElementById( "userstatus" );
+        U.value = type.slice(0,1)+U.value;
         let showscreen = {
             ".work_screen": type=="screen",
             ".print_patient": type == "patient",
             ".print_user": type == "user",
         };
-        document.getElementById( "userstatus" ).value = type+"X";
+        U.value = "X"+U.value;
         for ( let cl in showscreen ) {
             document.querySelectorAll(cl)
             .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
             );
-        document.getElementById( "userstatus" ).value = type+"Y";
         }
+        U.value = "Y"+U.value;
     }    
 
     static setButtons() {
