@@ -1368,18 +1368,12 @@ class Patient { // convenience class
                 4);
             // patient parameters
             t[0].rows[0].cells[1].innerText = ""; // name
-            t[0].rows[1].cells[1].innerText = doc.Complaint??"";
-            t[0].rows[2].cells[1].innerText = ""; // procedure
-            t[0].rows[3].cells[1].innerText = ""; // length
-            t[0].rows[4].cells[1].innerText = ""; // surgeon
-            t[0].rows[5].cells[1].innerText = doc.ASA??""; // ASA
-
-            t[1].rows[0].cells[1].innerText = DateMath.age(doc.DOB); 
-            t[1].rows[1].cells[1].innerText = doc.Sex??""; 
-            t[1].rows[2].cells[1].innerText = doc.Weight+" kg"??"";
-            t[1].rows[3].cells[1].innerText = doc.Allergies??"";
-            t[1].rows[4].cells[1].innerText = doc.Meds??"";
-            t[1].rows[5].cells[1].innerText = ""; // equipment
+            t[0].rows[1].cells[1].innerText = ""; // procedure
+            t[0].rows[2].cells[1].innerText = ""; // surgeon
+            t[0].rows[3].cells[1].innerText = DateMath.age(doc.DOB); 
+            t[0].rows[4].cells[1].innerText = doc.Sex??""; 
+            t[0].rows[5].cells[1].innerText = doc.Weight+" kg"??"";
+            t[0].rows[6].cells[1].innerText = ""; // equipment
             }) 
         .then( _ => db.query("Pid2Name",{key:patientId}) )
         .then( (doc) => t[0].rows[0].cells[1].innerText = doc.rows[0].value[0] )
@@ -1396,17 +1390,24 @@ class Patient { // convenience class
                     break;
             }
             if ( oleng >= 0 ) {
-                t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
-                t[0].rows[3].cells[1].innerText = docs.rows[oleng].doc.Duration + " hr"??"";
-                t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
-                t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
+                t[0].rows[1].cells[1].innerText = docs.rows[oleng].doc.Procedure??"";
+                t[0].rows[2].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
+                t[0].rows[6].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
             }
+            document.getElementById("printCardButtons").style.display="block";
             objectPage.show_screen( "patient" ); // Also prints
             })
         .catch( (err) => {
-            objectLog.err(err);
+            //objectLog.err(err);
+            console.log(err);
             objectPage.show( "InvalidPatient" );
             });
+    }
+    
+    static ActuallyPrint() {
+        document.getElementById("printCardButtons").style.display="none";
+        window.print();
+        objectPage.show('back');
     }
 }
 
@@ -2654,10 +2655,6 @@ class Page { // singleton class
                 document.querySelectorAll(cl)
                 .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
                 );
-            }
-            if ( type!=="screen" ) {
-                setTimeout(()=>window.print(),1000) ;
-                setTimeout(()=>objectPage.show("back"),3000) ;
             }
         }
     }    
