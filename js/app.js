@@ -2657,15 +2657,18 @@ class Page { // singleton class
     
     show_screen( type ) { // switch between screen and print
         document.getElementById("splash_screen").style.display = "none";
+        document.getElementById( "userstatus" ).value = type;
         let showscreen = {
             ".work_screen": type=="screen",
             ".print_patient": type == "patient",
             ".print_user": type == "user",
         };
+        document.getElementById( "userstatus" ).value = type+"X";
         for ( let cl in showscreen ) {
             document.querySelectorAll(cl)
             .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
             );
+        document.getElementById( "userstatus" ).value = type+"Y";
         }
     }    
 
