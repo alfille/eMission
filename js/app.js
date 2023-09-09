@@ -1193,7 +1193,6 @@ class DateMath { // convenience class
 }
 
 class Patient { // convenience class
-    static print_flag = false ;
     static del() {
         if ( Patient.isSelected() ) {        
             let pdoc;
@@ -1402,25 +1401,12 @@ class Patient { // convenience class
                 t[0].rows[4].cells[1].innerText = docs.rows[oleng].doc.Surgeon??"";
                 t[1].rows[5].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
             }
-            // From stackoverflow.com/questions/47133740/rendering-css-on-javascript-print
-            Patient.print_flag = true ;
-            setTimeout( () => Patient._print(),3000 );
-            document.addEventListener("DOMContentLoaded", ()=>Patient._print() );
-            objectPage.show_screen( "patient" );
+            objectPage.show_screen( "patient" ); // Also prints
             })
         .catch( (err) => {
             objectLog.err(err);
             objectPage.show( "InvalidPatient" );
             });
-    }
-    
-    static _print() {
-        if ( Patient.print_flag ) {
-            Patient.print_flag = false ;
-            document.removeEventListener("DOMContentLoaded", ()=>Patient.print() );
-            window.print();
-            objectPage.show("PatientPhoto");
-        }
     }
 }
 
@@ -2550,6 +2536,7 @@ class Page { // singleton class
     constructor() {
         // get page history from cookies
         const path = Cookie.get( "displayState" );
+        this.lastscreen = null ; // splash/screen/patient for show_screen
         this.path=[];
         if ( Array.isArray(path) ) {
             if ( objectPage ) {
@@ -2656,24 +2643,22 @@ class Page { // singleton class
     }
     
     show_screen( type ) { // switch between screen and print
-        document.getElementById("splash_screen").style.display = "none";
-        let U = document.getElementById( "userstatus" );
-        U.value = type.slice(0,1)+U.value;
-        let showscreen = {
-            ".work_screen": type=="screen",
-            ".print_patient": type == "patient",
-            ".print_user": type == "user",
-        };
-        U.value = "X"+U.value;
-        for ( let cl in showscreen ) {
-            document.querySelectorAll(cl)
-            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
-            );
+        if ( type !== this.lastscreen ) {
+            this.lastscreen == type ;
+            document.getElementById("splash_screen").style.display = "none";
+            let showscreen = {
+                ".work_screen": type=="screen",
+                ".print_patient": type == "patient",
+            };
+            for ( let cl in showscreen ) {
+                document.querySelectorAll(cl)
+                .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
+                );
+            }
+            if ( type!=="screen" ) {
+                window.print() ;
+            }
         }
-        if ( type=="patient" ) {
-            window.print() ;
-        }
-        U.value = "Y"+U.value;
     }    
 
     static setButtons() {
