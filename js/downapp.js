@@ -925,6 +925,7 @@ class Page { // singleton class
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
         this.path = Cookie.get( "displayState" );
+        this.lastscreen = null ; // splash/screen/patient for show_screen
     }
     
     reset() {
@@ -997,18 +998,20 @@ class Page { // singleton class
     }
 
     show_screen( type ) { // switch between screen and print
-        document.getElementById("splash_screen").style.display = "none";
-        const showscreen = {
-            ".work_screen": type=="screen",
-            ".print_patient": type == "patient",
-            ".print_user": type == "user",
-        };
-        for ( let cl in showscreen ) {
-            document.querySelectorAll(cl)
-            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
-            );
+        if ( type !== this.lastscreen ) {
+            this.lastscreen == type ;
+            document.getElementById("splash_screen").style.display = "none";
+            let showscreen = {
+                ".work_screen": type=="screen",
+            };
+            for ( let cl in showscreen ) {
+                document.querySelectorAll(cl)
+                .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
+                );
+            }
         }
     }    
+
 
     static setButtons() {
         // Add Extra buttons
@@ -1228,11 +1231,11 @@ function cookies_n_query() {
     // first try the search field
     const qline = parseQuery();
     if ( Object.keys(qline).length > 0 ) {
-		// non-empty search field -- send back to index.html
-		let u = new URL(window.location.href) ;
-		u.pathname = "/index.html" ;
-		window.location.href = u.toString()
-	}
+        // non-empty search field -- send back to index.html
+        let u = new URL(window.location.href) ;
+        u.pathname = "/index.html" ;
+        window.location.href = u.toString()
+    }
 
     objectRemote = new RemoteReplicant() ;
 }

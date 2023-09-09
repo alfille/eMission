@@ -1227,7 +1227,6 @@ class Operation { // convenience class
 class User { // convenience class
     static user_db = null ; // the special user couchdb database for access control
     static id = null; // not cookie backed
-    static print_flag = false ;
     static del() {
         if ( User.id ) {
             User.user_db.get( User.id )
@@ -1327,7 +1326,6 @@ We are looking forward to your participation.
     static printUserCard(user_dict,nextpage) {
         let card = document.getElementById("printUser");
         let url = User.make_url(user_dict);
-        objectPage.show_screen( "user" ) ;
         card.querySelector("#printUserText").innerText=User.bodytext( user_dict ) ;
         new QR(
             card.querySelector(".qrUser"),
@@ -1335,20 +1333,7 @@ We are looking forward to your participation.
             300,300,
             4);
 
-        User.print_flag = true ;
-        setTimeout( () => User._print(nextpage),1000 );
-        document.addEventListener("DOMContentLoaded", ()=>User._print(nextpage) );
-    }
-    
-    static _print(nextpage) {
-        
-        if ( User.print_flag ) {
-            console.log("_print",nextpage);
-            User.print_flag = false ;
-            document.removeEventListener("DOMContentLoaded", ()=>User.print() );
-            window.print();
-            objectPage.show(nextpage);
-        }
+        objectPage.show_screen( "user" ) ;
     }
 }
 
@@ -1565,6 +1550,7 @@ class Page { // singleton class
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
         this.path = Cookie.get( "displayState" );
+        this.lastscreen = null ; // splash/screen/patient for show_screen
         if ( this.path == null ) {
             this.reset() ;
         }
@@ -1647,20 +1633,26 @@ class Page { // singleton class
         }
     }
 
-    
-    show_screen( type ) { // switch between screen and print
-        document.getElementById("splash_screen").style.display = "none";
-        let showscreen = {
-            ".work_screen": type=="screen",
-            ".print_patient": type == "patient",
-            ".print_user": type == "user",
-        };
-        for ( let cl in showscreen ) {
-            document.querySelectorAll(cl)
-            .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
-            );
+   show_screen( type ) { // switch between screen and print
+        if ( type !== this.lastscreen ) {
+            this.lastscreen == type ;
+            document.getElementById("splash_screen").style.display = "none";
+            let showscreen = {
+                ".work_screen": type=="screen",
+                ".print_user": type == "user",
+            };
+            for ( let cl in showscreen ) {
+                document.querySelectorAll(cl)
+                .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
+                );
+            }
+            if ( type!=="screen" ) {
+                window.print() ;
+                setTimeout(()=>objectPage.show("back"),3000) ;
+            }
         }
     }    
+
 
     static setButtons() {
         // Add Extra buttons
