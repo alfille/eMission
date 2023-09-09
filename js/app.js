@@ -1407,7 +1407,7 @@ class Patient { // convenience class
     static ActuallyPrint() {
         document.getElementById("printCardButtons").style.display="none";
         window.print();
-        objectPage.show('back');
+        setTimeout(objectPage.show('back'),3000);
     }
 }
 
