@@ -1357,7 +1357,6 @@ class Patient { // convenience class
         let t = card.getElementsByTagName("table");
         Patient.getRecordIdPix()
         .then( (doc) => {
-            objectPage.show_screen( "patient" );
             let img = new ImageImbedded( card, doc, NoPhoto ) ;
             img.display_image();
             let link = new URL(window.location.href);
@@ -1407,6 +1406,7 @@ class Patient { // convenience class
             Patient.print_flag = true ;
             setTimeout( () => Patient._print(),3000 );
             document.addEventListener("DOMContentLoaded", ()=>Patient._print() );
+            objectPage.show_screen( "patient" );
             })
         .catch( (err) => {
             objectLog.err(err);
@@ -2669,6 +2669,9 @@ class Page { // singleton class
             document.querySelectorAll(cl)
             .forEach( (v)=> v.style.display=showscreen[cl]?"block":"none"
             );
+        }
+        if ( type=="patient" ) {
+            window.print() ;
         }
         U.value = "Y"+U.value;
     }    
