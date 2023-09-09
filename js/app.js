@@ -1405,7 +1405,7 @@ class Patient { // convenience class
             }
             // From stackoverflow.com/questions/47133740/rendering-css-on-javascript-print
             Patient.print_flag = true ;
-            setTimeout( () => Patient._print(),1000 );
+            setTimeout( () => Patient._print(),3000 );
             document.addEventListener("DOMContentLoaded", ()=>Patient._print() );
             })
         .catch( (err) => {
