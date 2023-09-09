@@ -2657,6 +2657,7 @@ class Page { // singleton class
             }
             if ( type!=="screen" ) {
                 window.print() ;
+                objectPage.show("back") ;
             }
         }
     }    
