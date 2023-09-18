@@ -1404,18 +1404,21 @@ class Patient { // convenience class
     }
     
     static ActuallyPrint() {
-        Mission.getRecordId()
-        .then( doc => printJS({
-            printable:"printCard",
-            type:"html",
-            ignoreElements:["printCardButtons"],
-            documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
-            onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
-            })
-        );
-//            objectPage.show("PatientPhoto");
-//        window.onafterprint = ()=>setTimeout(objectPage.show('back'),5000);
-//        window.print();
+        if (isAndroid() ) {
+            document.getElementById("printCardButtons").style.display="none";
+            window.onafterprint = ()=>setTimeout(objectPage.show('PatientPhoto'),5000);
+            setTimeout( ()=>window.print(), 2000 );
+        } else {
+            Mission.getRecordId()
+            .then( doc => printJS({
+                printable:"printCard",
+                type:"html",
+                ignoreElements:["printCardButtons"],
+                documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
+                onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
+                })
+            );
+        }
     }
 }
 
