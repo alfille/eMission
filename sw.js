@@ -29,6 +29,7 @@ const cacheList = [
     "/js/elasticlunr.min.js",
     "/js/jszip.min.js",
     "/js/pptxgen.min.js",
+    "/js/print.min.js",
     ];
 
 // preload cache

@@ -1398,16 +1398,24 @@ class Patient { // convenience class
             objectPage.show_screen( "patient" ); // Also prints
             })
         .catch( (err) => {
-            //objectLog.err(err);
-            console.log(err);
-            objectPage.show( "InvalidPatient" );
+            objectLog.err(err);
+            objectPage.show( "PatientPhoto" );
             });
     }
     
     static ActuallyPrint() {
-        window.onbeforeprint= ()=>document.getElementById("printCardButtons").style.display="none";
-        window.onafterprint = ()=>setTimeout(objectPage.show('back'),5000);
-        window.print();
+        Mission.getRecordId()
+        .then( doc => printJS({
+            printable:"printCard",
+            type:"html",
+            ignoreElements:["printCardButtons"],
+            documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
+            onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
+            })
+        );
+//            objectPage.show("PatientPhoto");
+//        window.onafterprint = ()=>setTimeout(objectPage.show('back'),5000);
+//        window.print();
     }
 }
 
