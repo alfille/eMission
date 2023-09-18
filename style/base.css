@@ -384,6 +384,9 @@ legend {
 .print_user {
     display: none ;
 }
+#printUser {
+    background-color: #F0FFF0;
+}
 .work_screen {
     display: none ;
 }

@@ -1404,21 +1404,15 @@ class Patient { // convenience class
     }
     
     static ActuallyPrint() {
-        if (isAndroid() ) {
-            document.getElementById("printCardButtons").style.display="none";
-            window.onafterprint = ()=>setTimeout(objectPage.show('PatientPhoto'),5000);
-            setTimeout( ()=>window.print(), 2000 );
-        } else {
-            Mission.getRecordId()
-            .then( doc => printJS({
-                printable:"printCard",
-                type:"html",
-                ignoreElements:["printCardButtons"],
-                documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
-                onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
-                })
-            );
-        }
+        Mission.getRecordId()
+        .then( doc => printJS({
+            printable:"printCard",
+            type:"html",
+            ignoreElements:["printCardButtons"],
+            documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
+            onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
+            })
+        );
     }
 }
 

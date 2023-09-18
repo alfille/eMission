@@ -1647,8 +1647,13 @@ class Page { // singleton class
                 );
             }
             if ( type!=="screen" ) {
-                setTimeout(()=>window.print(),1000) ;
-                setTimeout(()=>objectPage.show("back"),3000) ;
+                printJS({
+                    printable:"printUser",
+                    type:"html",
+                    ignoreElements:["printCardButtons"],
+                    documentTitle:"Name and Credentials",
+                    onPrintDialogClose: ()=>objectPage.show("back"),
+                });
             }
         }
     }    
