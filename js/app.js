@@ -2932,16 +2932,19 @@ class SelectPatientTable extends SortTable {
 class DatabaseTable extends SortTable {
     constructor() {
         super( 
-            ["Name","Organization","Location","Mission"], 
-            "DBTable" 
+            ["Name","Organization","Location","file"], 
+            "DBTable" ,
+            [
+                ["file","Filename",(doc)=>doc._id.substring(1)],
+            ] 
             );
-        // starting databaseId
+         // starting databaseId
         this.databaseId = this.makeId( remoteCouch.database ) ;
         this.loadedId = this.databaseId ;
         // set titlebox
         objectCollation.db.get(this.databaseId)
-        .then( (doc) => TitleBox([doc.Name,doc.Location,doc.Organization],"MissionInfo") )
-        .catch( _ => TitleBox([remoteCouch.address, remoteCouch.database],"MissionInfo") ) ;
+        .then( (doc) => TitleBox([doc.Name,doc.Location,doc.Organization,`<I>${this.databaseId.substring(1)}</I>`],"MissionInfo") )
+        .catch( _ => Mission.select() ) ;
         this.selectFunc( this.databaseId ) ;
     }
 
@@ -2991,6 +2994,7 @@ class DatabaseTable extends SortTable {
             .then( (doc) => {
                 remoteCouch.address = doc.server ;
                 remoteCouch.database = doc.dbname ;
+                Patient.unselect();
                 Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
                 })
             .catch( (err) => objectLog.err(err,"Loading patient database") )
