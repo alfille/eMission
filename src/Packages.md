@@ -12,6 +12,7 @@ All these packages are Open Source. The client-side code is actually included in
 |[Elasticlunr](http://elasticlunr.com/)|0.96|MIT|Text search|
 |[flatpickr](https://flatpickr.js.org/)||MIT|Date routines|
 |[PptxGenJS jszip](https://github.com/gitbrent/PptxGenJS/)||MIT|Powerpoint generator|
+|[PrintJS](https://printjs.crabbly.com/)|1.6.0|MIT|Printing|
 
 ## Server Side
 

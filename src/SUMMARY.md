@@ -62,6 +62,7 @@
   - [Caching](caching.md)
   - [Database Schema](schema.md)
   - [Server configuration](couchdb_config.md)
+  - [Task split](split.md)
 - [Source and Licence](Source.md)
    - [License](License.md)
    - [Packages Used](Packages.md)

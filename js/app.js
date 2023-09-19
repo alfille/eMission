@@ -3420,6 +3420,10 @@ function cookies_n_query() {
 
 // Application starting point
 window.onload = () => {
+    Page.setButtons(); // load some common html elements
+    document.querySelectorAll(".headerboxlink")
+    .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
+
     if ( window.frameElement ) {
         in_frame = true ;
     }
@@ -3435,8 +3439,6 @@ window.onload = () => {
         .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
-    Page.setButtons() ;
-
     // set state from URL or cookies
     cookies_n_query() ; // look for remoteCouch and other cookies
 
@@ -3446,8 +3448,6 @@ window.onload = () => {
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
-        document.querySelectorAll(".headerboxlink")
-        .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
         // Set up text search
         objectSearch = new Search();
@@ -3501,7 +3501,7 @@ window.onload = () => {
         // Secondary indexes
         createQueries();
         db.viewCleanup()
-        .catch( err => objectLog.err(err,"View cleanup") );
+        .catch( err => objectLog.err(err,"Query cleanup") );
 
         // now jump to proper page
         objectPage.show( null ) ;
