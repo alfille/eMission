@@ -2104,7 +2104,6 @@ class DatabaseInfo extends Administration {
 }
 class MissionMembers extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 class PrintYourself extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
@@ -2114,7 +2113,6 @@ class PatientMerge extends Administration {
 }
 class RemoteDatabaseInput extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 class SendUser extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
@@ -2125,15 +2123,12 @@ class SuperUser extends Administration {
 }
 class UserEdit extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 class UserList extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 class UserNew extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 
 class Help extends Pagelist {
@@ -2170,7 +2165,6 @@ class AllOperations extends Pagelist {
 
 class AllPatients extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding = false ;
 
     static subshow(extra="") {
         objectTable = new PatientTable();
@@ -2321,7 +2315,6 @@ class NoteList extends NoteListCategory {
 
 class NoteNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( Patient.isSelected() || (patientId == missionId) ) {
@@ -2336,7 +2329,6 @@ class NoteNew extends Pagelist {
 
 class OperationEdit extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( operationId ) {
@@ -2435,7 +2427,6 @@ class PatientMedical extends Pagelist {
 
 class PatientNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         Patient.unselect();
