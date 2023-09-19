@@ -63,6 +63,7 @@
   - [Database Schema](schema.md)
   - [Server configuration](couchdb_config.md)
   - [Task split](split.md)
+  - [Process start-up](app_start.md)
 - [Source and Licence](Source.md)
    - [License](License.md)
    - [Packages Used](Packages.md)
