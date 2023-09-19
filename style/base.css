@@ -155,7 +155,7 @@ ul {
 }
 @media print {
     header, footer, aside, form {
-        display: none;
+        display: none !important;
     }
 }
 .titlediv {
