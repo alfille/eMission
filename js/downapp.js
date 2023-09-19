@@ -975,12 +975,12 @@ class Page { // singleton class
         window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
-    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+    show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
             this.show("FirstTime");
         }
 
-        this.next(state) ; // update reversal list
+        this.next(page) ; // update reversal list
 
         // clear old image urls
         ImageImbedded.clearSrc() ;

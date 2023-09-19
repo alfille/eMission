@@ -1230,7 +1230,7 @@ class Patient { // convenience class
             .then( _ => db.remove(pdoc) )
             .then( _ => Patient.unselect() )
             .catch( (err) => objectLog.err(err) ) 
-            .finally( _ => objectPage.show( "AllPatients" ) );
+            .finally( _ => objectPage.show( "back" ) );
         }
     }
 
@@ -1349,8 +1349,10 @@ class Patient { // convenience class
     }
     
     static printCard() {
+        objectPage.next("PrintCard"); // fake page
         if ( patientId == null ) {
-            return objectPage.show( "InvalidPatient" );
+            objectLog.err("No patient to print");
+            return objectPage.show( "back" );
         }
         let card = document.getElementById("printCard");
         let t = card.getElementsByTagName("table");
@@ -1399,7 +1401,7 @@ class Patient { // convenience class
             })
         .catch( (err) => {
             objectLog.err(err);
-            objectPage.show( "PatientPhoto" );
+            objectPage.show( "back" );
             });
     }
     
@@ -1746,7 +1748,7 @@ class Operation { // convenience class
             .then( (doc) =>db.remove(doc) )
             .then( () => Operation.unselect() )
             .catch( (err) => objectLog.err(err) )
-            .finally( () => objectPage.show( "OperationList" ) );
+            .finally( () => objectPage.show( "back" ) );
         }
         return true;
     }    
@@ -2083,9 +2085,9 @@ class Pagelist {
         if ( cls ) {
             return cls ;
         } else {
-            // bad entry -- fix by making MainMenu the default
-            objectPage.next("MainMenu") ;
-            return MainMenu ;
+            // bad entry -- fix by going back
+            objectPage.back() ;
+            return objectPage.current() ;
         }
     } 
 }
@@ -2139,7 +2141,7 @@ class Help extends Pagelist {
 
     static subshow(extra="") {
         window.open( new URL(`/book/index.html`,location.href).toString(), '_blank' );
-        objectPage.show("MainMenu");
+//        objectPage.show("MainMenu");
     }
 }
 
@@ -2301,10 +2303,10 @@ class NoteListCategory extends Pagelist {
             .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
             .catch( (err) => {
                 objectLog.err(err,`Notelist (${extra})`);
-                onjectPage.show( "InvalidPatient" );
+                onjectPage.show( "back" );
                 });
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2322,15 +2324,12 @@ class NoteNew extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        if ( Patient.isSelected() ) {
+        if ( Patient.isSelected() || (patientId == missionId) ) {
             // New note only
             Note.unselect();
             Note.create();
-        } else if ( patientId == missionId ) {
-            Note.unselect();
-            Note.create();
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2349,10 +2348,10 @@ class OperationEdit extends Pagelist {
             .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
+                objectPage.show( "back" );
                 });
         } else if ( ! Patient.isSelected() ) {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         } else {
             objectPatientData = new OperationData(
             {
@@ -2375,7 +2374,7 @@ class OperationList extends Pagelist {
             .then( (docs) => objectTable.fill(docs.rows ) )
             .catch( (err) => objectLog.err(err) );
         } else {
-            objectPage.show( "AllPatients" ) ;
+            objectPage.show( "back" ) ;
         }
     }
 }
@@ -2389,7 +2388,7 @@ class OperationNew extends Pagelist {
             Operation.unselect();
             objectPage.show( "OperationEdit" );
         } else {
-            objectPage.show( "AllPatients" ) ;
+            objectPage.show( "back" ) ;
         }
     }
 }
@@ -2403,10 +2402,10 @@ class PatientDemographics extends Pagelist {
             .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
+                objectPage.show( "back" );
                 });
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2426,10 +2425,10 @@ class PatientMedical extends Pagelist {
                 })
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
+                objectPage.show( "back" );
                 });
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2464,10 +2463,10 @@ class PatientPhoto extends Pagelist {
             .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show( "InvalidPatient" );
+                objectPage.show( "back" );
                 });
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2481,7 +2480,7 @@ class QuickPhoto extends Pagelist {
         if ( patientId ) { // patient or Mission!
             Note.quickPhoto(this.extra);
         } else {
-            objectPage.show( "AllPatients" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2615,19 +2614,20 @@ class Page { // singleton class
         window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
-    show( state = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+    show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+        console.log("SHOW",page,"STATE",displayState);
         // test that database is selected
         if ( db == null || remoteCouch.database=='' ) {
             // can't bypass this! test if database exists
-            if ( state != "FirstTime" && state!="RemoteDatabaseInput" ) {
+            if ( page != "FirstTime" && state!="RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
         }
 
-        this.next(state) ; // update reversal list
+        this.next(page) ; // place in reversal list
 
         if ( in_frame ) { // imbedded, only show SelectPatient
-            if ( state != "SelectPatient" ) {
+            if ( page != "SelectPatient" ) {
                 this.show("SelectPatient") ;
             }
         } else if ( this.current() == "SelectPatient" ) {

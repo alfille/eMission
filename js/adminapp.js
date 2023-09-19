@@ -1607,16 +1607,14 @@ class Page { // singleton class
         window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
-    show( state = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
+    show( page = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || remoteCouch.database=='' ) {
             if ( state != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
         }
 
-                console.log(state);
-        this.next(state) ; // update reversal list
-                console.log(state);
+        this.next(page) ; // update reversal list
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
