@@ -17,6 +17,7 @@ var objectPage ;
 var patientId;
 var noteId;
 var operationId;
+var displayState;
 var remoteCouch;
 
 // other globals
@@ -1885,7 +1886,7 @@ class RemoteReplicant { // convenience class
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
-        if ( Cookie.get( "remoteCouch" ) == null ) {
+        if ( remoteCouch == null ) {
             remoteCouch = {
                 database: "", // must be set to continue
                 username: "",
@@ -1897,12 +1898,12 @@ class RemoteReplicant { // convenience class
         // Get Remote DB fron command line if available
         if ( this.remoteFields.every( k => k in qline ) ) {
             let updateCouch = false ;
-            this.remoteFields.forEach( f => {
-                const q = qline[f] ;
-                if ( remoteCouch[f] != q ) {
-                    updateCouch = true ;
-                    remoteCouch[f] = q ;
-                }
+            this.remoteFields
+            .filter( f => f in qline )
+            .filter( f => remoteCouch[f] != qline[f] )
+            .forEach( f => {
+                updateCouch = true ;
+                remoteCouch[f] = q ;
                 });
             // Changed, so reset page
             if ( updateCouch ) {
@@ -2052,6 +2053,14 @@ class Cookie { //convenience class
         return ret;
     }
 
+    static initialGet() {
+        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.get(c) );
+//        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => console.log(c,window[c]) );
+    }
+
+    static clear() {
+        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.del(c) );
+    }
 }
 
 class Pagelist {
@@ -2531,7 +2540,7 @@ class SelectPatient extends Pagelist {
 class Page { // singleton class
     constructor() {
         // get page history from cookies
-        const path = Cookie.get( "displayState" );
+        const path = displayState;
         this.lastscreen = null ; // splash/screen/patient for show_screen
         this.path=[];
         if ( Array.isArray(path) ) {
@@ -2695,8 +2704,6 @@ class Page { // singleton class
         .forEach( d => d.removeChild(d.querySelector(".missionButton")));
     }
 }
-
-objectPage = new Page();
 
 function isAndroid() {
     return navigator.userAgent.toLowerCase().indexOf("android") > -1;
@@ -3366,29 +3373,16 @@ function parseQuery() {
 function clearLocal() {
     const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
     if ( remove ) {
-        // clear cookies
-        Cookie.del( "patientId" );
-        Cookie.del( "remoteCouch");
-        Cookie.del( "operationId");
-        Cookie.del( "noteId" );
+        Cookie.clear();
         // clear (local) database
         db.destroy()
-        .finally( _ => {
-            objectPage.reset();
-            location.reload(); // force reload
-            });
+        .finally( _ => location.reload() ); // force reload
     } else {
         objectPage.show( "MainMenu" );
     }
 }
 
-function cookies_n_query() {
-    Cookie.get ( "patientId" );
-    Cookie.get ( "noteId" );
-    //objectPage = new Page();
-    Cookie.get ( "operationId" );
-
-    
+function URLparse() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
@@ -3411,6 +3405,10 @@ function cookies_n_query() {
 
 // Application starting point
 window.onload = () => {
+    // Get Cookies
+    Cookie.initialGet() ;
+    objectPage = new Page();
+    
     Page.setButtons(); // load some common html elements
     document.querySelectorAll(".headerboxlink")
     .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
@@ -3430,8 +3428,8 @@ window.onload = () => {
         .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
-    // set state from URL or cookies
-    cookies_n_query() ; // look for remoteCouch and other cookies
+    // set state from URL
+    URLparse() ; // look for remoteCouch and other cookies
 
     // database list
     objectCollation = new Collation();

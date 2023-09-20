@@ -388,7 +388,7 @@ class RemoteReplicant { // convenience class
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
-        if ( Cookie.get( "remoteCouch" ) == null ) {
+        if ( remoteCouch == null ) {
             remoteCouch = {
                 database: "", // must be set to continue
                 username: "",
@@ -534,6 +534,10 @@ class Cookie { //convenience class
         return ret;
     }
 
+
+    static initialGet() {
+        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.get(c) );
+    }
 }
 
 class DownloadFile { // convenience class
@@ -924,7 +928,7 @@ class Page { // singleton class
         // get page history from cookies
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
-        this.path = Cookie.get( "displayState" );
+        this.path = displayState;
         this.lastscreen = null ; // splash/screen/patient for show_screen
     }
     
@@ -1221,12 +1225,7 @@ function parseQuery() {
     return r;
 }
 
-function cookies_n_query() {
-    Cookie.get ( "patientId" );
-    Cookie.get ( "noteId" );
-    objectPage = new Page();
-    Cookie.get ( "operationId" );
-    
+function URLparse() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
@@ -1242,6 +1241,10 @@ function cookies_n_query() {
 
 // Application starting point
 window.onload = () => {
+    // Get Cookies
+    Cookie.initialGet() ;
+    objectPage = new Page();
+    
     // Initial splash screen
 
     // Stuff into history to block browser BACK button
@@ -1258,7 +1261,7 @@ window.onload = () => {
     Page.setButtons() ;
 
     // set state from URL or cookies
-    cookies_n_query() ; // look for remoteCouch and other cookies
+    URLparse() ; // setup remoteCouch and exclude command line parameters
 
     // Start pouchdb database       
     if ( remoteCouch.database !== "" ) {
