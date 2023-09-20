@@ -64,6 +64,7 @@
   - [Server configuration](couchdb_config.md)
   - [Task split](split.md)
   - [Process start-up](app_start.md)
+  - [Record IDs](ids.md)
 - [Source and Licence](Source.md)
    - [License](License.md)
    - [Packages Used](Packages.md)
