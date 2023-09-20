@@ -19,6 +19,7 @@ var remoteCouch;
 var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
+const credentialList = ["database", "username", "password", "address" ] ;
 var db ; // will be Pouchdb local copy 
 var security_db = null ;
 const remoteUser = {
@@ -30,10 +31,7 @@ const remoteUser = {
 
 class RemoteSecurity {
     constructor() {
-        this.database = null;
-        this.username=null;
-        this.address = null;
-        this.password = null;
+        credentialList.forEach( c => this[c] = null ) ;
     }
     
     setup( user, pass ) {
@@ -106,7 +104,7 @@ class RemoteSecurity {
             username: this.username,
             password: this.password,
             database: this.database,
-            address: this.address,
+            address : this.address ,
         } ;
     }
 };
@@ -535,8 +533,6 @@ class PatientDataRaw { // singleton class
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
-            } else if ( "roles" in item ) {
-                choices = Promise.resolve( item.roles.map( r => [remoteCouch.database,"all"].map( d=> [d,r].join("-"))).reduce( (a,e)=>a.concat(e)) );
             }
 
             // get value and make type-specific input field with filled in value
@@ -999,12 +995,11 @@ class EditUserData extends PatientData {
         if ( this.loadDocData()[0] ) {
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
-            this.doc[0].quad = {
-                'username':this.doc[0].name,
-                'password':this.doc[0].password,
-                'database':remoteCouch.database,
-                'address' :remoteCouch.address,
-            };
+
+            this.doc[0].quad = Object.assign( {}, remoteCouch ) ;
+            this.doc[0].quad.username = this.doc[0].name ;
+            this.doc[0].quad.password = this.doc[0].password ;
+
             User.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
             .then( _ => objectPage.show( "SendUser" ) )
@@ -1273,10 +1268,7 @@ class User { // convenience class
 
     static make_url( user_dict ) {
         let url = User.simple_url() ;
-        url.searchParams.append( "address", user_dict.address );
-        url.searchParams.append( "database", user_dict.database );
-        url.searchParams.append( "password", user_dict.password );
-        url.searchParams.append( "username", user_dict.username );
+        credentialList.forEach( c => url.searchParams.append( c, user_dict[c] ) );
         return url ;
     }
 
@@ -1387,7 +1379,6 @@ class Mission { // convenience class
 
 class RemoteReplicant { // convenience class
     constructor() {
-        this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.problem = false ;
         this.synctext = document.getElementById("syncstatus");
@@ -1465,7 +1456,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -1612,7 +1603,7 @@ class Page { // singleton class
     } 
     
     show( page = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        if ( db == null || remoteCouch.database=='' ) {
+        if ( db == null || credentialList.some( c=> remoteCouch[c]=='' ) ) {
             if ( state != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
@@ -1761,7 +1752,6 @@ class ErrorLog extends Pagelist {
 
 class MissionMembers extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
@@ -1780,7 +1770,7 @@ class MissionMembers extends Pagelist {
             .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show ( "SuperUser","MissionMembers" );
+                objectPage.show ( "back" );
                 });
         }
     }
@@ -1908,19 +1898,18 @@ class PrintYourself extends Pagelist {
 
 class SendUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
             objectPage.show( "SuperUser","SendUser" );
         } else if ( User.id == null ) {
-            objectPage.show( "UserList" );
+            objectPage.show( "back" );
         } else {
             User.user_db.get( User.id )
             .then( doc => User.send( doc ) )
             .catch( err => {
                 objectLog.err(err);
-                objectPage.show( "UserList" );
+                objectPage.show( "back" );
                 });
         }
     }
@@ -1928,6 +1917,7 @@ class SendUser extends Pagelist {
 
 class SuperUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    static safeLanding  = false ; // don't return here
 
     static subshow(extra="UserList") {
         remoteUser.address = remoteCouch.address;
@@ -1937,13 +1927,12 @@ class SuperUser extends Pagelist {
 
 class UserEdit extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
             objectPage.show( "SuperUser","UserEdit" );
         } else if ( User.id == null ) {
-            objectPage.show( "UserList" );
+            objectPage.show( "back" );
         } else {
             let sec=null;
             objectSecurity.getUsers()
@@ -1963,7 +1952,7 @@ class UserEdit extends Pagelist {
             .catch( err => {
                 objectLog.err(err);
                 User.unselect();
-                objectPage.show( "UserList" );
+                objectPage.show( "back" );
                 });
         }
     }
@@ -1971,7 +1960,6 @@ class UserEdit extends Pagelist {
 
 class UserList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
@@ -1980,7 +1968,7 @@ class UserList extends Pagelist {
             let rows = [] ;
             objectTable = new UserTable();
             User.getAllIdDoc()
-            .then( docs => rows = docs.rows )
+            .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
             .then( _ => objectSecurity.getUsers() )
             .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
@@ -1989,7 +1977,7 @@ class UserList extends Pagelist {
             .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
                 objectLog.err(err);
-                objectPage.show ( "SuperUser","UserList" );
+                objectPage.show ( "back" );
                 });
         }
     }
@@ -1997,7 +1985,6 @@ class UserList extends Pagelist {
 
 class UserNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
@@ -2338,7 +2325,7 @@ window.onload = () => {
     URLparse() ; // look for remoteCouch and exclude command line parameters
 
     // Start pouchdb database       
-    if ( remoteCouch.database !== "" ) {
+    if ( credentialList.every( c=> remoteCouch[c] !== "" ) ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.querySelectorAll(".headerboxlink")
         .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));

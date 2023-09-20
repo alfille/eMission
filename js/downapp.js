@@ -19,6 +19,8 @@ var remoteCouch;
 // Database handles and  
 var db ; // will be Pouchdb local copy 
 
+const credentialList = ["database", "username", "password", "address" ] ;
+
 class ImageImbedded {
     static srcList = [] ;
     
@@ -382,19 +384,13 @@ class Mission { // convenience class
 class RemoteReplicant { // convenience class
     // Access to remote (cloud) version of database
     constructor() {
-        this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.problem = false ; // separates real connection problem from just network offline
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-            remoteCouch = {
-                database: "", // must be set to continue
-                username: "",
-                password: "",
-                address: "",
-                };
+            credentialList.forEach( c => remoteCouch[c] = "" ) ;
         }
 
         // set up monitoring
@@ -469,7 +465,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -980,7 +976,7 @@ class Page { // singleton class
     } 
     
     show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        if ( db == null || remoteCouch.database=='' ) {
+        if ( db == null || credentialList.some( c=> remoteCouch[c]=='' ) ) {
             this.show("FirstTime");
         }
 
@@ -1264,7 +1260,7 @@ window.onload = () => {
     URLparse() ; // setup remoteCouch and exclude command line parameters
 
     // Start pouchdb database       
-    if ( remoteCouch.database !== "" ) {
+    if ( credentialList.every( c => remoteCouch[c] !== "" ) ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.querySelectorAll(".headerboxlink")
         .forEach(q => q.addEventListener("click",()=>objectPage.show("MainMenu")));

@@ -26,6 +26,8 @@ var frame_name = "" ;
 var NoPhoto = "style/NoPhoto.png";
 var DCTOHClogo = "images/DCTOHC11.jpg";
 
+const credentialList = ["database", "username", "password", "address" ] ;
+
 // Database handles and  
 var db ; // will be Pouchdb local copy 
 
@@ -734,8 +736,6 @@ class PatientDataRaw { // singleton class
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
                 choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
-            } else if ( "roles" in item ) {
-                choices = Promise.resolve( item.roles.map( r => [remoteCouch.database,"all"].map( d=> [d,r].join("-"))).reduce( (a,e)=>a.concat(e)) );
             }
 
             // get value and make type-specific input field with filled in value
@@ -1363,6 +1363,7 @@ class Patient { // convenience class
             img.display_image();
             let link = new URL(window.location.href);
             link.searchParams.append( "patientId", patientId );
+            link.searchParams.append( "database", remoteCouch.database );
 
             new QR(
                 card.querySelector(".qrCard"),
@@ -1880,25 +1881,19 @@ class Mission { // convenience class
 class RemoteReplicant { // convenience class
     // Access to remote (cloud) version of database
     constructor( qline ) {
-        this.remoteFields = [ "address", "username", "password", "database" ];
         this.remoteDB = null;
         this.problem = false ; // separates real connection problem from just network offline
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-            remoteCouch = {
-                database: "", // must be set to continue
-                username: "",
-                password: "",
-                address: "",
-                };
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         // Get Remote DB fron command line if available
-        if ( this.remoteFields.every( k => k in qline ) ) {
+        if ( credentialList.every( k => k in qline ) ) {
             let updateCouch = false ;
-            this.remoteFields
+            credentialList
             .filter( f => f in qline )
             .filter( f => remoteCouch[f] != qline[f] )
             .forEach( f => {
@@ -1985,7 +1980,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && this.remoteFields.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -2615,9 +2610,9 @@ class Page { // singleton class
     } 
     
     show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        console.log("SHOW",page,"STATE",displayState);
+        //console.log("SHOW",page,"STATE",displayState);
         // test that database is selected
-        if ( db == null || remoteCouch.database=='' ) {
+        if ( db == null || credentialList.some( c => remoteCouch[c]=='' ) ) {
             // can't bypass this! test if database exists
             if ( page != "FirstTime" && state!="RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
@@ -3435,7 +3430,7 @@ window.onload = () => {
     objectCollation = new Collation();
 
     // Start pouchdb database       
-    if ( remoteCouch.database !== "" ) {
+    if ( credentialList.every( c => remoteCouch[c] !== "" ) ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
 
         // Set up text search
