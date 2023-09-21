@@ -59,6 +59,7 @@
   - [Support and Maintenance](Support.md)
   - [Server configuration](couchdb_config.md)
 - [For Developers](architecture.md)
+  - [Contributing code](contributing.md)
   - [Caching](caching.md)
   - [Database Schema](schema.md)
   - [Task split](split.md)

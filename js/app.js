@@ -2140,7 +2140,7 @@ class Help extends Pagelist {
 
     static subshow(extra="") {
         window.open( new URL(`/book/index.html`,location.href).toString(), '_blank' );
-//        objectPage.show("MainMenu");
+        objectPage.show("back");
     }
 }
 

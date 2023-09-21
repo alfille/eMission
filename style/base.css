@@ -314,8 +314,12 @@ legend {
   background: #bcbce9 ;
   justify-content: center;
   align-items: center;
-  flex-direction: column ; 
+  flex-direction: column ;
+  width: 100%;
   padding: 1em;
+}
+.PatientDataContent, .dataFieldset {
+    width: 100%;
 }
 #DownloadPPTXContent {
   font-size: 20px;

@@ -235,6 +235,13 @@ const structDatabase = [
         type: "text",
     },
     {
+        name: "raw",
+        alias: "  process address",
+        hint: "Fix URL with protocol and port",
+        type: "radio",
+        choices: ["fixed","raw"],
+    },
+    {
         name: "database",
         hint: 'Name of patient information database (e.g. "ukraine"',
         type: "text",
@@ -926,7 +933,10 @@ class DatabaseData extends PatientDataRaw {
 
     savePatientData() {
         if ( this.loadDocData()[0] ) {
-            this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
+            if ( this.doc[0].raw=="fixed" ) {
+                this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
+            }
+            delete this.doc[0].raw ;
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
         objectPage.reset();
@@ -1722,7 +1732,9 @@ class RemoteDatabaseInput extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        objectPatientData = new DatabaseData( Object.assign({},remoteCouch), structDatabase );
+        const doc = Object.assign({},remoteCouch) ;
+        doc.raw = "fixed";
+        objectPatientData = new DatabaseData( doc, structDatabase );
     }
 }
 
@@ -1760,7 +1772,7 @@ class MissionMembers extends Pagelist {
             let rows = [] ;
             objectTable = new MissionMembersTable();
             User.getAllIdDoc()
-            .then( docs => rows = docs.rows )
+            .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _ => objectSecurity.getUsers() )
             .then( sec => rows.forEach( row => row.doc.mission = 
                 ["members","admins"]
