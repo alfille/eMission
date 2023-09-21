@@ -61,7 +61,7 @@ Or just go to [https://emissionsystem.org](https://emissionsystem.org)
 
 ## Documentation
 
-![](book/images/bean.jpg)
+![](src/images/bean.jpg)
 
 
 The [eMission Manual](https://emissionsystem.org/book/index.html) is well organized and comprehensive.
