@@ -1898,7 +1898,7 @@ class RemoteReplicant { // convenience class
             .filter( f => remoteCouch[f] != qline[f] )
             .forEach( f => {
                 updateCouch = true ;
-                remoteCouch[f] = q ;
+                remoteCouch[f] = qline[f] ;
                 });
             // Changed, so reset page
             if ( updateCouch ) {
