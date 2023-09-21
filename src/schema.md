@@ -6,7 +6,7 @@
   * housekeeping fields for version control and replication
   * Application assigned key:value pairs
 
-eMission design used the unique key as follows:
+eMission design used the [unique key](ids.html) as follows:
 
 * Type (Patient,Operation,Mission,Note)
 * Version
