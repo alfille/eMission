@@ -1,7 +1,7 @@
 # eMission
 
 ## Briefly
-eMission is a database for medical mission work. Intentionally simple. Supports your entire team using their smartphone, ipad or laptop. eMission is robust even when internet connectivity is spotty.
+**eMission** is a database for medical mission work. Intentionally made simple, it supports your entire team using their smartphone, ipad or laptop. **eMission** is robust even when internet connectivity is spotty.
 
 ----------------------
 
@@ -17,7 +17,7 @@ He needed a way to:
 * keep a visual record of the injuries and document followup
 
 
-A spreadsheet was not adequate -- he wanted to use his phone, include pictures, and be more secure. Hence the __eMission__ project was born.
+A spreadsheet was not adequate -- he wanted to use his phone, include pictures, and be more secure. Hence the **eMission** project was born.
 
 ------------------------------
 ![](src/images/gman.jpg)
@@ -30,12 +30,7 @@ A spreadsheet was not adequate -- he wanted to use his phone, include pictures, 
 - Supports a workflow that includes patient ID cards and downloadable data
 - Usable on phones, tablets and laptops
 
-### Out of scope
-- lab values 
-- vital signs / monitoring
-- drug and supply information
-
-Note that *free text fields* are available for extra information
+Between pictures and text there is a lot of flexibility on how **eMission** can support your work.
 
 ----------------
 
@@ -60,20 +55,27 @@ There is a test database available for use
 * Direct Link: https://emissionsystem.org/?address=https%3A%2F%2Femissionsystem.org%3A6984&database=testdb&password=TheShire&username=Hobbit
 * QR code (scan with your phone camera)
 
-![test database line](/src/images/qr.png)
+![](src/images/QR.png)
 
 Or just go to [https://emissionsystem.org](https://emissionsystem.org)
+
+## Documentation
 
 ![](book/images/bean.jpg)
 
 
-[eMission Manual](https://emissionsystem.org/book/index.html)
+The [eMission Manual](https://emissionsystem.org/book/index.html) is well organized and comprehensive.
+
+Read a [published article](src/images/s44250-023-00035-9.pdf) on **eMission**
 
 # Advanced information 
 
 This section is for administrators and developers
 
-  * Pure Javascript with no dependencies
-  * Included javascript libraries are open source as well
+  * Central server uses free software
+    * Use your own server and IT support (We'll help them set it up)
+    * Share our infrastructure with contribution to our resource expenses
+  * Client is pure Javascript with no dependencies
+    * Included javascript libraries are open source as well
 * License: [MIT](https://mit-license.org) (OpenSource)
-*  Copyright 2021-2022 Paul H Alfille MD palfille@mgh.harvard.edu
+*  Copyright 2021-2023 Paul H Alfille MD palfille@mgh.harvard.edu
