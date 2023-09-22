@@ -2120,7 +2120,6 @@ class RemoteDatabaseInput extends Administration {
 }
 class SendUser extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 }
 class SuperUser extends Administration {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
@@ -2313,7 +2312,12 @@ class NoteList extends NoteListCategory {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        super.subshow('Uncategorized');
+        if ( Patient.isSelected() || (patientId == missionId) ) {
+            super.subshow('Uncategorized');
+        } else {
+            Note.unselect();
+            objectPage.show( "back" );
+        }
     }
 }
 
@@ -2377,7 +2381,6 @@ class OperationList extends Pagelist {
 
 class OperationNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
-    static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
@@ -2535,23 +2538,19 @@ class SelectPatient extends Pagelist {
 class Page { // singleton class
     constructor() {
         // get page history from cookies
-        const path = displayState;
+        const path = displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
         this.lastscreen = null ; // splash/screen/patient for show_screen
-        this.path=[];
+        this.path = [];
         if ( Array.isArray(path) ) {
-            if ( objectPage ) {
-                // review pages to make sure "landable"          
-                for( const p of path.filter(p => Pagelist.subclass(p).safeLanding) ) {
-                    if ( this.path.includes(p) ) {
-                        break ;
-                    } else {
-                        this.path.push(p);
-                    }
+            // stop at repeat of a page          
+            for( const p of path ) {
+                if ( this.path.includes(p) ) {
+                    break ;
+                } else {
+                    this.path.push(p);
                 }
             }
         }
-        // default last choice
-        this.path.push("MainMenu");
     }
     
     reset() {
@@ -2609,8 +2608,8 @@ class Page { // singleton class
         window.open( new URL(`/book/${this.current()}.html`,location.href).toString(), '_blank' );
     } 
     
-    show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        //console.log("SHOW",page,"STATE",displayState);
+    show( page, extra="" ) { // main routine for displaying different "pages" by hiding different elements
+        //console.log("SHOW",page,"STATE",displayState,this.path);
         // test that database is selected
         if ( db == null || credentialList.some( c => remoteCouch[c]=='' ) ) {
             // can't bypass this! test if database exists
