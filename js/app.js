@@ -1949,7 +1949,7 @@ class RemoteReplicant { // convenience class
             .on('change', ()       => this.status( "good", "changed" ))
             .on('paused', ()       => this.status( "good", "quiescent" ))
             .on('active', ()       => this.status( "good", "actively syncing" ))
-            .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
+            .on('denied', ()       => this.status( "problem", "Credentials or database incorrect" ))
             .on('complete', ()     => this.status( "good", "sync stopped" ))
             .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
     }
@@ -2301,7 +2301,7 @@ class NoteListCategory extends Pagelist {
             .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
             .catch( (err) => {
                 objectLog.err(err,`Notelist (${extra})`);
-                onjectPage.show( "back" );
+                objectPage.show( "back" );
                 });
         } else {
             objectPage.show( "back" );
@@ -2614,7 +2614,7 @@ class Page { // singleton class
         // test that database is selected
         if ( db == null || credentialList.some( c => remoteCouch[c]=='' ) ) {
             // can't bypass this! test if database exists
-            if ( page != "FirstTime" && state!="RemoteDatabaseInput" ) {
+            if ( page != "FirstTime" && page != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
         }

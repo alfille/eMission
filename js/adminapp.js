@@ -9,6 +9,7 @@ var objectNoteList={};
 var objectTable = null;
 var objectRemote = null;
 var objectLog = null;
+var displayState = [];
 
 // globals cookie backed
 var objectPage ;
@@ -16,7 +17,6 @@ var patientId;
 var noteId;
 var operationId;
 var remoteCouch;
-var DCTOHClogo = "images/DCTOHC11.jpg";
 
 // Database handles and  
 const credentialList = ["database", "username", "password", "address" ] ;
@@ -107,7 +107,7 @@ class RemoteSecurity {
             address : this.address ,
         } ;
     }
-};
+}
 
 var objectSecurity = new RemoteSecurity();
 
@@ -1017,86 +1017,13 @@ class EditUserData extends PatientData {
                 objectLog.err(err);
                 objectPage.show( "UserList" );
                 });
-        } else if ( quad in this.doc[0] ) {
+        } else if ( "quad" in this.doc[0] ) {
             objectPage.show( "SendUser" );
         } else {
             // no password to send
             objectLog.err("No stored password") ;
             objectPage.show( "UserList" );
         }
-    }
-}
-
-class DateMath { // convenience class
-    static prettyInterval(msec) {
-        let hours = msec / 1000 / 60 / 60;
-        if ( hours < 24 ) {
-            return `${hours.toFixed(1)} hours`;
-        }
-        let days = hours / 24 ;
-        if ( days < 14 ) {
-            return `${days.toFixed(1)} days`;
-        }
-        let weeks = days / 7;
-        if ( weeks < 8 ) {
-            return `${weeks.toFixed(1)} weeks`;
-        }
-        let months = days / 30.5;
-        if ( months < 13 ) {
-            return `${months.toFixed(1)} months`;
-        }
-        let years = days / 365.25;
-        return `${years.toFixed(1)} years`;
-    }
-
-    static age( dob, current=null ) {
-        let birthday = flatpickr.parseDate( dob, "Y-m-d") ;
-        let ref = Date.now();
-        if ( current ) {
-            ref = flatpickr.parseDate( current, "Y-m-d") ;
-        }
-        return DateMath.prettyInterval( ref - birthday );
-    }
-}
-
-class Patient { // convenience class
-    static getRecordId(id=patientId ) {
-        return db.get( id );
-    }
-
-    static getRecordIdPix(id=patientId ) {
-        return db.get( id, { attachments:true, binary:true } );
-    }
-
-    static getAllId() {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey: Id_patient.allEnd(),
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey: Id_patient.allEnd(),
-            include_docs: true,
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    static getAllIdDocPix() {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey: Id_patient.allEnd(),
-            include_docs: true,
-            binary: true,
-            attachments: true,
-        };
-
-        return db.allDocs(doc);
     }
 }
 
@@ -1321,11 +1248,11 @@ We are looking forward to your participation.
             mail_url.searchParams.append( "subject", "Welcome to eMission" );
             mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
             document.getElementById("SendUserMail").href = mail_url.toString();
-            document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad,"SendUser");
+            document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad);
         }
     }
 
-    static printUserCard(user_dict,nextpage) {
+    static printUserCard(user_dict) {
         let card = document.getElementById("printUser");
         let url = User.make_url(user_dict);
         card.querySelector("#printUserText").innerText=User.bodytext( user_dict ) ;
@@ -1614,7 +1541,7 @@ class Page { // singleton class
     
     show( page = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
         if ( db == null || credentialList.some( c=> remoteCouch[c]=='' ) ) {
-            if ( state != "RemoteDatabaseInput" ) {
+            if ( page != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
         }
@@ -1904,7 +1831,7 @@ class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="MainMenu") {
-        User.printUserCard(remoteCouch,extra);
+        User.printUserCard(remoteCouch);
     }
 }
 

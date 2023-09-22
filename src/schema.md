@@ -1,12 +1,12 @@
 # Database Record format
 
-* PouchDB (on the device) and CouchDB on the server are a non-SQL record-designed database. 
+* PouchDB (on the device) and CouchDB on the server are a non-SQL record-based key-value database. 
 * All records have a 
-  * unique key
+  * unique key (ID)
   * housekeeping fields for version control and replication
   * Application assigned key:value pairs
 
-eMission design used the [unique key](ids.html) as follows:
+eMission design used the [unique Id](ids.html) as follows:
 
 * Type (Patient,Operation,Mission,Note)
 * Version
@@ -86,3 +86,13 @@ eMission design used the [unique key](ids.html) as follows:
 |_attachments:image:data|Mission Logo|automatic|binary image data|
 |_attachments:image:content_type|Mission logo|automatic|e.g. png||
 
+# Patterns
+
+* Mission record is similar to a patient record
+  * ID has same number of fields
+  * Mission Notes have a *patient_id* field that refers back to it
+  * There is no analog to Lastname, Firstname or DOB in id
+  * Only a single mission record per database is allowed
+* Mission Notes are similar to patient notes
+  * Same fields and editing
+  * no real use of categories 

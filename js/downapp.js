@@ -15,6 +15,7 @@ var patientId;
 var noteId;
 var operationId;
 var remoteCouch;
+var displayState = [];
 
 // Database handles and  
 var db ; // will be Pouchdb local copy 
@@ -258,7 +259,7 @@ class Note { // convenience class
         return db.allDocs(doc);
     }
 
-    static getRecordsId() {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
@@ -266,7 +267,7 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc() {
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
@@ -434,7 +435,7 @@ class RemoteReplicant { // convenience class
             .on('change', ()       => this.status( "good", "changed" ))
             .on('paused', ()       => this.status( "good", "quiescent" ))
             .on('active', ()       => this.status( "good", "actively syncing" ))
-            .on('denied', (err)    => this.status( "problem", "Credentials or database incorrect" ))
+            .on('denied', ()    => this.status( "problem", "Credentials or database incorrect" ))
             .on('complete', ()     => this.status( "good", "sync stopped" ))
             .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
     }
