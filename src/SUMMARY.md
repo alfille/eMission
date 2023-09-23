@@ -29,6 +29,7 @@
     - [New Note](NoteNew.md)
     - [New Photo](QuickPhoto.md)
     - [Edit A Note](NoteEdit.md)
+    - [Add Documents](NoteDocuments.md)
   - [Operations](Operations.md)
     - [Full Operation List](AllOperations.md)
     - [Patient's Operations](OperationList.md)

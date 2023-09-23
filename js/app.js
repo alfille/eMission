@@ -456,7 +456,7 @@ class ImageImbedded {
         this.upload_image=null;
 
         // file
-        let fl = Object.entries(att??{}).filter( e => e[0] == "image" ) ;
+        let fl = Object.entries(att??{}).filter( e => e[0] !== "image" ) ;
         if ( fl.length > 0 ) {
             this.filename = fl[0][0];
             this.file = URL.createObjectURL(fl[0][1]["data"]);
@@ -586,7 +586,7 @@ class ImageImbedded {
         const files = this.parent.querySelector('.fileBar') ;
         this.upload_file = files.files[0];
         this.file = URL.createObjectURL(this.upload_file);
-        this.filename=files.file[0].name;
+        this.filename=files.files[0].name;
         this.addSrc(this.file);
         this.display_image();
         try { this.parent.querySelector(".fileRemove").disabled = false; }
