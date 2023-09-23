@@ -279,7 +279,6 @@
             <div class="imagetemplate_edit">
                 <img class="entryfield_image">
                 <div class="editToolbar">
-                    <button type="button" class="imageRevert" title="Original image"><span><B>Revert</B></span></button>
                     <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
@@ -296,6 +295,9 @@
             <!-- Note display -->
             <div class="notetemplate">
                 <img class="entryfield_image">
+                <div class="entryfield_file">
+                    File: <a><B>&#x1F5BA; <label></label></a>
+                </div>
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>
                     <label class="selectdiv">Type
@@ -314,17 +316,19 @@
             <!-- Note edit -->
             <div class="notetemplate_edit">
                 <img class="entryfield_image">
+                <div class="entryfield_file">
+                    File: <a><B>&#x1F5BA; <label></label></a>
+                </div>
                 <div class="editToolbar">
                     <button type="button" class="imageSave" title="Save this note"><span><B>Save</B></span></button>
                     <button type="button" class="imageCancel" title="Do not save any changes"><span><B>Cancel</B></span></button>
                     <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                    <!--
                     <button type="button" class="fileGet" title="Get file"><span><B>&#x1F5BA;</B></span></button>            
                     <button type="button" class="fileRemove" title="Remove file"><span><B>&#128473;&#x1F5BA;</B></span></button>
-                     --->
                     <button type="button" class="imageDelete delete" title="Delete this note"><span><B>Delete</B></span></button>
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
+                    <input type="file" accept="*" class="fileBar">
                 </div>
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>
@@ -344,16 +348,18 @@
             <!-- New Note edit -->
             <div class="newnotetemplate_edit">
                 <img class="entryfield_image">
+                <div class="entryfield_file">
+                    File: <a><B>&#x1F5BA; <label></label></a>
+                </div>
                 <div class="editToolbar choice">
                     <button type="button" class="imageSave" title="Save this note"><span><B>Save</B></span></button>
                     <button type="button" class="imageCancel" title="Do not save any changes"><span><B>Cancel</B></span></button>
                     <button type="button" class="imageGet" title="Get image"><span><B>&#128247;</B></span></button>            
                     <button type="button" class="imageRemove" title="Remove image"><span><B>&#128473;&#128247;</B></span></button>
-                    <!--
                     <button type="button" class="fileGet" title="Get file"><span><B>&#x1F5BA;</B></span></button>            
                     <button type="button" class="fileRemove" title="Remove file"><span><B>&#128473;&#x1F5BA;</B></span></button>
-                     --->
                     <input type="file" accept="image/*" class="imageBar" capture="environment">
+                    <input type="file" accept="*" class="fileBar">
                 </div>
                 <div class="titlediv">
                     <label>Title: <div class="entryfield_title choice" contenteditable></div></label>

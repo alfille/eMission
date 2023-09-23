@@ -438,26 +438,39 @@ class Search { // singleton class
 class ImageImbedded {
     static srcList = [] ;
     
-    constructor( parent, doc, backup ) {
+    constructor( parent, doc, backupImage ) {
         this.doc = doc;
         this.parent = parent;
-        this.backup=backup;
-        this.fromDoc();
-    }
-    
-    fromDoc() {
-        let data = this.doc ?._attachments ?.image ?.data;
+        this.backupImage = backupImage ;
+
+        const att = this.doc ?._attachments ;
+
+        // image
+        const data = att ?.image ?.data;
         if ( data === undefined ) {
-            this.src = this.backup ?? null ;
+            this.src = this.backupImage ?? null ;
         } else {
             this.src = URL.createObjectURL(data);
-            this.addSrc();
+            this.addSrc(this.src);
         }
-        this.upload=null;
-    }
+        this.upload_image=null;
 
-    addSrc() {
-        ImageImbedded.srcList.push( this.src ) ;
+        // file
+        let fl = Object.entries(att??{}).filter( e => e[0] == "image" ) ;
+        if ( fl.length > 0 ) {
+            this.filename = fl[0][0];
+            this.file = URL.createObjectURL(fl[0][1]["data"]);
+            this.addSrc(this.file);
+            console.log(this.filename);
+        } else {
+            this.filename = "";
+            this.file = null;
+        }
+        this.upload_file=null;
+    }
+    
+    addSrc(src) {
+        ImageImbedded.srcList.push( src ) ;
     }
 
     static clearSrc() {
@@ -481,7 +494,8 @@ class ImageImbedded {
     }
 
     display_image() {
-        let img = this.parent.querySelector( "img");
+        const img = this.parent.querySelector( "img");
+        const fl = this.parent.querySelector( ".entryfield_file")
         if ( img ) {
             img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
             if ( this.src ) {
@@ -492,36 +506,53 @@ class ImageImbedded {
                 img.style.display = "none" ;
             }
         }
+        if ( fl ) {
+            if ( this.file ) {
+                fl.style.display="block";
+                fl.querySelector("label").innerText=this.filename;
+                fl.querySelector("a").download=this.filename;
+                fl.querySelector("a").href=this.file;
+            } else {
+                fl.style.display="none";
+            }
+        }
     }
         
-    revert() {
-        this.fromDoc();
-        this.display_image();
-    }
-
     addListen() {
-        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
-            catch { // empty 
-                }
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
             catch { // empty 
                 }
-        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
+        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.removeImage() ); }
             catch { // empty 
                 }
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
+        try { this.parent.querySelector( ".fileGet").addEventListener( 'click', () => this.getFile() ); }
+            catch { // empty 
+                }
+        try { this.parent.querySelector( ".fileRemove").addEventListener( 'click', () => this.removeFile() ); }
+            catch { // empty 
+                }
+        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handleImage() ); }
+            catch { // empty 
+                }
+        try { this.parent.querySelector( ".fileBar").addEventListener( 'change', () => this.handleFile() ); }
             catch { // empty 
                 }
     }
 
-    remove() {
-        this.upload="remove";
-        this.src=this.backup ?? null ;
+    removeImage() {
+        this.upload_image="remove";
+        this.src=this.backupImage ?? null ;
+        this.display_image();
+    }
+
+    removeFile() {
+        this.upload_file="remove";
+        this.file=null ;
         this.display_image();
     }
 
     getImage() {
-        let inp = this.parent.querySelector(".imageBar");
+        const inp = this.parent.querySelector(".imageBar");
         if ( isAndroid() ) {
             inp.removeAttribute("capture");
         } else {
@@ -530,37 +561,74 @@ class ImageImbedded {
         inp.click();
     }
 
-    handle() {
+    getFile() {
+        const inp = this.parent.querySelector(".fileBar");
+        if ( isAndroid() ) {
+            inp.removeAttribute("capture");
+        } else {
+            inp.setAttribute("capture","environment");
+        }
+        inp.click();
+    }
+
+    handleImage() {
         const files = this.parent.querySelector('.imageBar') ;
-        this.upload = files.files[0];
-        this.src = URL.createObjectURL(this.upload);
-        this.addSrc();
+        this.upload_image = files.files[0];
+        this.src = URL.createObjectURL(this.upload_image);
+        this.addSrc(this.src);
         this.display_image();
         try { this.parent.querySelector(".imageRemove").disabled = false; }
             catch{ // empty
                 }
     }
 
+    handleFile() {
+        const files = this.parent.querySelector('.fileBar') ;
+        this.upload_file = files.files[0];
+        this.file = URL.createObjectURL(this.upload_file);
+        this.filename=files.file[0].name;
+        this.addSrc(this.file);
+        this.display_image();
+        try { this.parent.querySelector(".fileRemove").disabled = false; }
+            catch{ // empty
+                }
+    }
+
     save(doc) {
-        if ( this.upload == null ) { // ignore
-        } else if ( this.upload == "remove" ) {
-            if ( "_attachments" in doc ) {
-                delete doc._attachments;
+        const att = [] ;
+        if ( this.upload_image == null ) { // no change
+            if ( doc ?. _attachments ?. image ) {
+                att.push( {image: doc._attachments.image} );
             }
-        } else {
-            Object.assign(
-                doc,
-                { _attachments: {
-                    image: {
-                        content_type: this.upload.type,
-                        data: this.upload,
+        } else if ( this.upload_image !== "remove" ) {
+            att.push({ image: {
+                        content_type: this.upload_image.type,
+                        data: this.upload_image,
                         }
-                }} );
+                    });
         }
+        if ( this.upload_file == null ) { // no change
+            if ( this.filename != "" ) {
+                att.push( {[this.filename]: doc ?. _attachments[this.filename] } ) ;
+            }
+        } else if ( this.upload_file !== "remove" ) {
+            att.push({ [this.filename]: {
+                        content_type: this.upload_file.type,
+                        data: this.upload_file,
+                        }
+                    });
+        }
+        console.log(att);
+        delete doc._attachments ;
+        if ( att.length > 0 ) {
+            doc._attachments = {} ;
+            att.forEach( a => Object.assign( doc._attachments, a ) );
+        }
+        console.log(doc);
     }
 
     changed() {
-        return this.upload != null;
+        return this.upload_image != null;
     }
 }
 
@@ -666,9 +734,9 @@ class ImageQuick extends ImageImbedded {
 }
 
 class ImageDrop extends ImageImbedded { // can only save(doc)
-    constructor( upload ) {
+    constructor( upload_image ) {
         super( null, null );
-        this.upload = upload;
+        this.upload_image = upload_image;
     }
 }
 
@@ -1661,8 +1729,8 @@ class Note { // convenience class
         cloneClass( ".imagetemplate_quick", inp );
         let doc = Note.template();
         let img = new ImageQuick( inp, doc );
-        function handle() {
-            img.handle();
+        function handleImage() {
+            img.handleImage();
             img.save(doc);
             db.put(doc)
             .then( () => Note.getRecordsId(patientId) ) // to try to prime the list
@@ -1670,7 +1738,7 @@ class Note { // convenience class
             .finally( objectPage.show( null ) );
         }
         img.display_image();
-        img.addListen(handle);
+        img.addListen(handleImage);
         img.getImage();
     }
 

@@ -226,7 +226,7 @@ body {
   background: #99ddff;
 }
 
-.imageBar {
+.imageBar, .fileBar {
   display:none;
 }
 .editable {

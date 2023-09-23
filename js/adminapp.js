@@ -406,15 +406,7 @@ class ImageImbedded {
         }
     }
         
-    revert() {
-        this.fromDoc();
-        this.display_image();
-    }
-
     addListen() {
-        try { this.parent.querySelector( ".imageRevert").addEventListener( 'click', () => this.revert() ); }
-            catch { // empty 
-                }
         try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
             catch { // empty 
                 }
