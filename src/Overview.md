@@ -7,7 +7,7 @@ eMission is a simple patient database for use by humanitarian medical missions.
 * It works on most smart phones
 * It works even with bad cell service or intermittent wifi
 * It's really easy to use
-* It's easy to add photos
+* It's easy to add photos and documents
 * The team can share the information
 * Security is build in
 
@@ -15,7 +15,7 @@ eMission is a simple patient database for use by humanitarian medical missions.
 
 ## Examples:
 
-*To preserve patient confidentiality, only Fantasy creatures are shown*
+*To preserve patient confidentiality, only fictional characters are shown*
 
 ### Main Menu:
 

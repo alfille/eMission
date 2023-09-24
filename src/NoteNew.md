@@ -16,9 +16,17 @@ or from the **Note List**
 
 Once started, all the fields of the note can be added including 
 
-* text
+* The initial edit display
 
 ![](images/NoteNewx2.png)
+
+* Add text, category and title
+
+![](images/NoteNewx3.png)
+
+* Add a document
+
+![](images/NoteNewx3x.png)
 
 * images
 

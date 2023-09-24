@@ -21,11 +21,14 @@ Two things happened:
 ![](images/Note2b.png)
 
 1. The date field can be altered. It defaults to the date of note creation.
-2. The note category (e.g. Preop, Postop, ...) can be chosen
-3. The note text can be changed. This is free form text of any length
-4. A set of control buttons are displayed:
+2. A set of control buttons are displayed:
   * **Save** your changes (and finish the edit)
   * **Cancel** any changes
   * **Camera** Add or change the picture
   * **xCamera** Remove the picture
-  * **Delete** remove the entire note
+  * **Document** Add or change an attached file
+  * **xDocument** Remove the attached file
+  * **Delete** remove the entire note. 
+3. The Note title can be edited
+4. The note category (e.g. Preop, Postop, ...) can be chosen
+5. The note text can be changed. This is free form text of any length

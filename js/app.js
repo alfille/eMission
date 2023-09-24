@@ -652,10 +652,11 @@ class ImageNote extends ImageImbedded {
         }
     }
 
-    display_text() {
+    display_all() {
         this.parent.querySelector(".entryfield_text").innerText = this.text;
         this.parent.querySelector(".entryfield_title").innerText = this.title;
         this.parent.querySelector("select").value = this.category;
+        this.display_image();
     }
 
     store() {
@@ -672,8 +673,7 @@ class ImageNote extends ImageImbedded {
     edit() {
         this.addListen();
         this.buttonsdisabled( true );
-        this.display_image();
-        this.display_text();
+        this.display_all();
     }
 
     addListen() {
@@ -3337,7 +3337,7 @@ class NoteLister {
         if ( "doc" in note ) {
             cloneClass( ".notetemplate", li );
             img=new ImageNote(li,note.doc);
-            img.display_image();
+            img.display_all();
         }    
         
         let edit_note = () => {
