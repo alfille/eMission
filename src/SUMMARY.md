@@ -42,6 +42,7 @@
   - [Download](Download.md)
     - [Speadsheet](DownloadCSV.md)
     - [Presentation (PowerPoint)](DownloadPPTX.md)
+    - [Archive of Images and Files](DownloadZIP.md)
     - [Backup](DownloadJSON.md)
   - [Administration](Administration.md)
     - [Super User (Top level access)](SuperUser.md)

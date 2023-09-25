@@ -89,13 +89,13 @@ class Patient { // convenience class
         return db.allDocs(doc);
     }
         
-    static getAllIdDocPix() {
+    static getAllIdDocPix(binary=false) {
         // Note: using base64 here
         let doc = {
             startkey: Id_patient.allStart(),
             endkey:   Id_patient.allEnd(),
             include_docs: true,
-            binary: false,
+            binary: binary,
             attachments: true,
         };
 
@@ -927,62 +927,104 @@ class PPTX {
 }   
 
 class ZIP {
-	constructor () {
-		this.zip = new JSZip() ;
+    constructor () {
+        this.zip = new JSZip() ;
 
-		this.check_img = document.getElementById("imgZIP");
-		this.check_doc = document.getElementById("docZIP");
-		this.qbtn = document.getElementById("createZIP");
+        this.check_img = document.getElementById("imgZIP");
+        this.check_doc = document.getElementById("docZIP");
+        this.qbtn = document.getElementById("createZIP");
 
-		this.check_img.checked = true;
-		this.check_doc.checked = true;
-		this.test();
-	}
-	
-	test() {
-		this.qbtn.disabled = ! (this.check_img.checked || this.check_doc.checked) ;
-	}
-	
-	image_name( name, doc ) {
-		return [ name, doc._attachments.image.content_type.split("/")[1] ].join(".");
-	}
-	
-	one_note_image( path, doc ) {
-		if ( doc?._attachments?.image ) {
-			this.zip.file( [path,this.image_name(Id.splitId(doc._id).key,doc)].join("/"), doc._attachments.image.data, {
-				binary: true,
-				createFolders: true,
-				}) ;
-		}
-	}
-	
-	print() {
-		const qimg = this.check_img.checked ;
-		const qdoc = this.check_doc.checked ;
-		
-		Mission.getRecordId(true)
+        this.check_img.checked = true;
+        this.check_doc.checked = true;
+        this.test();
+    }
+    
+    test() {
+        this.qbtn.disabled = ! (this.check_img.checked || this.check_doc.checked) ;
+    }
+    
+    image_name( name, doc ) {
+        return [ name, doc._attachments.image.content_type.split("/")[1] ].join(".");
+    }
+    
+    one_note_image( path, doc ) {
+        if ( doc?._attachments?.image ) {
+            this.zip.file( [path,this.image_name(Id.splitId(doc._id).key,doc)].join("/"), doc._attachments.image.data, {
+                binary: true,
+                createFolders: true,
+                }) ;
+        }
+    }
+    
+    one_note_doc( path, doc ) {
+        if ( doc?._attachments ) {
+            Object.entries(doc._attachments)
+            .filter( f => f[0] !== "image" )
+            .forEach(f => this.zip.file( [path,f[0]].join("/"), f[1]["data"], {
+                binary: true,
+                createFolders: true,
+                })) ;
+        }
+    }
+    
+    print() {
+        const qimg = this.check_img.checked ;
+        const qdoc = this.check_doc.checked ;
+        
+        Mission.getRecordId(true)
         .then( doc => {
-			console.log(doc);
-			if ( qimg && doc?._attachments?.image ) {
-				console.log("print");
-				this.zip.file( this.image_name("Mission",doc), doc._attachments.image.data, {
-					binary: true,
-					createFolders: true,
-					}) ;
-			}
-			})
-		.then(_=> Note.getRecordsIdPix(missionId,true))
-		.then(notelist => notelist.rows
-			.forEach( doc => {
-				if ( qimg ) {
-					this.one_note_image( "Mission", doc );
-				}
-				})
-			)
-		.then( _ => this.zip.generateAsync({type:"blob"}) )
-		.then( blob => DownloadFile.blob( blob, `${remoteCouch.database}.zip` ) )
-		.catch( err => console.log(err) );
-	}
+            if ( qimg && doc?._attachments?.image ) {
+                this.zip.file( this.image_name("Mission",doc), doc._attachments.image.data, {
+                    binary: true,
+                    createFolders: true,
+                    }) ;
+            }
+            })
+        .then(_=> Note.getRecordsIdPix(missionId,true))
+        .then(notelist => notelist.rows
+            .forEach( row => {
+                if ( qimg ) {
+                    this.one_note_image( "Mission", row.doc );
+                }
+                if ( qdoc ) {
+                    this.one_note_doc( "Mission", row.doc );
+                }
+                })
+            )
+        .then( _ => Patient.getAllIdDocPix( true ) )
+        .then( doclist => {
+            this.numpats = doclist.rows.length ;
+            this.pat = 0 ;
+            // for each patient
+            return PromiseSeq(
+                doclist.rows.map( pt => {
+                    return _ =>
+                    db.query( "Pid2Name", {key:pt.id})
+                    .then( q => {
+                        this.pname = q.rows[0].value[0] ;
+                        if ( qimg && pt.doc?._attachments?.image ) {
+                            this.zip.file( this.image_name(this.pname,pt.doc), pt.doc._attachments.image.data, {
+                                binary: true,
+                                createFolders: true,
+                                }) ;
+                        }
+                        })
+                    .then( _ => Note.getRecordsIdPix( pt.id, true) )                    
+                    .then( notelist => notelist.rows.forEach( row => {
+                        if ( qimg ) {
+                            this.one_note_image( this.pname, row.doc );
+                        }
+                        if ( qdoc ) {
+                            this.one_note_doc( this.pname, row.doc );
+                        }
+                    }))
+                    
+                })
+            )})
+        .then( _ => this.zip.generateAsync({type:"blob"}) )
+        .then( blob => DownloadFile.blob( blob, `${remoteCouch.database}.zip` ) )
+        .catch( err => console.log(err) );
+    }
 }
 
 class Page { // singleton class
