@@ -8,6 +8,7 @@ var objectNoteList={};
 var objectRemote = null;
 var objectLog = null;
 var objectPPTX = null;
+var objectZIP = null;
 
 // globals cookie backed
 var objectPage ;
@@ -276,13 +277,13 @@ class Note { // convenience class
         return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix( pid = patientId) {
+    static getRecordsIdPix( pid = patientId, binary=false) {
         // Bse64 encoding
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
             include_docs: true,
-            binary: false,
+            binary: binary,
             attachments: true,
         };
         return db.allDocs(doc) ;
@@ -342,9 +343,9 @@ class Mission { // convenience class
     }
     
 
-    static getRecordId() {
+    static getRecordId(binary=false) {
         // return the Mission record, or a dummy
-        return db.get( missionId, { attachments: true, binary: false } )
+        return db.get( missionId, { attachments: true, binary: binary } )
         .then( doc => Promise.resolve(doc) )
         .catch( () => Promise.resolve({
             EndDate:null,
@@ -538,29 +539,34 @@ class Cookie { //convenience class
 }
 
 class DownloadFile { // convenience class
-    static download(contents, filename, htype ) {
+    static file(contents, filename, htype ) {
         //htype the file type i.e. text/csv
-        let downloadFile = new Blob([contents], {type: htype});
-        let downloadLink = document.createElement("a");
-        downloadLink.download = filename;
-        downloadLink.href = window.URL.createObjectURL(downloadFile);
-        downloadLink.style.display = "none";
+        const blub = new Blob([contents], {type: htype});
+        this.blob( blub, filename ) ;
+    }
 
-        document.body.appendChild(downloadLink);
-        downloadLink.click(); // press invisible button
+    static blob(blub, filename ) {
+        //htype the file type i.e. text/csv
+        const link = document.createElement("a");
+        link.download = filename;
+        link.href = window.URL.createObjectURL(blub);
+        link.style.display = "none";
+
+        document.body.appendChild(link);
+        link.click(); // press invisible button
         
         // clean up
         // Add "delay" see: https://www.stefanjudis.com/snippets/how-trigger-file-downloads-with-javascript/
         setTimeout( () => {
-            window.URL.revokeObjectURL(downloadLink.href) ;
-            document.body.removeChild(downloadLink) ;
+            window.URL.revokeObjectURL(link.href) ;
+            document.body.removeChild(link) ;
         });
     }
 }
 
 class CSV { // convenience class
     static download(csv, filename) {
-        DownloadFile.download( csv, filename, 'text/csv' ) ;
+        DownloadFile.file( csv, filename, 'text/csv' ) ;
     }
 
     static patients() {
@@ -659,7 +665,7 @@ class CSV { // convenience class
 
 class Backup {
     static download( j, filename ) {
-        DownloadFile.download( j, filename, 'application/json' ) ;
+        DownloadFile.file( j, filename, 'application/json' ) ;
     }
     
     static all() {
@@ -920,6 +926,65 @@ class PPTX {
     }
 }   
 
+class ZIP {
+	constructor () {
+		this.zip = new JSZip() ;
+
+		this.check_img = document.getElementById("imgZIP");
+		this.check_doc = document.getElementById("docZIP");
+		this.qbtn = document.getElementById("createZIP");
+
+		this.check_img.checked = true;
+		this.check_doc.checked = true;
+		this.test();
+	}
+	
+	test() {
+		this.qbtn.disabled = ! (this.check_img.checked || this.check_doc.checked) ;
+	}
+	
+	image_name( name, doc ) {
+		return [ name, doc._attachments.image.content_type.split("/")[1] ].join(".");
+	}
+	
+	one_note_image( path, doc ) {
+		if ( doc?._attachments?.image ) {
+			this.zip.file( [path,this.image_name(Id.splitId(doc._id).key,doc)].join("/"), doc._attachments.image.data, {
+				binary: true,
+				createFolders: true,
+				}) ;
+		}
+	}
+	
+	print() {
+		const qimg = this.check_img.checked ;
+		const qdoc = this.check_doc.checked ;
+		
+		Mission.getRecordId(true)
+        .then( doc => {
+			console.log(doc);
+			if ( qimg && doc?._attachments?.image ) {
+				console.log("print");
+				this.zip.file( this.image_name("Mission",doc), doc._attachments.image.data, {
+					binary: true,
+					createFolders: true,
+					}) ;
+			}
+			})
+		.then(_=> Note.getRecordsIdPix(missionId,true))
+		.then(notelist => notelist.rows
+			.forEach( doc => {
+				if ( qimg ) {
+					this.one_note_image( "Mission", doc );
+				}
+				})
+			)
+		.then( _ => this.zip.generateAsync({type:"blob"}) )
+		.then( blob => DownloadFile.blob( blob, `${remoteCouch.database}.zip` ) )
+		.catch( err => console.log(err) );
+	}
+}
+
 class Page { // singleton class
     constructor() {
         // get page history from cookies
@@ -1104,6 +1169,15 @@ class DownloadPPTX extends Pagelist {
     static subshow(extra="") {
         Mission.select();
         objectPPTX = new PPTX() ;
+    }
+}
+
+class DownloadZIP extends Pagelist {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+    
+    static subshow(extra="") {
+        Mission.select();
+        objectZIP = new ZIP() ;
     }
 }
 

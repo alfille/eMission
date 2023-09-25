@@ -321,12 +321,12 @@ legend {
 .PatientDataContent, .dataFieldset {
     width: 100%;
 }
-#DownloadPPTXContent {
+.DownloadCheckbox {
   font-size: 20px;
   line-height: 2em;
   font=weight: bold;
 }
-#DownloadPPTXContent input[type="checkbox"] {
+.DownloadCheckbox input[type="checkbox"] {
   height: 2em;
   width: 2em;
 }

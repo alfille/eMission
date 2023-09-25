@@ -2295,6 +2295,9 @@ class DownloadJSON extends Download {
 class DownloadPPTX extends Download {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 }
+class DownloadZIP extends Download {
+    static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
+}
 
 class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
