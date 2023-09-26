@@ -2609,19 +2609,20 @@ class SelectPatient extends Pagelist {
 class Page { // singleton class
     constructor() {
         // get page history from cookies
-        const path = displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
+        let path = [] ;
+        if ( Array.isArray( displayState ) {
+			path = displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
+		}
         this.lastscreen = null ; // splash/screen/patient for show_screen
         this.path = [];
-        if ( Array.isArray(path) ) {
-            // stop at repeat of a page          
-            for( const p of path ) {
-                if ( this.path.includes(p) ) {
-                    break ;
-                } else {
-                    this.path.push(p);
-                }
-            }
-        }
+		// stop at repeat of a page          
+		for( const p of path ) {
+			if ( this.path.includes(p) ) {
+				break ;
+			} else {
+				this.path.push(p);
+			}
+		}
     }
     
     reset() {
@@ -3431,7 +3432,6 @@ function parseQuery() {
     for ( let [n,v] of url.searchParams) {
         r[n] = v;
     }
-    //location.search = "";
     return r;
 }
 
@@ -3576,5 +3576,4 @@ window.onload = () => {
         objectPage.reset();
         objectPage.show("FirstTime");
     }
-
 };
