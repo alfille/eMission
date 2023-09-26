@@ -2610,7 +2610,7 @@ class Page { // singleton class
     constructor() {
         // get page history from cookies
         let path = [] ;
-        if ( Array.isArray( displayState ) {
+        if ( Array.isArray( displayState ) ) {
 			path = displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
 		}
         this.lastscreen = null ; // splash/screen/patient for show_screen
