@@ -392,7 +392,8 @@ class RemoteReplicant { // convenience class
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-            credentialList.forEach( c => remoteCouch[c] = "" ) ;
+			remoteCouch = {} ;
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         // set up monitoring

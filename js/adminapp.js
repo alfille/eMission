@@ -1314,12 +1314,8 @@ class RemoteReplicant { // convenience class
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-            remoteCouch = {
-                database: "", // must be set to continue
-                username: "",
-                password: "",
-                address: "",
-                };
+			remoteCouch = {} ;
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );

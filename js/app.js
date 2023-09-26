@@ -1955,6 +1955,7 @@ class RemoteReplicant { // convenience class
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
+			remoteCouch = {} ;
             credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
