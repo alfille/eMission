@@ -1,3 +1,11 @@
+/* eMission project
+ * Medical mission database application
+ * See https://github.com/alfille/eMission
+ * or https://emissionsystem.org
+ * by Paul H Alfille 2023
+ * MIT license
+ * */
+
 "use strict";
 
 /* jshint esversion: 11 */
