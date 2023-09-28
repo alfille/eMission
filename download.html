@@ -17,7 +17,7 @@
                     <!-- top: Download DownloadCSV DowloadPPTX DownloadZIP DatabaseInfo -->
                     <div class= "Download DownloadCSV DownloadPPTX DownloadZIP topButtons pageOverlay">
                         <div class="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Return</button>
                     </div>
                 </div>
             </div>
@@ -29,9 +29,9 @@
             <div class="Download pageOverlay">
                 <div id="DownloadContent" class="buttonmenu" >
                     <h3>Choose file type</h3>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadCSV' )" title="CSV file">Spreadsheet (text only)</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadPPTX' )" title="PPTX (Powerpoint) file">Presentation</button>
-                    <button type="button" class="divbutton" onclick="objectPage.show( 'DownloadZIP' )" title="Zip file or documents and images">Documents</button>
+                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'DownloadCSV' )" title="CSV file">Spreadsheet (text only)</button>
+                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'DownloadPPTX' )" title="PPTX (Powerpoint) file">Presentation</button>
+                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'DownloadZIP' )" title="Zip file or documents and images">Documents</button>
                     <button type="button" class="divbutton" onclick="Backup.all()" title="JSON file">Backup</button>
                 </div>
             </div>
@@ -89,7 +89,7 @@
         <footer class="work_screen">
             <div id="footerflex">
                 <div><label>User:<input type="text" readonly id="userstatus"></label></div>
-                <div><label>Sync status:<input type="text" readonly id="syncstatus" readonly id="syncstatus" onclick="objectPage.show( 'ErrorLog' )"></label></div>
+                <div><label>Sync status:<input type="text" readonly id="syncstatus" readonly id="syncstatus" onclick="G.objectPage.show( 'ErrorLog' )"></label></div>
             </div>
         </footer>
         <!-- Splash screen -->
@@ -105,7 +105,7 @@
         </div>
         
         <!-- scripts -->
-        <!-- pouchdb --> <script src="js/pouchdb-8.0.1.min.js"></script>
+        <!-- pouchdb --> <script src="js/pouchG.db-8.0.1.min.js"></script>
         <!-- zip (for powerpoint) --> <script src="js/jszip.min.js"></script>
         <!-- powerpoint --> <script src="js/pptxgen.min.js"></script>
         <!-- application code --> <script src="js/downapp.js"></script>

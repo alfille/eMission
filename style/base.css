@@ -75,7 +75,7 @@ tr:nth-child(odd):hover, li:nth-child(even):hover {
 }
 
 #ErrorLogContent li {
-  background: #c7db3a;
+  background: #c7G.db3a;
 }
 
 #ErrorLogContent li:nth-child(even) {
