@@ -6,8 +6,6 @@
  * MIT license
  * */
 
-import {G} from "./globals_mod.js" ;
- 
 export function test(x) {
-	console.log(x,G.remoteCouch);
+	console.log(x,remoteCouch);
 }

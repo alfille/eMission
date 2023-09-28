@@ -9,7 +9,6 @@
 "use strict";
 
 /* jshint esversion: 11 */
-import {G} from "./globals_mod.js" ;
 
 // singleton class instances
 var objectPPTX = null;
@@ -53,12 +52,12 @@ class ImageImbedded {
 }
 
 class Patient { // convenience class
-    static getRecordId(id=G.patientId ) {
-        return G.db.get( id );
+    static getRecordId(id=patientId ) {
+        return db.get( id );
     }
 
-    static getRecordIdPix(id=G.patientId ) {
-        return G.db.get( id, { attachments:true, binary:false } );
+    static getRecordIdPix(id=patientId ) {
+        return db.get( id, { attachments:true, binary:false } );
     }
 
     static getAllId() {
@@ -67,7 +66,7 @@ class Patient { // convenience class
             endkey:   Id_patient.allEnd(),
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
         
     static getAllIdDoc() {
@@ -79,7 +78,7 @@ class Patient { // convenience class
             binary: false,
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
         
     static getAllIdDocPix(binary=false) {
@@ -92,28 +91,28 @@ class Patient { // convenience class
             attachments: true,
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static select( pid = G.patientId ) {
-        G.patientId = pid ;
+    static select( pid = patientId ) {
+        patientId = pid ;
         if ( pid == missionId ) {
             Mission.select() ;
         } else {
             Cookie.set( "patientId", pid );
             // Check patient existence
-            G.db.query("Pid2Name",{key:pid})
+            db.query("Pid2Name",{key:pid})
             .then( (doc) => {
                 // highlight the list row
                 TitleBox([doc.rows[0].value[1]]) ;
                 })
             .catch( (err) => {
-                G.objectLog.err(err,"patient select");
+                objectLog.err(err,"patient select");
                 });
         }
     }
 
-    static splitId( pid = G.patientId ) {
+    static splitId( pid = patientId ) {
         if ( pid ) {
             let spl = pid.split(";");
             if ( spl.length !== 5 ) {
@@ -132,7 +131,7 @@ class Patient { // convenience class
     }
 
     static isSelected() {
-        return ( G.patientId != null ) && ( G.patientId != missionId ) ;
+        return ( patientId != null ) && ( patientId != missionId ) ;
     }
 }
 
@@ -178,7 +177,7 @@ class Id {
         return this.joinId( obj );
     }
     
-    static makeId( pid=G.patientId ) { // Make a new Id for a note or operation using current time as the last field
+    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
         return this.makeIdKey(pid);
     }
     
@@ -190,11 +189,11 @@ class Id {
         return [this.type, this.end].join(";");
     }
 
-    static patStart( pid=G.patientId ) { // Search just this patient's records
+    static patStart( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.start ) ;
     }    
 
-    static patEnd( pid=G.patientId ) { // Search just this patient's records
+    static patEnd( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.end ) ;
     }    
 }
@@ -211,21 +210,21 @@ class Id_patient extends Id{
             (doc.DOB??"").replace(/;/g,"_")
             ].join(";");
     }
-    static splitId( id=G.patientId ) {
+    static splitId( id=patientId ) {
         return super.splitId(id);
     }
 }
 
 class Id_note extends Id{
     static type = "c";        
-    static splitId( id=G.noteId ) {
+    static splitId( id=noteId ) {
         return super.splitId(id);
     }
 }
 
 class Id_operation extends Id{
     static type = "o";
-    static splitId( id=G.operationId ) {
+    static splitId( id=operationId ) {
         return super.splitId(id);
     }
 }
@@ -250,27 +249,27 @@ class Note { // convenience class
             binary: false,
             attachments: false,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc(pid=G.patientId) {
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix( pid = G.patientId, binary=false) {
+    static getRecordsIdPix( pid = patientId, binary=false) {
         // Bse64 encoding
         let doc = {
             startkey: Id_note.patStart(pid),
@@ -279,7 +278,7 @@ class Note { // convenience class
             binary: binary,
             attachments: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
     static dateFromDoc( doc ) {
@@ -294,19 +293,19 @@ class Operation { // convenience class
             endkey:   Id_operation.allEnd(),
             include_docs: true,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc( pid=G.patientId ) {
+    static getRecordsIdDoc( pid=patientId ) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
@@ -315,7 +314,7 @@ class Operation { // convenience class
 
         // Adds a single "blank"
         // also purges excess "blanks"
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
 
@@ -330,7 +329,7 @@ class Operation { // convenience class
 
 class Mission { // convenience class
     static select() {
-        G.patientId = missionId;
+        patientId = missionId;
         Mission.getRecordId()
         .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
@@ -338,15 +337,15 @@ class Mission { // convenience class
 
     static getRecordId(binary=false) {
         // return the Mission record, or a dummy
-        return G.db.get( missionId, { attachments: true, binary: binary } )
+        return db.get( missionId, { attachments: true, binary: binary } )
         .then( doc => Promise.resolve(doc) )
         .catch( () => Promise.resolve({
             EndDate:null,
             Link:"",
             LocalContact:"",
             Location:"",
-            Mission:G.remoteCouch.database,
-            Name:G.remoteCouch.database,
+            Mission:remoteCouch.database,
+            Name:remoteCouch.database,
             Organization:"",
             StartDate:null,
             type:"mission",
@@ -372,7 +371,7 @@ class Mission { // convenience class
             document.querySelectorAll(".missionButtonImage")
             .forEach( logo => logo.src=src??"images/Null.png" );
             })
-        .catch( err => G.objectLog.err(err,"Mission info") ) ;
+        .catch( err => objectLog.err(err,"Mission info") ) ;
     }
 }
 
@@ -384,9 +383,9 @@ class RemoteReplicant { // convenience class
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
-        if ( G.remoteCouch == null ) {
-			G.remoteCouch = {} ;
-            G.credentialList.forEach( c => G.remoteCouch[c] = "" );
+        if ( remoteCouch == null ) {
+			remoteCouch = {} ;
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         // set up monitoring
@@ -407,11 +406,11 @@ class RemoteReplicant { // convenience class
 
     // Initialise a sync process with the remote server
     foreverSync() {
-        this.remoteDB = this.openRemoteDB( G.remoteCouch ); // null initially
-        document.getElementById( "userstatus" ).value = G.remoteCouch.username;
+        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
+        document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
             this.status( "good","download remote database");
-            G.db.replicate.from( this.remoteDB )
+            db.replicate.from( this.remoteDB )
                 .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
                 .finally( _ => this.syncer() );
         } else {
@@ -421,7 +420,7 @@ class RemoteReplicant { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        G.db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -440,19 +439,19 @@ class RemoteReplicant { // convenience class
             case "disconnect":
                 document.body.style.background="#7071d3"; // Orange
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 break ;
             case "problem":
                 document.body.style.background="#d72e18"; // grey
-                G.objectLog.err(msg,"Network status");
+                objectLog.err(msg,"Network status");
                 this.problem = true ;
                 break ;
             case "good":
             default:
                 document.body.style.background="#172bae"; // heppy blue
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 this.problem = false ;
                 break ;
@@ -461,7 +460,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && G.credentialList.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -470,7 +469,7 @@ class RemoteReplicant { // convenience class
                     },
                 });
         } else {
-            G.objectLog.err("Bad DB specification");
+            objectLog.err("Bad DB specification");
             return null;
         }
     }
@@ -500,14 +499,14 @@ class RemoteReplicant { // convenience class
 class Cookie { //convenience class
     static set( cname, value ) {
       // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
-        window[cname] = value;
+        globalThis[cname] = value;
         let date = new Date();
         date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
         document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
     }
 
     static del( cname ) {
-        G[cname] = null;
+        globalThis[cname] = null;
         document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
 
@@ -522,7 +521,7 @@ class Cookie { //convenience class
                 ret =  val.substring(name.length);
                 }
         });
-        G[cname] = ret;
+        globalThis[cname] = ret;
         return ret;
     }
 
@@ -578,7 +577,7 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.download( csv, `${G.remoteCouch.database}Patients.csv` ); // Send to download file
+            CSV.download( csv, `${remoteCouch.database}Patients.csv` ); // Send to download file
             });
     }
 
@@ -595,7 +594,7 @@ class CSV { // convenience class
             doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
             olist = doclist.rows.filter( r => ! Operation.nullOp(r.doc) ) ;
             })
-        .then( _ => G.db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
+        .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
         .then( nlist => {
             const names = {};
             nlist.rows.forEach( n => names[n.key] = n.value[0] ) ;
@@ -607,7 +606,7 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.download( csv, `${G.remoteCouch.database}Operations.csv` ); // Send to download file
+            CSV.download( csv, `${remoteCouch.database}Operations.csv` ); // Send to download file
             });
     }
 
@@ -652,7 +651,7 @@ class CSV { // convenience class
                     .join(',')
                     )
                 .join( '\n' );
-            CSV.download( csv, `${G.remoteCouch.database}AllData.csv` );
+            CSV.download( csv, `${remoteCouch.database}AllData.csv` );
             });
     }
 }
@@ -663,7 +662,7 @@ class Backup {
     }
     
     static all() {
-        G.db.allDocs({
+        db.allDocs({
             include_docs: true,
             attachments: true,
             binary: false,
@@ -671,7 +670,7 @@ class Backup {
         .then( doclist => 
             Backup.download(
                 JSON.stringify(doclist.rows.map(({doc}) => doc)),
-                `${G.remoteCouch.database}.json`
+                `${remoteCouch.database}.json`
                 )
             );
     }
@@ -703,7 +702,7 @@ class PPTX {
         
     master( mission_doc ) {
         // Synchonous
-        this.pptx.author=G.remoteCouch.username;
+        this.pptx.author=remoteCouch.username;
         this.pptx.company=mission_doc.Organization;
         this.pptx.subject=mission_doc.Location;
         this.pptx.title=mission_doc.Mission;
@@ -778,7 +777,7 @@ class PPTX {
                 doclist.rows.map( pt => {
                     // Get pretty name
                     return _ => 
-                    G.db.query( "Pid2Name", {key:pt.id} )
+                    db.query( "Pid2Name", {key:pt.id} )
                     .then( q => {
                         this.pname = q.rows[0].value[0] ;
                         return this.patient( pt.doc ) ;
@@ -794,7 +793,7 @@ class PPTX {
                 })
         .then( () => {
             this.button.innerText = "Writing..." ;
-            return this.pptx.writeFile( { filename: `${G.remoteCouch.database}.pptx`, compression:true });
+            return this.pptx.writeFile( { filename: `${remoteCouch.database}.pptx`, compression:true });
             })
         .then( () => {this.button.innerText = "Complete!";});
     }
@@ -993,7 +992,7 @@ class ZIP {
             return PromiseSeq(
                 doclist.rows.map( pt => {
                     return _ =>
-                    G.db.query( "Pid2Name", {key:pt.id})
+                    db.query( "Pid2Name", {key:pt.id})
                     .then( q => {
                         this.pname = q.rows[0].value[0] ;
                         if ( qimg && pt.doc?._attachments?.image ) {
@@ -1016,7 +1015,7 @@ class ZIP {
                 })
             )})
         .then( _ => this.zip.generateAsync({type:"blob"}) )
-        .then( blob => DownloadFile.blob( blob, `${G.remoteCouch.database}.zip` ) )
+        .then( blob => DownloadFile.blob( blob, `${remoteCouch.database}.zip` ) )
         .catch( err => console.log(err) );
     }
 }
@@ -1026,7 +1025,7 @@ class Page { // singleton class
         // get page history from cookies
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
-        this.path = G.displayState;
+        this.path = displayState;
         this.lastscreen = null ; // splash/screen/patient for show_screen
     }
     
@@ -1078,7 +1077,7 @@ class Page { // singleton class
     } 
     
     show( page = "AllPatients", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        if ( G.db == null || G.credentialList.some( c=> G.remoteCouch[c]=='' ) ) {
+        if ( db == null || credentialList.some( c=> remoteCouch[c]=='' ) ) {
             this.show("FirstTime");
         }
 
@@ -1091,7 +1090,7 @@ class Page { // singleton class
         this.show_screen( "screen" ); // basic page display setup
 
         // send to page-specific code
-        const page_class = Pagelist.subclass(G.objectPage.current()) ;
+        const page_class = Pagelist.subclass(objectPage.current()) ;
         if ( page_class ) {
             page_class.show(extra) ;
         } else {
@@ -1123,13 +1122,13 @@ class Page { // singleton class
         // set Help buttons
         document.querySelectorAll(".Qmark").forEach( h => {
             h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>G.objectPage.link());
+            h.addEventListener("click",()=>objectPage.link());
             });
 
         // set Search buttons
         document.querySelectorAll(".Search").forEach( s => {
             s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>G.objectPage.show('SearchList'));
+            s.addEventListener("click",()=>objectPage.show('SearchList'));
             });
 
         // remove redundant mission buttons
@@ -1221,7 +1220,7 @@ class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectLog.show() ;
+        objectLog.show() ;
     }
 }
 
@@ -1232,14 +1231,14 @@ class Log{
     
     err( err, title=null ) {
         // generic console.log of error
-        let ttl = title ?? G.objectPage.current() ;
+        let ttl = title ?? objectPage.current() ;
         let msg = err.message ?? err ;
         this.list.push(`${ttl}: ${msg}`);
         console.group() ;
         console.log( ttl, msg ) ;
         console.trace();
         console.groupEnd();
-        if ( G.objectPage.current() == "ErrorLog" ) {
+        if ( objectPage.current() == "ErrorLog" ) {
             // update
             this.show();
         }
@@ -1266,13 +1265,13 @@ class Log{
 }
 
 
-G.objectLog = new Log() ;
+objectLog = new Log() ;
 
 function TitleBox( titlearray=null, show="PatientPhoto" ) {
     if ( titlearray == null ) {
         document.getElementById( "titlebox" ).innerHTML = "" ;
     } else {
-        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='G.objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
     }
 }
 
@@ -1304,21 +1303,21 @@ function createQueries() {
     }, 
     ];
     Promise.all( ddoclist.map( (ddoc) => {
-        G.db.get( ddoc._id )
+        db.get( ddoc._id )
         .then( doc => {
             if ( ddoc.version !== doc.version ) {
                 ddoc._rev = doc._rev;
-                return G.db.put( ddoc );
+                return db.put( ddoc );
             } else {
                 return Promise.resolve(true);
             }
             })
         .catch( () => {
             // assume because this is first time and cannot "get"
-            return G.db.put( ddoc );
+            return db.put( ddoc );
             });
         }))
-    .catch( (err) => G.objectLog.err(err) );
+    .catch( (err) => objectLog.err(err) );
 }
 
 function parseQuery() {
@@ -1333,7 +1332,7 @@ function parseQuery() {
 }
 
 function URLparse() {
-    // need to establish remote G.db and credentials
+    // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
     if ( Object.keys(qline).length > 0 ) {
@@ -1343,14 +1342,14 @@ function URLparse() {
         window.location.href = u.toString()
     }
 
-    G.objectRemote = new RemoteReplicant() ;
+    objectRemote = new RemoteReplicant() ;
 }
 
 // Application starting point
 window.onload = () => {
     // Get Cookies
     Cookie.initialGet() ;
-    G.objectPage = new Page();
+    objectPage = new Page();
     
     // Initial splash screen
 
@@ -1362,30 +1361,30 @@ window.onload = () => {
     if ( 'serviceWorker' in navigator ) {
         navigator.serviceWorker
         .register('/sw.js')
-        .catch( err => G.objectLog.err(err,"Service worker registration") );
+        .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
     Page.setButtons() ;
 
     // set state from URL or cookies
-    URLparse() ; // setup G.remoteCouch and exclude command line parameters
+    URLparse() ; // setup remoteCouch and exclude command line parameters
 
     // Start pouchdb database       
-    if ( G.credentialList.every( c => G.remoteCouch[c] !== "" ) ) {
-        G.db = new PouchDB( G.remoteCouch.database, {auto_compaction: true} ); // open local copy
+    if ( credentialList.every( c => remoteCouch[c] !== "" ) ) {
+        db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.querySelectorAll(".headerboxlink")
-        .forEach(q => q.addEventListener("click",()=>G.objectPage.show("MainMenu")));
+        .forEach(q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
         // start sync with remote database
-        G.objectRemote.foreverSync();
+        objectRemote.foreverSync();
         
         // Secondary indexes
         createQueries();
-        G.db.viewCleanup()
-        .catch( err => G.objectLog.err(err,"View cleanup") );
+        db.viewCleanup()
+        .catch( err => objectLog.err(err,"View cleanup") );
 
         // now jump to proper page
-        G.objectPage.show( null ) ;
+        objectPage.show( null ) ;
 
         // Set patient, operation and note -- need page shown first
         if ( Patient.isSelected() ) { // mission too
@@ -1393,9 +1392,9 @@ window.onload = () => {
         }
 
     } else {
-        G.db = null;
-        G.objectPage.reset();
-        G.objectPage.show("FirstTime");
+        db = null;
+        objectPage.reset();
+        objectPage.show("FirstTime");
     }
 
 };

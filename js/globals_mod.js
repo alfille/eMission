@@ -7,27 +7,24 @@
  * */
 
 // globals cookie backed
-export class G {
-	static objectPage ;
-    static patientId;
-    static noteId;
-    static operationId;
-    static displayState=[];
-    static remoteCouch ={};
+globalThis.patientId = null ;
+globalThis.noteId = null ;
+globalThis.operationId = null ;
+globalThis.displayState = null ;
+globalThis.remoteCouch = null ;
 
 // other globals
-	static credentialList = ["database", "username", "password", "address" ] ;
-
-// Database handles and  
-    static db ; // will be PouchG.db local copy 
-
+globalThis.credentialList = ["database", "username", "password", "address" ] ;
 
 // singleton class instances
-    static objectPatientData;
-    static objectNoteList={
-		category: 'Uncategorized',
-		};
-    static objectTable = null;
-    static objectRemote = null;
-    static objectLog = null;
-}
+globalThis.objectPage = null ;
+globalThis.objectPatientData = null ;
+globalThis.objectNoteList = {
+	category: 'Uncategorized',
+	};
+globalThis.objectTable = null ;
+globalThis.objectRemote = null ;
+globalThis.objectLog = null ;
+
+// Database handles
+globalThis.db = null ; // will be Pouchdb local copy 

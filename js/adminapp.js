@@ -10,8 +10,6 @@
 
 /* jshint esversion: 11 */
 
-import {G} from "./globals_mod.js" ;
-
 // Database handles and  
 var security_db = null ;
 const remoteUser = {
@@ -23,14 +21,14 @@ const remoteUser = {
 
 class RemoteSecurity {
     constructor() {
-        G.credentialList.forEach( c => this[c] = null ) ;
+        credentialList.forEach( c => this[c] = null ) ;
     }
     
     setup( user, pass ) {
         this.username = user;
         this.password = pass ;
-        this.database = G.remoteCouch.database ;
-        this.address = G.remoteCouch.address;
+        this.database = remoteCouch.database ;
+        this.address = remoteCouch.address;
         this.header = new Headers( {
             "Content-Type" : "application/json",
             "Authorization": `Basic ${btoa([this.username,this.password].join(":"))}`, });
@@ -145,7 +143,7 @@ class Id {
         return this.joinId( obj );
     }
     
-    static makeId( pid=G.patientId ) { // Make a new Id for a note or operation using current time as the last field
+    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
         return this.makeIdKey(pid);
     }
     
@@ -157,11 +155,11 @@ class Id {
         return [this.type, this.end].join(";");
     }
 
-    static patStart( pid=G.patientId ) { // Search just this patient's records
+    static patStart( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.start ) ;
     }    
 
-    static patEnd( pid=G.patientId ) { // Search just this patient's records
+    static patEnd( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.end ) ;
     }    
 }
@@ -178,21 +176,21 @@ class Id_patient extends Id{
             (doc.DOB??"").replace(/;/g,"_")
             ].join(";");
     }
-    static splitId( id=G.patientId ) {
+    static splitId( id=patientId ) {
         return super.splitId(id);
     }
 }
 
 class Id_note extends Id{
     static type = "c";        
-    static splitId( id=G.noteId ) {
+    static splitId( id=noteId ) {
         return super.splitId(id);
     }
 }
 
 class Id_operation extends Id{
     static type = "o";
-    static splitId( id=G.operationId ) {
+    static splitId( id=operationId ) {
         return super.splitId(id);
     }
 }
@@ -523,7 +521,7 @@ class PatientDataRaw { // singleton class
             if ( "choices" in item ) {
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
-                choices = G.db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
+                choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
             }
 
             // get value and make type-specific input field with filled in value
@@ -875,9 +873,9 @@ class PatientDataRaw { // singleton class
     
     saveChanged ( state ) {
         let changed = this.loadDocData();
-        Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => G.db.put( doc ) ) )
-            .catch( (err) => G.objectLog.err(err) )
-            .finally( () => G.objectPage.show( state ) );
+        Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( state ) );
     }
     
     savePatientData() {
@@ -906,7 +904,7 @@ class DatabaseInfoData extends PatientData {
 class DatabaseData extends PatientDataRaw {
     // starts with "EDIT" clicked
     constructor(...args) {
-        if ( G.remoteCouch.database=="" ) {
+        if ( remoteCouch.database=="" ) {
             // First time
             super(true,...args); // clicked = true
             this.clickEditButtons() ;
@@ -918,12 +916,12 @@ class DatabaseData extends PatientDataRaw {
     savePatientData() {
         if ( this.loadDocData()[0] ) {
             if ( this.doc[0].raw=="fixed" ) {
-                this.doc[0].address=G.objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
+                this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             }
             delete this.doc[0].raw ;
             Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
-        G.objectPage.reset();
+        objectPage.reset();
         location.reload(); // force reload
     }
 }
@@ -937,21 +935,21 @@ class SuperUserData extends PatientDataEditMode {
     savePatientData() {
         this.loadDocData();
 
-        G.objectRemote.closeRemoteDB()
+        objectRemote.closeRemoteDB()
         .then( () => {
             // remote User database
             remoteUser.username = this.doc[0].username;
             remoteUser.password = this.doc[0].password;
-            User.user_db = G.objectRemote.openRemoteDB( remoteUser );
+            User.user_db = objectRemote.openRemoteDB( remoteUser );
 
             // admin access to this database
             objectSecurity.setup( remoteUser.username, remoteUser.password ) ;
-            security_db = G.objectRemote.openRemoteDB( objectSecurity.object() );
+            security_db = objectRemote.openRemoteDB( objectSecurity.object() );
 
-            G.objectPage.show( this.nextpage ); })
+            objectPage.show( this.nextpage ); })
         .catch( err => {
             alert( err );
-            G.objectPage.show( "SuperUser",this.nextpage );
+            objectPage.show( "SuperUser",this.nextpage );
             });
     }
 }
@@ -970,16 +968,16 @@ class NewUserData extends PatientDataEditMode {
         this.doc[0].quad = {
             'username':this.doc[0].name,
             'password':this.doc[0].password,
-            'database':G.remoteCouch.database,
-            'address' :G.remoteCouch.address,
+            'database':remoteCouch.database,
+            'address' :remoteCouch.address,
         };
         User.user_db.put( this.doc[0] )
         .then( response => User.select( response.id ))
         .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
-        .then( _ => G.objectPage.show( "SendUser" ) )
+        .then( _ => objectPage.show( "SendUser" ) )
         .catch( err => {
-            G.objectLog.err(err);
-            G.objectPage.show( "UserList" );
+            objectLog.err(err);
+            objectPage.show( "UserList" );
             });
     }
 }
@@ -990,23 +988,23 @@ class EditUserData extends PatientData {
             let status = this.doc[0].status.map(s=>s+"s") ;
             delete this.doc[0].status // note stored in database -- put in permissions
 
-            this.doc[0].quad = Object.assign( {}, G.remoteCouch ) ;
+            this.doc[0].quad = Object.assign( {}, remoteCouch ) ;
             this.doc[0].quad.username = this.doc[0].name ;
             this.doc[0].quad.password = this.doc[0].password ;
 
             User.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
-            .then( _ => G.objectPage.show( "SendUser" ) )
+            .then( _ => objectPage.show( "SendUser" ) )
             .catch( err => {
-                G.objectLog.err(err);
-                G.objectPage.show( "UserList" );
+                objectLog.err(err);
+                objectPage.show( "UserList" );
                 });
         } else if ( "quad" in this.doc[0] ) {
-            G.objectPage.show( "SendUser" );
+            objectPage.show( "SendUser" );
         } else {
             // no password to send
-            G.objectLog.err("No stored password") ;
-            G.objectPage.show( "UserList" );
+            objectLog.err("No stored password") ;
+            objectPage.show( "UserList" );
         }
     }
 }
@@ -1020,27 +1018,27 @@ class Note { // convenience class
             binary: false,
             attachments: false,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc(pid=G.patientId) {
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix(pid=G.patientId) {
+    static getRecordsIdPix(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
@@ -1048,7 +1046,7 @@ class Note { // convenience class
             binary: true,
             attachments: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
     static dateFromDoc( doc ) {
@@ -1062,7 +1060,7 @@ class Operation { // convenience class
     static create() {
         let doc = {
             _id: Id_operation.makeId(),
-            author: G.remoteCouch.username,
+            author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
             Surgeon: "",
@@ -1071,9 +1069,9 @@ class Operation { // convenience class
             Laterality: "?",
             Status: "none",
             Equipment: "",
-            patient_id: G.patientId,
+            patient_id: patientId,
         };
-        return G.db.put( doc );
+        return db.put( doc );
     }
     
     static nullOp( doc ) {
@@ -1086,18 +1084,18 @@ class Operation { // convenience class
             endkey: Id_operation.allEnd(),
             include_docs: true,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
-    static getRecordsIdDoc( pid=G.patientId ) {
+    static getRecordsIdDoc( pid=patientId ) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
@@ -1106,7 +1104,7 @@ class Operation { // convenience class
 
         // Adds a single "blank"
         // also purges excess "blanks"
-        return G.db.allDocs(doc)
+        return db.allDocs(doc)
         .then( (doclist) => {
             let newlist = doclist.rows
                 .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
@@ -1126,12 +1124,12 @@ class Operation { // convenience class
                 throw null;
             }
             // too many empties
-            return Promise.all(dlist.map( (doc) => G.db.remove(doc) ))
+            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
                 .then( ()=> Operation.getRecordsIdDoc( pid )
                 );
             })
         .catch( () => {
-            return Operation.create().then( () => G.db.allDocs(doc) );
+            return Operation.create().then( () => db.allDocs(doc) );
             });
     }
 
@@ -1154,16 +1152,16 @@ class User { // convenience class
                 }
                 })              
             .then( () => User.unselect() )
-            .catch( (err) => G.objectLog.err(err) )
-            .finally( () => G.objectPage.show( "UserList" ) );
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( "UserList" ) );
         }
         return true;
     }    
     
     static select( uid ) {
         User.id = uid;
-        if ( G.objectPage.test("UserList") ) {
-            G.objectTable.highlight();
+        if ( objectPage.test("UserList") ) {
+            objectTable.highlight();
         }
     }    
 
@@ -1181,7 +1179,7 @@ class User { // convenience class
     static simple_url() {
         let url = new URL( "/index.html", window.location.href ) ;
         if ( url.hostname == 'localhost' ) {
-            url = new URL( "/index.html", G.remoteCouch.address ) ;
+            url = new URL( "/index.html", remoteCouch.address ) ;
             url.port = '';
         }
         return url
@@ -1189,7 +1187,7 @@ class User { // convenience class
 
     static make_url( user_dict ) {
         let url = User.simple_url() ;
-        G.credentialList.forEach( c => url.searchParams.append( c, user_dict[c] ) );
+        credentialList.forEach( c => url.searchParams.append( c, user_dict[c] ) );
         return url ;
     }
 
@@ -1202,10 +1200,10 @@ class User { // convenience class
 
 You have an account:
 
-  web address: ${G.remoteCouch.address}
+  web address: ${remoteCouch.address}
      username: ${user_dict.username}
      password: ${user_dict.password}
-     database: ${G.remoteCouch.database}
+     database: ${remoteCouch.database}
 
 Full link (paste into your browser address bar):
   ${User.make_url( user_dict ).toString()}
@@ -1246,13 +1244,13 @@ We are looking forward to your participation.
             300,300,
             4);
 
-        G.objectPage.show_screen( "user" ) ;
+        objectPage.show_screen( "user" ) ;
     }
 }
 
 class Mission { // convenience class
     static select() {
-        G.patientId = missionId;
+        patientId = missionId;
         Mission.getRecordId()
         .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
@@ -1260,15 +1258,15 @@ class Mission { // convenience class
     static getRecordId() {
         // return the Mission record, or a dummy
         // returns a promise, but can't fail!
-        return G.db.get( missionId, { attachments: true, binary: true } )
+        return db.get( missionId, { attachments: true, binary: true } )
         .then( doc => Promise.resolve(doc) )
         .catch( () => Promise.resolve({
             EndDate:null,
             Link:"",
             LocalContact:"",
             Location:"",
-            Mission:G.remoteCouch.database,
-            Name:G.remoteCouch.database,
+            Mission:remoteCouch.database,
+            Name:remoteCouch.database,
             Organization:"",
             StartDate:null,
             type:"mission",
@@ -1294,7 +1292,7 @@ class Mission { // convenience class
             document.querySelectorAll(".missionButtonImage")
             .forEach( logo => logo.src=src??"images/Null.png" );
             })
-        .catch( err => G.objectLog.err(err,"Mission info") ) ;
+        .catch( err => objectLog.err(err,"Mission info") ) ;
     }
 }
 
@@ -1305,9 +1303,9 @@ class RemoteReplicant { // convenience class
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
-        if ( G.remoteCouch == null ) {
-			G.remoteCouch = {} ;
-            G.credentialList.forEach( c => G.remoteCouch[c] = "" );
+        if ( remoteCouch == null ) {
+			remoteCouch = {} ;
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         window.addEventListener("offline", _ => this.status( "disconnect", "--network offline--" ) );
@@ -1319,11 +1317,11 @@ class RemoteReplicant { // convenience class
 
     // Initialise a sync process with the remote server
     foreverSync() {
-        this.remoteDB = this.openRemoteDB( G.remoteCouch ); // null initially
-        document.getElementById( "userstatus" ).value = G.remoteCouch.username;
+        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
+        document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
             this.status( "good","download remote database");
-            G.db.replicate.from( this.remoteDB )
+            db.replicate.from( this.remoteDB )
                 .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
                 .finally( _ => this.syncer() );
         } else {
@@ -1333,7 +1331,7 @@ class RemoteReplicant { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        G.db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -1352,19 +1350,19 @@ class RemoteReplicant { // convenience class
             case "disconnect":
                 document.body.style.background="#d72e18"; // grey
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 break ;
             case "problem":
                 document.body.style.background="#7071d3"; // Orange
-                G.objectLog.err(msg,"Network status");
+                objectLog.err(msg,"Network status");
                 this.problem = true ;
                 break ;
             case "good":
             default:
                 document.body.style.background="#172bae"; // happy blue
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 this.problem = false ;
                 break ;
@@ -1373,7 +1371,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && G.credentialList.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -1382,7 +1380,7 @@ class RemoteReplicant { // convenience class
                     },
                 });
         } else {
-            G.objectLog.err("Bad DB specficication");
+            objectLog.err("Bad DB specficication");
             return null;
         }
     }
@@ -1396,7 +1394,7 @@ class RemoteReplicant { // convenience class
 
     // Fauxton link
     link() {
-        window.open( `${G.remoteCouch.address}/_utils`, '_blank' );
+        window.open( `${remoteCouch.address}/_utils`, '_blank' );
     }
 
     SecureURLparse( url ) {
@@ -1424,14 +1422,14 @@ class RemoteReplicant { // convenience class
 class Cookie { //convenience class
     static set( cname, value ) {
       // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
-        window[cname] = value;
+        globalThis[cname] = value;
         let date = new Date();
         date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
         document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
     }
 
     static del( cname ) {
-        G[cname] = null;
+        globalThis[cname] = null;
         document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
 
@@ -1446,7 +1444,7 @@ class Cookie { //convenience class
                 ret =  val.substring(name.length);
                 }
         });
-        G[cname] = ret;
+        globalThis[cname] = ret;
         return ret;
     }
 
@@ -1461,7 +1459,7 @@ class Page { // singleton class
         // get page history from cookies
         // much simplified from app.js -- no checking of entries or history
         // since any unrecognized entries send us back to app.js
-        this.path = G.displayState;
+        this.path = displayState;
         this.lastscreen = null ; // splash/screen/patient for show_screen
         if ( this.path == null ) {
             this.reset() ;
@@ -1520,7 +1518,7 @@ class Page { // singleton class
     } 
     
     show( page = "Administration", extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        if ( G.db == null || G.credentialList.some( c=> G.remoteCouch[c]=='' ) ) {
+        if ( db == null || credentialList.some( c=> remoteCouch[c]=='' ) ) {
             if ( page != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
             }
@@ -1535,7 +1533,7 @@ class Page { // singleton class
         this.show_screen( "screen" ); // basic page display setup
 
         // send to page-specific code
-        const page_class = Pagelist.subclass(G.objectPage.current()) ;
+        const page_class = Pagelist.subclass(objectPage.current()) ;
         if ( page_class ) {
             page_class.show(extra) ;
         } else {
@@ -1562,7 +1560,7 @@ class Page { // singleton class
                     type:"html",
                     ignoreElements:["printCardButtons"],
                     documentTitle:"Name and Credentials",
-                    onPrintDialogClose: ()=>G.objectPage.show("back"),
+                    onPrintDialogClose: ()=>objectPage.show("back"),
                 });
             }
         }
@@ -1577,19 +1575,19 @@ class Page { // singleton class
         // set Help buttons
         document.querySelectorAll(".Qmark").forEach( h => {
             h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>G.objectPage.link());
+            h.addEventListener("click",()=>objectPage.link());
             });
 
         // set edit details for PatientData edit pages -- only for "top" portion
         document.querySelectorAll(".edit_data").forEach( e => {
             e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>G.objectPatientData.clickEdit());
+            e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
 
         // set save details for PatientData save pages
         document.querySelectorAll(".savedata").forEach( s => {
             s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>G.objectPatientData.savePatientData());
+            s.addEventListener("click",()=>objectPatientData.savePatientData());
             });
         // remove redundant mission buttons
         [...document.querySelectorAll(".topButtons")]
@@ -1639,9 +1637,9 @@ class RemoteDatabaseInput extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        const doc = Object.assign({},G.remoteCouch) ;
+        const doc = Object.assign({},remoteCouch) ;
         doc.raw = "fixed";
-        G.objectPatientData = new DatabaseData( doc, structDatabase );
+        objectPatientData = new DatabaseData( doc, structDatabase );
     }
 }
 
@@ -1653,11 +1651,11 @@ class DatabaseInfo extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.db.info()
+        db.info()
         .then( doc => {
-            G.objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
+            objectPatientData = new DatabaseInfoData( doc, structDatabaseInfo );
             })
-        .catch( err => G.objectLog.err(err) );
+        .catch( err => objectLog.err(err) );
     }
 }
 
@@ -1665,7 +1663,7 @@ class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectLog.show() ;
+        objectLog.show() ;
     }
 }
 
@@ -1674,10 +1672,10 @@ class MissionMembers extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user.db == null ) {
-            G.objectPage.show( "SuperUser","MissionMembers" );
+            objectPage.show( "SuperUser","MissionMembers" );
         } else {
             let rows = [] ;
-            G.objectTable = new MissionMembersTable();
+            objectTable = new MissionMembersTable();
             User.getAllIdDoc()
             .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _ => objectSecurity.getUsers() )
@@ -1686,10 +1684,10 @@ class MissionMembers extends Pagelist {
                 .filter( role => sec[role].names && sec[role].names.includes(row.doc.name))
                 .map( r => r.slice(0,-1) )
                 ))
-            .then( _ => G.objectTable.fill(rows ) )
+            .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show ( "back" );
+                objectLog.err(err);
+                objectPage.show ( "back" );
                 });
         }
     }
@@ -1743,12 +1741,12 @@ class PatientMerge extends Pagelist {
     
     static leave() {
         window.removeEventListener('message',this.gotMessage);
-        G.objectPage.show( 'back' );
+        objectPage.show( 'back' );
     }
     
     static merge() {
         if ( ! PatientMerge.not_mergeable() ) {
-            G.db.get(PatientMerge.transfer.from,{attachments:true})
+            db.get(PatientMerge.transfer.from,{attachments:true})
             .then( fromdoc => {
                 // Make old patient record a note (to document merge and save old data)
                 let doc = {
@@ -1770,34 +1768,34 @@ class PatientMerge extends Pagelist {
                 } else {
                     delete doc._attachments;
                 }
-                return Promise.all([G.db.put(doc),G.db.remove(fromdoc)]);
+                return Promise.all([db.put(doc),db.remove(fromdoc)]);
             })
             .then( _ => Note.getRecordsId( PatientMerge.transfer.from ) )
             .then( nlist => Promise.all( nlist.rows.map( r => 
                 // convert notes to new id and delete old
-                G.db.get(r.id,{attachments:true})
+                db.get(r.id,{attachments:true})
                 .then(doc => {
                     let newdoc = Object.assign({},doc);
                     delete newdoc._rev;
                     newdoc.patient_id = PatientMerge.transfer.to;
                     newdoc._id = Id_note.makeIdKey( PatientMerge.transfer.to, Id_note.splitId(doc._id).key);
-                    return Promise.all([G.db.put(newdoc),G.db.remove(doc)]);
+                    return Promise.all([db.put(newdoc),db.remove(doc)]);
                     })
                  )))
             .then( _ => Operation.getRecordsId( PatientMerge.transfer.from ) )
             .then( olist => Promise.all( olist.rows.map( r => 
                 // convert operations to new id and delete old
-                G.db.get(r.id,{attachments:true})
+                db.get(r.id,{attachments:true})
                 .then(doc => {
                     if ( Operation.nullOp(doc) ) {
                         // no real operations -- just delete
-                        return G.db.remove(doc);
+                        return db.remove(doc);
                     } else {
                         let newdoc = Object.assign({},doc);
                         delete newdoc._rev;
                         newdoc.patient_id = PatientMerge.transfer.to;
                         newdoc._id = Id_operation.makeIdKey( PatientMerge.transfer.to, Id_operation.splitId(doc._id).key);
-                        return Promise.all([G.db.put(newdoc),G.db.remove(doc)]);
+                        return Promise.all([db.put(newdoc),db.remove(doc)]);
                     }}) 
                 )))
             .then( l => console.log(l) )
@@ -1811,7 +1809,7 @@ class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="MainMenu") {
-        User.printUserCard(G.remoteCouch);
+        User.printUserCard(remoteCouch);
     }
 }
 
@@ -1820,15 +1818,15 @@ class SendUser extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            G.objectPage.show( "SuperUser","SendUser" );
+            objectPage.show( "SuperUser","SendUser" );
         } else if ( User.id == null ) {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         } else {
             User.user_db.get( User.id )
             .then( doc => User.send( doc ) )
             .catch( err => {
-                G.objectLog.err(err);
-                G.objectPage.show( "back" );
+                objectLog.err(err);
+                objectPage.show( "back" );
                 });
         }
     }
@@ -1839,8 +1837,8 @@ class SuperUser extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="UserList") {
-        remoteUser.address = G.remoteCouch.address;
-        G.objectPatientData = new SuperUserData( extra, Object.assign({},remoteUser), structSuperUser );
+        remoteUser.address = remoteCouch.address;
+        objectPatientData = new SuperUserData( extra, Object.assign({},remoteUser), structSuperUser );
     }
 }
 
@@ -1849,9 +1847,9 @@ class UserEdit extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            G.objectPage.show( "SuperUser","UserEdit" );
+            objectPage.show( "SuperUser","UserEdit" );
         } else if ( User.id == null ) {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         } else {
             let sec=null;
             objectSecurity.getUsers()
@@ -1866,12 +1864,12 @@ class UserEdit extends Pagelist {
                     // address and database are set but not used
                     doc.password = doc.quad.password ;
                 }
-                G.objectPatientData = new EditUserData( doc, structEditUser );
+                objectPatientData = new EditUserData( doc, structEditUser );
                 })
             .catch( err => {
-                G.objectLog.err(err);
+                objectLog.err(err);
                 User.unselect();
-                G.objectPage.show( "back" );
+                objectPage.show( "back" );
                 });
         }
     }
@@ -1882,10 +1880,10 @@ class UserList extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            G.objectPage.show( "SuperUser","UserList" );
+            objectPage.show( "SuperUser","UserList" );
         } else {
             let rows = [] ;
-            G.objectTable = new UserTable();
+            objectTable = new UserTable();
             User.getAllIdDoc()
             .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
@@ -1893,10 +1891,10 @@ class UserList extends Pagelist {
             .then( sec => ["members","admins"].forEach(role=> rows.forEach( row => {
                if ( sec[role].names && sec[role].names.includes(row.doc.name) ) { row.doc.mission = role.slice(0,-1); } 
                 })))
-            .then( _ => G.objectTable.fill(rows ) )
+            .then( _ => objectTable.fill(rows ) )
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show ( "back" );
+                objectLog.err(err);
+                objectPage.show ( "back" );
                 });
         }
     }
@@ -1907,10 +1905,10 @@ class UserNew extends Pagelist {
 
     static subshow(extra="") {
         if ( User.user_db == null ) {
-            G.objectPage.show( "SuperUser","UserNew" );
+            objectPage.show( "SuperUser","UserNew" );
         } else {
             User.unselect();
-            G.objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
+            objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
         }
     }
 }
@@ -2094,7 +2092,7 @@ class UserTable extends SortTable {
     }
 
     editpage() {
-        G.objectPage.show("UserEdit");
+        objectPage.show("UserEdit");
     }
 }
 
@@ -2136,7 +2134,7 @@ class MissionMembersTable extends SortTable {
     }
 
     editpage() {
-        G.objectPage.show("UserEdit");
+        objectPage.show("UserEdit");
     }
 }
 
@@ -2153,14 +2151,14 @@ class Log{
     
     err( err, title=null ) {
         // generic console.log of error
-        let ttl = title ?? G.objectPage.current() ;
+        let ttl = title ?? objectPage.current() ;
         let msg = err.message ?? err ;
         this.list.push(`${ttl}: ${msg}`);
         console.group() ;
         console.log( ttl, msg ) ;
         console.trace();
         console.groupEnd();
-        if ( G.objectPage.current() == "ErrorLog" ) {
+        if ( objectPage.current() == "ErrorLog" ) {
             // update
             this.show();
         }
@@ -2186,13 +2184,13 @@ class Log{
     }
 }
 
-G.objectLog = new Log() ;
+objectLog = new Log() ;
 
 function TitleBox( titlearray=null, show="PatientPhoto" ) {
     if ( titlearray == null ) {
         document.getElementById( "titlebox" ).innerHTML = "" ;
     } else {
-        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='G.objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
     }
 }
 
@@ -2218,14 +2216,14 @@ function URLparse() {
         u.pathname = "/index.html" ;
         window.location.href = u.toString()
     }
-    G.objectRemote = new RemoteReplicant() ;
+    objectRemote = new RemoteReplicant() ;
 }
 
 // Application starting point
 window.onload = () => {
     // Get Cookies
     Cookie.initialGet() ;
-    G.objectPage = new Page();
+    objectPage = new Page();
         
     // Stuff into history to block browser BACK button
     window.history.pushState({}, '');
@@ -2235,38 +2233,38 @@ window.onload = () => {
     if ( 'serviceWorker' in navigator ) {
         navigator.serviceWorker
         .register('/sw.js')
-        .catch( err => G.objectLog.err(err,"Service worker registration") );
+        .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
     Page.setButtons() ;
 
     // set state from URL or cookies
-    URLparse() ; // look for G.remoteCouch and exclude command line parameters
+    URLparse() ; // look for remoteCouch and exclude command line parameters
 
     // Start pouchdb database       
-    if ( G.credentialList.every( c=> G.remoteCouch[c] !== "" ) ) {
-        G.db = new PouchDB( G.remoteCouch.database, {auto_compaction: true} ); // open local copy
+    if ( credentialList.every( c=> remoteCouch[c] !== "" ) ) {
+        db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
         document.querySelectorAll(".headerboxlink")
-        .forEach( q => q.addEventListener("click",()=>G.objectPage.show("MainMenu")));
+        .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
         // start sync with remote database
-        G.objectRemote.foreverSync();
+        objectRemote.foreverSync();
 
         // set link for mission
         Mission.link();
         Mission.select();
 
         // now jump to proper page
-        G.objectPage.show( null ) ;
+        objectPage.show( null ) ;
 
-    } else if ( G.objectPage.current() == "RemoteDatabaseInput" ) {
+    } else if ( objectPage.current() == "RemoteDatabaseInput" ) {
         // now jump to proper page
-        G.objectPage.show( null ) ;
+        objectPage.show( null ) ;
 
     } else {
-        G.db = null;
-        G.objectPage.reset();
-        G.objectPage.show("FirstTime");
+        db = null;
+        objectPage.reset();
+        objectPage.show("FirstTime");
     }
 
 };

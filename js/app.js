@@ -8,10 +8,6 @@
 
 "use strict";
 
-import {G} from "./globals_mod.js" ;
- 
-import {test} from "./image_mod.js";
-
 /* jshint esversion: 11 */
 
 // other globals
@@ -311,21 +307,21 @@ function createQueries() {
     }, 
     ];
     Promise.all( ddoclist.map( (ddoc) => {
-        G.db.get( ddoc._id )
+        db.get( ddoc._id )
         .then( doc => {
             if ( ddoc.version !== doc.version ) {
                 ddoc._rev = doc._rev;
-                return G.db.put( ddoc );
+                return db.put( ddoc );
             } else {
                 return Promise.resolve(true);
             }
             })
         .catch( () => {
             // assume because this is first time and cannot "get"
-            return G.db.put( ddoc );
+            return db.put( ddoc );
             });
         }))
-    .catch( (err) => G.objectLog.err(err) );
+    .catch( (err) => objectLog.err(err) );
 }
 
 class Search { // singleton class
@@ -373,7 +369,7 @@ class Search { // singleton class
             return Promise.resolve(true) ;
         } else {
             // adds docs to index
-            return G.db.allDocs( { include_docs: true, } )
+            return db.allDocs( { include_docs: true, } )
             .then( docs => docs.rows.forEach( r => this.addDoc( r.doc ) ));
         }
     }
@@ -402,26 +398,26 @@ class Search { // singleton class
             return this.resetTable();
         }
         
-        G.db.allDocs( { // get docs from search
+        db.allDocs( { // get docs from search
             include_docs: true,
             keys: this.search(value).map( s => s.ref ),
         })
         .then( docs => { // add _id, Text, Type fields to result
             docs.rows.forEach( (r,i)=> result[i]=({_id:r.id,Type:r.doc.type,Text:r.doc[this.fieldlist[r.doc.type][0]]}) );
-            return G.db.query("Doc2Pid", { keys: docs.rows.map( r=>r.id), } );
+            return db.query("Doc2Pid", { keys: docs.rows.map( r=>r.id), } );
             })
-        .then( docs => G.db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} )) // associated patient Id for each
+        .then( docs => db.query("Pid2Name", {keys: docs.rows.map(r=>r.value),} )) // associated patient Id for each
         .then( docs => docs.rows.forEach( (r,i) => result[i].Name = r.value[0] )) // associate patient name
         .then( () => this.result = result.map( r=>({doc:r}))) // encode as list of doc objects
         .then( ()=>this.setTable()) // fill the table
         .catch(err=> {
-            G.objectLog.err(err);
+            objectLog.err(err);
             this.resetTable();
             });
     }
 
     setTable() {
-        G.objectTable.fill(this.result);
+        objectTable.fill(this.result);
     }
 }
 
@@ -633,12 +629,12 @@ class ImageNote extends ImageImbedded {
     
     leave() {
         this.buttonsdisabled( false );
-        if (G.patientId == missionId) {
-            G.objectPage.show( 'MissionList');
-        } else if ( G.objectNoteList.category == 'Uncategorized' ) {
-            G.objectPage.show( 'NoteList');
+        if (patientId == missionId) {
+            objectPage.show( 'MissionList');
+        } else if ( objectNoteList.category == 'Uncategorized' ) {
+            objectPage.show( 'NoteList');
         } else {
-            G.objectPage.show( 'NoteListCategory', G.objectNoteList.category);
+            objectPage.show( 'NoteListCategory', objectNoteList.category);
         }
     }
 
@@ -651,12 +647,12 @@ class ImageNote extends ImageImbedded {
 
     store() {
         this.save( this.doc );
-        G.db.put( this.doc )
+        db.put( this.doc )
         .then( resp => {
             Note.select( resp.id );
             return Note.getAllIdDoc(); // to prime list
             })
-        .catch( err => G.objectLog.err(err) )
+        .catch( err => objectLog.err(err) )
         .finally( () => this.leave() );
     }
 
@@ -696,7 +692,7 @@ class ImageNote extends ImageImbedded {
         Patient.getRecordId()
         .then( (doc) => {
             pdoc = doc;
-            return G.db.get( G.noteId );
+            return db.get( noteId );
             })
         .then( (doc) => {
             if ( confirm(`Delete note on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
@@ -705,16 +701,16 @@ class ImageNote extends ImageImbedded {
                 throw "No delete";
             }           
             })
-        .then( (doc) => G.db.remove(doc) )
+        .then( (doc) => db.remove(doc) )
         .then( () => Note.unselect() )
-        .catch( (err) => G.objectLog.err(err) )
+        .catch( (err) => objectLog.err(err) )
         .finally( () => this.leave() );
     }
 }
 
 class ImageQuick extends ImageImbedded {
     addListen(hfunc) {
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => G.objectPage.show('QuickPhoto') ); }
+        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => objectPage.show('QuickPhoto') ); }
             catch { //empty
                 }
         try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => hfunc() ); }
@@ -793,7 +789,7 @@ class PatientDataRaw { // singleton class
             if ( "choices" in item ) {
                 choices = Promise.resolve(item.choices) ;
             } else if ( "query" in item ) {
-                choices = G.db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
+                choices = db.query(item.query,{group:true,reduce:true}).then( q=>q.rows.map(qq=>qq.key).filter(c=>c.length>0) ) ;
             }
 
             // get value and make type-specific input field with filled in value
@@ -1142,9 +1138,9 @@ class PatientDataRaw { // singleton class
     
     saveChanged ( state ) {
         let changed = this.loadDocData();
-        Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => G.db.put( doc ) ) )
-            .catch( (err) => G.objectLog.err(err) )
-            .finally( () => G.objectPage.show( state ) );
+        Promise.all( this.doc.filter( (doc, idx) => changed[idx] ).map( (doc) => db.put( doc ) ) )
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( state ) );
     }
     
     savePatientData() {
@@ -1170,17 +1166,17 @@ class MissionData extends PatientData {
     saveChanged ( state ) {
         let changed = this.loadDocData();
         if ( changed[0] ) {
-            G.db.put( this.doc[0] )
-            .then( _ => objectCollation.db.get( '0'+G.remoteCouch.database ) )
+            db.put( this.doc[0] )
+            .then( _ => objectCollation.db.get( '0'+remoteCouch.database ) )
             .then( doc => {
-                doc.dbname = G.remoteCouch.database;
-                doc.server = G.remoteCouch.address;
+                doc.dbname = remoteCouch.database;
+                doc.server = remoteCouch.address;
                 ["Organizatoin","Name","Location","StartDate","endDate","Mission","Link"].forEach(k=> doc[k]=this.doc[0][k]);
                 return doc ;
                 })
             .then( doc => objectCollation.db.put(doc) )
-            .catch( (err) => G.objectLog.err(err) )
-            .finally( () => G.objectPage.show( state ) );
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( state ) );
         }
     }
      savePatientData() {
@@ -1209,12 +1205,12 @@ class NewPatientData extends PatientDataEditMode {
             // create new patient record
             this.doc[0]._id = Id_patient.makeId( this.doc[0] );
             this.doc[0].patient_id = this.doc[0]._id;
-            G.db.put( this.doc[0] )
+            db.put( this.doc[0] )
             .then( (response) => {
                 Patient.select(response.id);
-                G.objectPage.show( "PatientPhoto" );
+                objectPage.show( "PatientPhoto" );
                 })
-            .catch( (err) => G.objectLog.err(err) );
+            .catch( (err) => objectLog.err(err) );
         }
     }
 }
@@ -1259,9 +1255,9 @@ class Patient { // convenience class
             let odocs;
             Patient.getRecordIdPix()
             .then( (doc) => pdoc = doc ) // patient
-            .then( _ => Note.getRecordsIdDoc(G.patientId) ) // notes
+            .then( _ => Note.getRecordsIdDoc(patientId) ) // notes
             .then( (docs) => ndocs = docs.rows ) // get notes
-            .then( _ => Operation.getRecordsIdDoc(G.patientId) ) // operations
+            .then( _ => Operation.getRecordsIdDoc(patientId) ) // operations
             .then( (docs) => {
                 // get operations
                 odocs = docs.rows;
@@ -1284,21 +1280,21 @@ class Patient { // convenience class
                     throw "No delete";
                 }           
                 })
-            .then( _ => Promise.all(ndocs.map( (doc) => G.db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( _ => Promise.all(odocs.map( (doc) => G.db.remove(doc.doc._id,doc.doc._rev) ) ) )
-            .then( _ => G.db.remove(pdoc) )
+            .then( _ => Promise.all(ndocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( _ => Promise.all(odocs.map( (doc) => db.remove(doc.doc._id,doc.doc._rev) ) ) )
+            .then( _ => db.remove(pdoc) )
             .then( _ => Patient.unselect() )
-            .catch( (err) => G.objectLog.err(err) ) 
-            .finally( _ => G.objectPage.show( "back" ) );
+            .catch( (err) => objectLog.err(err) ) 
+            .finally( _ => objectPage.show( "back" ) );
         }
     }
 
-    static getRecordId(id=G.patientId ) {
-        return G.db.get( id );
+    static getRecordId(id=patientId ) {
+        return db.get( id );
     }
 
-    static getRecordIdPix(id=G.patientId ) {
-        return G.db.get( id, { attachments:true, binary:true } );
+    static getRecordIdPix(id=patientId ) {
+        return db.get( id, { attachments:true, binary:true } );
     }
 
     static getAllId() {
@@ -1307,7 +1303,7 @@ class Patient { // convenience class
             endkey:   Id_patient.allEnd(),
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
         
     static getAllIdDoc() {
@@ -1317,7 +1313,7 @@ class Patient { // convenience class
             include_docs: true,
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
         
     static getAllIdDocPix() {
@@ -1329,48 +1325,48 @@ class Patient { // convenience class
             attachments: true,
         };
 
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static select( pid = G.patientId ) {
-        if ( G.patientId != pid ) {
+    static select( pid = patientId ) {
+        if ( patientId != pid ) {
             // change patient -- notes dont apply
             Note.unselect();
-            G.objectNoteList.category = 'Uncategorized' ;
+            objectNoteList.category = 'Uncategorized' ;
         }
 
-        G.patientId = pid ;
+        patientId = pid ;
         if ( pid == missionId ) {
             Mission.select() ;
         } else {
             Cookie.set( "patientId", pid );
             // Check patient existence
-            G.db.query("Pid2Name",{key:pid})
+            db.query("Pid2Name",{key:pid})
             .then( (doc) => {
                 // highlight the list row
-                if ( G.objectPage.test('AllPatients') ) {
-                    G.objectTable.highlight();
+                if ( objectPage.test('AllPatients') ) {
+                    objectTable.highlight();
                 }
                 TitleBox([doc.rows[0].value[1]]);
                 })
             .catch( (err) => {
-                G.objectLog.err(err,"patient select");
+                objectLog.err(err,"patient select");
                 Patient.unselect();
                 });
         }
     }
 
     static isSelected() {
-        return ( G.patientId != null ) && ( G.patientId != missionId ) ;
+        return ( patientId != null ) && ( patientId != missionId ) ;
     }
 
     static unselect() {
-        G.patientId = null;
+        patientId = null;
         Cookie.del ( "patientId" );
         Note.unselect();
-        G.objectNoteList.category = 'Uncategorized' ;
+        objectNoteList.category = 'Uncategorized' ;
         Operation.unselect();
-        if ( G.objectPage.test("AllPatients") ) {
+        if ( objectPage.test("AllPatients") ) {
             let pt = document.getElementById("PatientTable");
             if ( pt ) {
                 let rows = pt.rows;
@@ -1408,10 +1404,10 @@ class Patient { // convenience class
     }
     
     static printCard() {
-        G.objectPage.next("PrintCard"); // fake page
-        if ( G.patientId == null ) {
-            G.objectLog.err("No patient to print");
-            return G.objectPage.show( "back" );
+        objectPage.next("PrintCard"); // fake page
+        if ( patientId == null ) {
+            objectLog.err("No patient to print");
+            return objectPage.show( "back" );
         }
         let card = document.getElementById("printCard");
         let t = card.getElementsByTagName("table");
@@ -1420,8 +1416,8 @@ class Patient { // convenience class
             let img = new ImageImbedded( card, doc, NoPhoto ) ;
             img.display_image();
             let link = new URL(window.location.href);
-            link.searchParams.append( "G.patientId", G.patientId );
-            link.searchParams.append( "database", G.remoteCouch.database );
+            link.searchParams.append( "patientId", patientId );
+            link.searchParams.append( "database", remoteCouch.database );
 
             new QR(
                 card.querySelector(".qrCard"),
@@ -1437,9 +1433,9 @@ class Patient { // convenience class
             t[0].rows[5].cells[1].innerText = doc.Weight+" kg"??"";
             t[0].rows[6].cells[1].innerText = ""; // equipment
             }) 
-        .then( _ => G.db.query("Pid2Name",{key:G.patientId}) )
+        .then( _ => db.query("Pid2Name",{key:patientId}) )
         .then( (doc) => t[0].rows[0].cells[1].innerText = doc.rows[0].value[0] )
-        .then( _ => Operation.getRecordsIdDoc(G.patientId) )
+        .then( _ => Operation.getRecordsIdDoc(patientId) )
         .then( (docs) => {
             let oleng = docs.rows.length;
             switch(oleng) {
@@ -1457,11 +1453,11 @@ class Patient { // convenience class
                 t[0].rows[6].cells[1].innerText = docs.rows[oleng].doc.Equipment??"";
             }
             document.getElementById("printCardButtons").style.display="block";
-            G.objectPage.show_screen( "patient" ); // Also prints
+            objectPage.show_screen( "patient" ); // Also prints
             })
         .catch( (err) => {
-            G.objectLog.err(err);
-            G.objectPage.show( "back" );
+            objectLog.err(err);
+            objectPage.show( "back" );
             });
     }
     
@@ -1472,7 +1468,7 @@ class Patient { // convenience class
             type:"html",
             ignoreElements:["printCardButtons"],
             documentTitle:[doc.Name,doc.Location,doc.Organization].join(" "),
-            onPrintDialogClose: ()=>G.objectPage.show("PatientPhoto"),
+            onPrintDialogClose: ()=>objectPage.show("PatientPhoto"),
             })
         );
     }
@@ -1520,7 +1516,7 @@ class Id {
         return this.joinId( obj );
     }
     
-    static makeId( pid=G.patientId ) { // Make a new Id for a note or operation using current time as the last field
+    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
         return this.makeIdKey(pid);
     }
     
@@ -1532,11 +1528,11 @@ class Id {
         return [this.type, this.end].join(";");
     }
 
-    static patStart( pid=G.patientId ) { // Search just this patient's records
+    static patStart( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.start ) ;
     }    
 
-    static patEnd( pid=G.patientId ) { // Search just this patient's records
+    static patEnd( pid=patientId ) { // Search just this patient's records
         return this.makeIdKey( pid, this.end ) ;
     }    
 }
@@ -1553,21 +1549,21 @@ class Id_patient extends Id{
             (doc.DOB??"").replace(/;/g,"_")
             ].join(";");
     }
-    static splitId( id=G.patientId ) {
+    static splitId( id=patientId ) {
         return super.splitId(id);
     }
 }
 
 class Id_note extends Id{
     static type = "c";        
-    static splitId( id=G.noteId ) {
+    static splitId( id=noteId ) {
         return super.splitId(id);
     }
 }
 
 class Id_operation extends Id{
     static type = "o";
-    static splitId( id=G.operationId ) {
+    static splitId( id=operationId ) {
         return super.splitId(id);
     }
 }
@@ -1592,27 +1588,27 @@ class Note { // convenience class
             binary: false,
             attachments: false,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdDoc(pid=G.patientId) {
+    static getRecordsIdDoc(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
-    static getRecordsIdPix(pid=G.patientId) {
+    static getRecordsIdPix(pid=patientId) {
         let doc = {
             startkey: Id_note.patStart(pid),
             endkey: Id_note.patEnd(pid),
@@ -1620,31 +1616,31 @@ class Note { // convenience class
             binary: true,
             attachments: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
 
     static dateFromDoc( doc ) {
         return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
     }
 
-    static select( nid=G.noteId ) {
+    static select( nid=noteId ) {
         // Check patient existence
-        G.db.get(nid)
+        db.get(nid)
         .then( doc => {
-            if ( doc.patient_id != G.patientId ) {
+            if ( doc.patient_id != patientId ) {
                 Patient.select( doc.patient_id);
             }
             Cookie.set( "noteId", nid );
-            if ( G.objectPage.test("NoteList") || G.objectPage.test("NoteListCategory") || G.objectPage.test("MissionList")) {
-                G.objectNoteList.select() ;
+            if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
+                objectNoteList.select() ;
             }
             })
-        .catch( err => G.objectLog.err(err,"note select"));
+        .catch( err => objectLog.err(err,"note select"));
     }
 
     static unselect() {
         Cookie.del ( "noteId" );
-        if ( G.objectPage.test("NoteList") || G.objectPage.test("NoteListCategory") || G.objectPage.test("MissionList")) {
+        if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
             document.getElementById("NoteListContent").querySelectorAll("li")
             .forEach( l => l.classList.remove('choice') );
         }
@@ -1682,23 +1678,23 @@ class Note { // convenience class
                         .then( blb => {
                             let doc = Note.template();
                             new ImageDrop(blb).save(doc);
-                            return G.db.put(doc);
+                            return db.put(doc);
                             });
                     reader.readAsDataURL(file); // start reading the file data.
                     }))
-                    .then( () => Note.getRecordsId(G.patientId) ) // refresh the list
-                    .catch( err => G.objectLog.err(err,"Photo drop") )
+                    .then( () => Note.getRecordsId(patientId) ) // refresh the list
+                    .catch( err => objectLog.err(err,"Photo drop") )
                     .finally( () => {
-                        if (G.objectNoteList.category=='Uncategorized') {
-                            G.objectPage.show( "NoteList" );
+                        if (objectNoteList.category=='Uncategorized') {
+                            objectPage.show( "NoteList" );
                         } else {
-                            G.objectPage.show( "NoteListCategory",G.objectNoteList.category );
+                            objectPage.show( "NoteListCategory",objectNoteList.category );
                         }
                         });
             });
     }
 
-    static template(category=G.objectNoteList.category) {
+    static template(category=objectNoteList.category) {
         if ( category=='' ) {
             category = 'Uncategorized' ;
         }
@@ -1706,10 +1702,10 @@ class Note { // convenience class
             _id: Id_note.makeId(),
             text: "",
             title: "",
-            author: G.remoteCouch.username,
+            author: remoteCouch.username,
             type: "note",
             category: category,
-            patient_id: G.patientId,
+            patient_id: patientId,
             date: new Date().toISOString(),
         };
     }
@@ -1722,10 +1718,10 @@ class Note { // convenience class
         function handleImage() {
             img.handleImage();
             img.save(doc);
-            G.db.put(doc)
-            .then( () => Note.getRecordsId(G.patientId) ) // to try to prime the list
-            .catch( err => G.objectLog.err(err) )
-            .finally( G.objectPage.show( null ) );
+            db.put(doc)
+            .then( () => Note.getRecordsId(patientId) ) // to try to prime the list
+            .catch( err => objectLog.err(err) )
+            .finally( objectPage.show( null ) );
         }
         img.display_image();
         img.addListen(handleImage);
@@ -1735,30 +1731,30 @@ class Note { // convenience class
 }
 
 class Operation { // convenience class
-    static select( oid=G.operationId ) {
+    static select( oid=operationId ) {
         // Check patient existence
-        G.operationId=oid ;
-        G.db.get(oid)
+        operationId=oid ;
+        db.get(oid)
         .then( doc => {
-            if ( doc.patient_id != G.patientId ) {
+            if ( doc.patient_id != patientId ) {
                 Patient.select( doc.patient_id);
             }
             Cookie.set ( "operationId", oid  );
             // highlight the list row
-            if ( G.objectPage.test('OperationList') || G.objectPage.test('AllOperations')  ) {
-                G.objectTable.highlight();
+            if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
+                objectTable.highlight();
             }
             })
         .catch( err => {
-            G.objectLog.err(err,"operation select");
+            objectLog.err(err,"operation select");
             Operation.unselect();
             });             
     }
 
     static unselect() {
-        G.operationId = null;
+        operationId = null;
         Cookie.del( "operationId" );
-        if ( G.objectPage.test("OperationList") ) {
+        if ( objectPage.test("OperationList") ) {
             let ot = document.getElementById("OperationsList");
             if ( ot ) {
                 let rows = ot.rows;
@@ -1772,7 +1768,7 @@ class Operation { // convenience class
     static create() {
         let doc = {
             _id: Id_operation.makeId(),
-            author: G.remoteCouch.username,
+            author: remoteCouch.username,
             type: "operation",
             Procedure: "Enter new procedure",
             Surgeon: "",
@@ -1781,9 +1777,9 @@ class Operation { // convenience class
             Laterality: "?",
             Status: "none",
             Equipment: "",
-            patient_id: G.patientId,
+            patient_id: patientId,
         };
-        return G.db.put( doc );
+        return db.put( doc );
     }
 
     static nullOp( doc ) {
@@ -1791,12 +1787,12 @@ class Operation { // convenience class
     }
 
     static del() {
-        if ( G.operationId ) {
+        if ( operationId ) {
             let pdoc;
             Patient.getRecordId()
             .then( (doc) => { 
                 pdoc = doc;
-                return G.db.get( G.operationId );
+                return db.get( operationId );
                 })
             .then( (doc) => {
                 if ( confirm(`Delete operation <${doc.Procedure}>\n on patient ${pdoc.FirstName} ${pdoc.LastName} DOB: ${pdoc.DOB}.\n -- Are you sure?`) ) {
@@ -1805,10 +1801,10 @@ class Operation { // convenience class
                     throw "No delete";
                 }           
                 })
-            .then( (doc) =>G.db.remove(doc) )
+            .then( (doc) =>db.remove(doc) )
             .then( () => Operation.unselect() )
-            .catch( (err) => G.objectLog.err(err) )
-            .finally( () => G.objectPage.show( "back" ) );
+            .catch( (err) => objectLog.err(err) )
+            .finally( () => objectPage.show( "back" ) );
         }
         return true;
     }    
@@ -1819,7 +1815,7 @@ class Operation { // convenience class
             endkey:   Id_operation.allEnd(),
             include_docs: true,
         };
-        return G.db.allDocs(doc);
+        return db.allDocs(doc);
     }
 
     static getAllIdDocCurated() {
@@ -1836,15 +1832,15 @@ class Operation { // convenience class
             });
     }
 
-    static getRecordsId(pid=G.patientId) {
+    static getRecordsId(pid=patientId) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
             include_docs: true,
         };
-        return G.db.allDocs(doc) ;
+        return db.allDocs(doc) ;
     }
-    static getRecordsIdDoc( pid=G.patientId ) {
+    static getRecordsIdDoc( pid=patientId ) {
         let doc = {
             startkey: Id_operation.patStart(pid),
             endkey: Id_operation.patEnd(pid),
@@ -1853,7 +1849,7 @@ class Operation { // convenience class
 
         // Adds a single "blank"
         // also purges excess "blanks"
-        return G.db.allDocs(doc)
+        return db.allDocs(doc)
         .then( (doclist) => {
             let newlist = doclist.rows
                 .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
@@ -1873,12 +1869,12 @@ class Operation { // convenience class
                 throw null;
             }
             // too many empties
-            return Promise.all(dlist.map( (doc) => G.db.remove(doc) ))
+            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
                 .then( ()=> Operation.getRecordsIdDoc( pid )
                 );
             })
         .catch( () => {
-            return Operation.create().then( () => G.db.allDocs(doc) );
+            return Operation.create().then( () => db.allDocs(doc) );
             });
     }
 
@@ -1890,7 +1886,7 @@ class Operation { // convenience class
 class Mission { // convenience class
     static select() {
         Patient.unselect();
-        G.patientId = missionId;
+        patientId = missionId;
         Mission.getRecordId()
         .then( doc => TitleBox([doc.Mission,doc.Organization],"MissionInfo") ) ;
     }
@@ -1898,15 +1894,15 @@ class Mission { // convenience class
     static getRecordId() {
         // return the Mission record, or a dummy
         // returns a promise, but can't fail!
-        return G.db.get( missionId, { attachments: true, binary: true } )
+        return db.get( missionId, { attachments: true, binary: true } )
         .then( doc => Promise.resolve(doc) )
         .catch( _ => Promise.resolve({
             EndDate:null,
             Link:"",
             LocalContact:"",
             Location:"",
-            Mission:G.remoteCouch.database,
-            Name:G.remoteCouch.database,
+            Mission:remoteCouch.database,
+            Name:remoteCouch.database,
             Organization:"",
             StartDate:null,
             type:"mission",
@@ -1932,7 +1928,7 @@ class Mission { // convenience class
             document.querySelectorAll(".missionButtonImage")
             .forEach( logo => logo.src=src??"images/Null.png" );
             })
-        .catch( err => G.objectLog.err(err,"Mission info") ) ;
+        .catch( err => objectLog.err(err,"Mission info") ) ;
     }
 }
 
@@ -1944,25 +1940,25 @@ class RemoteReplicant { // convenience class
         this.synctext = document.getElementById("syncstatus");
         
         // Get remote DB from cookies if available
-        if ( G.remoteCouch == null ) {
-			G.remoteCouch = {} ;
-            G.credentialList.forEach( c => G.remoteCouch[c] = "" );
+        if ( remoteCouch == null ) {
+			remoteCouch = {} ;
+            credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
         // Get Remote DB fron command line if available
-        if ( G.credentialList.every( k => k in qline ) ) {
+        if ( credentialList.every( k => k in qline ) ) {
             let updateCouch = false ;
-            G.credentialList
+            credentialList
             .filter( f => f in qline )
-            .filter( f => G.remoteCouch[f] != qline[f] )
+            .filter( f => remoteCouch[f] != qline[f] )
             .forEach( f => {
                 updateCouch = true ;
-                G.remoteCouch[f] = qline[f] ;
+                remoteCouch[f] = qline[f] ;
                 });
             // Changed, so reset page
             if ( updateCouch ) {
-                G.objectPage.reset() ;               
-                Cookie.set( "remoteCouch", G.remoteCouch );
+                objectPage.reset() ;               
+                Cookie.set( "remoteCouch", remoteCouch );
             }
         }
         
@@ -1985,11 +1981,11 @@ class RemoteReplicant { // convenience class
 
     // Initialise a sync process with the remote server
     foreverSync() {
-        this.remoteDB = this.openRemoteDB( G.remoteCouch ); // null initially
-        document.getElementById( "userstatus" ).value = G.remoteCouch.username;
+        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
+        document.getElementById( "userstatus" ).value = remoteCouch.username;
         if ( this.remoteDB ) {
             this.status( "good","download remote database");
-            G.db.replicate.from( this.remoteDB )
+            db.replicate.from( this.remoteDB )
                 .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
                 .finally( _ => this.syncer() );
         } else {
@@ -1999,7 +1995,7 @@ class RemoteReplicant { // convenience class
     
     syncer() {
         this.status("good","Starting database intermittent sync");
-        G.db.sync( this.remoteDB ,
+        db.sync( this.remoteDB ,
             {
                 live: true,
                 retry: true,
@@ -2018,19 +2014,19 @@ class RemoteReplicant { // convenience class
             case "disconnect":
                 document.body.style.background="#7071d3"; // Orange
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 break ;
             case "problem":
                 document.body.style.background="#d72e18"; // grey
-                G.objectLog.err(msg,"Network status");
+                objectLog.err(msg,"Network status");
                 this.problem = true ;
                 break ;
             case "good":
             default:
                 document.body.style.background="#172bae"; // heppy blue
                 if ( this.lastState !== state ) {
-                    G.objectLog.err(msg,"Network status");
+                    objectLog.err(msg,"Network status");
                 }
                 this.problem = false ;
                 break ;
@@ -2039,7 +2035,7 @@ class RemoteReplicant { // convenience class
     }
             
     openRemoteDB( DBstruct ) {
-        if ( DBstruct && G.credentialList.every( k => k in DBstruct )  ) {
+        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
             return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
                 "skip_setup": "true",
                 "auth": {
@@ -2048,7 +2044,7 @@ class RemoteReplicant { // convenience class
                     },
                 });
         } else {
-            G.objectLog.err("Bad DB specification");
+            objectLog.err("Bad DB specification");
             return null;
         }
     }
@@ -2080,7 +2076,7 @@ class Cookie { //convenience class
         // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
         if ( ! in_frame ) {
             // Don't store values for in-frame instances -- it get's too confusing
-            window[cname] = value;
+            globalThis[cname] = value;
             let date = new Date();
             date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
             document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
@@ -2088,7 +2084,7 @@ class Cookie { //convenience class
     }
 
     static del( cname ) {
-        G[cname] = null;
+        globalThis[cname] = null;
         document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
 
@@ -2103,7 +2099,7 @@ class Cookie { //convenience class
                 ret =  val.substring(name.length);
                 }
         });
-        G[cname] = ret;
+        globalThis[cname] = ret;
         return ret;
     }
 
@@ -2148,8 +2144,8 @@ class Pagelist {
             return cls ;
         } else {
             // bad entry -- fix by going back
-            G.objectPage.back() ;
-            return G.objectPage.current() ;
+            objectPage.back() ;
+            return objectPage.current() ;
         }
     } 
 }
@@ -2197,7 +2193,7 @@ class Help extends Pagelist {
 
     static subshow(extra="") {
         window.open( new URL(`/book/index.html`,location.href).toString(), '_blank' );
-        G.objectPage.show("back");
+        objectPage.show("back");
     }
 }
 
@@ -2209,18 +2205,18 @@ class AllOperations extends Pagelist {
         let olist;
         Operation.getAllIdDocCurated()
         .then( doclist => olist = doclist)
-        .then( _ => G.db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
+        .then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
         .then( nlist => {
             const n2id = {} ;
             // create an pid -> name dict
             nlist.rows.forEach( n => n2id[n.key]=n.value[0] );
             // Assign names, filter out empties
             olist.forEach( r => r.doc.Name = ( r.doc.patient_id in n2id ) ? n2id[r.doc.patient_id] : "" ) ;
-            G.objectTable = new AllOperationTable();
+            objectTable = new AllOperationTable();
             // Default value
-            G.objectTable.fill(olist.filter(o=>o.doc.Name!==""));
+            objectTable.fill(olist.filter(o=>o.doc.Name!==""));
             })
-        .catch( err=>G.objectLog.err(err) );
+        .catch( err=>objectLog.err(err) );
     }
 }
 
@@ -2228,7 +2224,7 @@ class AllPatients extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectTable = new PatientTable();
+        objectTable = new PatientTable();
         let o2pid = {} ; // oplist
         Operation.getAllIdDocCurated()
         .then( oplist => {
@@ -2241,14 +2237,14 @@ class AllPatients extends Pagelist {
         .then( _ => Patient.getAllIdDoc() )
         .then( (docs) => {
             docs.rows.forEach( r => Object.assign( r.doc, o2pid[r.id]) );
-            G.objectTable.fill(docs.rows );
+            objectTable.fill(docs.rows );
             if ( Patient.isSelected() ) {
-                Patient.select( G.patientId );
+                Patient.select( patientId );
             } else {
                 Patient.unselect();
             }
             })
-        .catch( (err) => G.objectLog.err(err) );
+        .catch( (err) => objectLog.err(err) );
     }
 }
 
@@ -2256,16 +2252,16 @@ class DBTable extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectTable = new DatabaseTable();
+        objectTable = new DatabaseTable();
         objectCollation.db.allDocs( {
             startkey: '0',
             endkey:   '1',
             include_docs: true,
             })
         .then( (docs) => {
-            G.objectTable.fill(docs.rows) ;
+            objectTable.fill(docs.rows) ;
             })
-        .catch( (err) => G.objectLog.err(err) );
+        .catch( (err) => objectLog.err(err) );
     }
 }
 
@@ -2293,7 +2289,7 @@ class ErrorLog extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectLog.show() ;
+        objectLog.show() ;
     }
 }
 
@@ -2301,8 +2297,8 @@ class FirstTime extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( G.db !== null ) {
-            G.objectPage.show("MainMenu");
+        if ( db !== null ) {
+            objectPage.show("MainMenu");
         }
     }
 }
@@ -2326,15 +2322,15 @@ class MissionInfo extends Pagelist {
     static subshow(extra="") {
         Mission.select();
         Patient.getRecordIdPix()
-        .then( (doc) => G.objectPatientData = new MissionData( doc, structMission ) )
+        .then( (doc) => objectPatientData = new MissionData( doc, structMission ) )
         .catch( () => {
             let doc = {
                 _id: missionId,
-                author: G.remoteCouch.username,
+                author: remoteCouch.username,
                 patient_id: missionId,
                 type: "mission",
             };
-            G.objectPatientData = new MissionData( doc, structMission ) ;
+            objectPatientData = new MissionData( doc, structMission ) ;
             })
         .finally( () => Mission.link() );
     }
@@ -2346,9 +2342,9 @@ class MissionList extends Pagelist {
     static subshow(extra="") {
         Mission.select() ;
         Mission.getRecordId()
-        .then( () => Note.getRecordsIdPix(G.patientId) )
-        .then( notelist => G.objectNoteList = new NoteLister(notelist,'Uncategorized') )
-        .catch( ()=> G.objectPage.show( "MissionInfo" ) ) ;
+        .then( () => Note.getRecordsIdPix(patientId) )
+        .then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
+        .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
     }
 }
 
@@ -2357,14 +2353,14 @@ class NoteListCategory extends Pagelist {
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
-            Note.getRecordsIdPix(G.patientId)
-            .then( notelist => G.objectNoteList = new NoteLister(notelist,extra) )
+            Note.getRecordsIdPix(patientId)
+            .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
             .catch( (err) => {
-                G.objectLog.err(err,`Notelist (${extra})`);
-                G.objectPage.show( "back" );
+                objectLog.err(err,`Notelist (${extra})`);
+                objectPage.show( "back" );
                 });
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2373,11 +2369,11 @@ class NoteList extends NoteListCategory {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( Patient.isSelected() || (G.patientId == missionId) ) {
+        if ( Patient.isSelected() || (patientId == missionId) ) {
             super.subshow('Uncategorized');
         } else {
             Note.unselect();
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2386,12 +2382,12 @@ class NoteNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( Patient.isSelected() || (G.patientId == missionId) ) {
+        if ( Patient.isSelected() || (patientId == missionId) ) {
             // New note only
             Note.unselect();
             Note.create();
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2400,26 +2396,26 @@ class OperationEdit extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( G.operationId ) {
-            G.db.get( G.operationId )
+        if ( operationId ) {
+            db.get( operationId )
             .then ( doc => {
                 Patient.select( doc.patient_id ); // async set title
                 return doc ;
                 })
-            .then( (doc) => G.objectPatientData = new OperationData( doc, structOperation ) )
+            .then( (doc) => objectPatientData = new OperationData( doc, structOperation ) )
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show( "back" );
+                objectLog.err(err);
+                objectPage.show( "back" );
                 });
         } else if ( ! Patient.isSelected() ) {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         } else {
-            G.objectPatientData = new OperationData(
+            objectPatientData = new OperationData(
             {
                 _id: Id_operation.makeId(),
                 type: "operation",
-                patient_id: G.patientId,
-                author: G.remoteCouch.username,
+                patient_id: patientId,
+                author: remoteCouch.username,
             } , structOperation );
         }
     }
@@ -2430,12 +2426,12 @@ class OperationList extends Pagelist {
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
-            G.objectTable = new OperationTable();
-            Operation.getRecordsIdDoc(G.patientId)
-            .then( (docs) => G.objectTable.fill(docs.rows ) )
-            .catch( (err) => G.objectLog.err(err) );
+            objectTable = new OperationTable();
+            Operation.getRecordsIdDoc(patientId)
+            .then( (docs) => objectTable.fill(docs.rows ) )
+            .catch( (err) => objectLog.err(err) );
         } else {
-            G.objectPage.show( "back" ) ;
+            objectPage.show( "back" ) ;
         }
     }
 }
@@ -2446,9 +2442,9 @@ class OperationNew extends Pagelist {
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
             Operation.unselect();
-            G.objectPage.show( "OperationEdit" );
+            objectPage.show( "OperationEdit" );
         } else {
-            G.objectPage.show( "back" ) ;
+            objectPage.show( "back" ) ;
         }
     }
 }
@@ -2459,13 +2455,13 @@ class PatientDemographics extends Pagelist {
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
             Patient.getRecordIdPix()
-            .then( (doc) => G.objectPatientData = new PatientData( doc, structDemographics ) )
+            .then( (doc) => objectPatientData = new PatientData( doc, structDemographics ) )
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show( "back" );
+                objectLog.err(err);
+                objectPage.show( "back" );
                 });
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2478,17 +2474,17 @@ class PatientMedical extends Pagelist {
             let args;
             Patient.getRecordId()
             .then( (doc) => args = [doc,structMedical] )
-            .then( _ => Operation.getRecordsIdDoc(G.patientId) )
+            .then( _ => Operation.getRecordsIdDoc(patientId) )
             .then( ( olist ) => {
                 olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
-                G.objectPatientData = new PatientData( ...args );
+                objectPatientData = new PatientData( ...args );
                 })
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show( "back" );
+                objectLog.err(err);
+                objectPage.show( "back" );
                 });
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2498,9 +2494,9 @@ class PatientNew extends Pagelist {
 
     static subshow(extra="") {
         Patient.unselect();
-        G.objectPatientData = new NewPatientData(
+        objectPatientData = new NewPatientData(
             {
-                author: G.remoteCouch.username,
+                author: remoteCouch.username,
                 type:"patient"
             }, structNewPatient );
     }
@@ -2511,21 +2507,21 @@ class PatientPhoto extends Pagelist {
 
     static subshow(extra="") {
         if ( Patient.isSelected() ) {
-            Patient.select( G.patientId );
+            Patient.select( patientId );
             let pdoc;
             let onum ;
             Patient.getRecordIdPix()
             .then( (doc) => pdoc = doc )
-            .then( _ => Operation.getRecordsIdDoc(G.patientId) )
+            .then( _ => Operation.getRecordsIdDoc(patientId) )
             .then ( (doclist) => onum = doclist.rows.filter( r=> ! Operation.nullOp(r.doc) ).length )
-            .then( _ => Note.getRecordsIdDoc(G.patientId) )
+            .then( _ => Note.getRecordsIdDoc(patientId) )
             .then ( (notelist) => Patient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
-                G.objectLog.err(err);
-                G.objectPage.show( "back" );
+                objectLog.err(err);
+                objectPage.show( "back" );
                 });
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2535,11 +2531,11 @@ class QuickPhoto extends Pagelist {
     static safeLanding  = false ; // don't return here
 
     static subshow(extra="") {
-        G.objectPage.forget(); // don't return here!
-        if ( G.patientId ) { // patient or Mission!
+        objectPage.forget(); // don't return here!
+        if ( patientId ) { // patient or Mission!
             Note.quickPhoto(this.extra);
         } else {
-            G.objectPage.show( "back" );
+            objectPage.show( "back" );
         }
     }
 }
@@ -2548,7 +2544,7 @@ class SearchList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        G.objectTable = new SearchTable() ;
+        objectTable = new SearchTable() ;
         objectSearch.setTable();
     }
 }
@@ -2560,7 +2556,7 @@ class SelectPatient extends Pagelist {
         document.getElementById("headerbox").style.display = "none"; // make less confusing
         document.getElementById("titlebox").style.display = "none"; // make less confusing
         document.getElementById("footerflex").style.display = "none"; // make less confusing
-        G.objectTable = new SelectPatientTable();
+        objectTable = new SelectPatientTable();
         let onum= {} ;
         let nnum = {} ;
         Operation.getAllIdDoc() // Operations
@@ -2590,9 +2586,9 @@ class SelectPatient extends Pagelist {
                 d.doc.Operations = onum[d.id]??0 ;
                 d.doc.Notes = nnum[d.id]??0 ;
             })
-            G.objectTable.fill(docs.rows );
+            objectTable.fill(docs.rows );
             })
-        .catch( (err) => G.objectLog.err(err) );
+        .catch( (err) => objectLog.err(err) );
     }
 }
 
@@ -2600,8 +2596,8 @@ class Page { // singleton class
     constructor() {
         // get page history from cookies
         let path = [] ;
-        if ( Array.isArray( G.displayState ) ) {
-			path = G.displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
+        if ( Array.isArray( displayState ) ) {
+			path = displayState.filter(p => Pagelist.subclass(p).safeLanding); // landable
 		}
         this.lastscreen = null ; // splash/screen/patient for show_screen
         this.path = [];
@@ -2671,9 +2667,9 @@ class Page { // singleton class
     } 
     
     show( page, extra="" ) { // main routine for displaying different "pages" by hiding different elements
-        //console.log("SHOW",page,"STATE",G.displayState,this.path);
+        //console.log("SHOW",page,"STATE",displayState,this.path);
         // test that database is selected
-        if ( G.db == null || G.credentialList.some( c => G.remoteCouch[c]=='' ) ) {
+        if ( db == null || credentialList.some( c => remoteCouch[c]=='' ) ) {
             // can't bypass this! test if database exists
             if ( page != "FirstTime" && page != "RemoteDatabaseInput" ) {
                 this.show("RemoteDatabaseInput");
@@ -2691,8 +2687,8 @@ class Page { // singleton class
         }
 
         // clear display objects
-        G.objectPatientData = null;
-        G.objectTable = null;
+        objectPatientData = null;
+        objectTable = null;
 
         // clear old image urls
         ImageImbedded.clearSrc() ;
@@ -2701,7 +2697,7 @@ class Page { // singleton class
         this.show_screen( "screen" ); // basic page display setup
 
         // send to page-specific code
-        (Pagelist.subclass(G.objectPage.current())).show(extra);
+        (Pagelist.subclass(objectPage.current())).show(extra);
     }
     
     show_screen( type ) { // switch between screen and print
@@ -2728,31 +2724,31 @@ class Page { // singleton class
         // set Help buttons
         document.querySelectorAll(".Qmark").forEach( h => {
             h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>G.objectPage.link());
+            h.addEventListener("click",()=>objectPage.link());
             });
 
         // set Search buttons
         document.querySelectorAll(".Search").forEach( s => {
             s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>G.objectPage.show('SearchList'));
+            s.addEventListener("click",()=>objectPage.show('SearchList'));
             });
 
         // set Quick Photo buttons
         document.querySelectorAll(".Qphoto").forEach( q => {
             q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>G.objectPage.show('QuickPhoto'));
+            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
             });
 
         // set edit details for PatientData edit pages -- only for "top" portion
         document.querySelectorAll(".edit_data").forEach( e => {
             e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>G.objectPatientData.clickEdit());
+            e.addEventListener("click",()=>objectPatientData.clickEdit());
             });
 
         // set save details for PatientData save pages
         document.querySelectorAll(".savedata").forEach( s => {
             s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>G.objectPatientData.savePatientData());
+            s.addEventListener("click",()=>objectPatientData.savePatientData());
             });
         // remove redundant mission buttons
         [...document.querySelectorAll(".topButtons")]
@@ -2769,7 +2765,7 @@ function TitleBox( titlearray=null, show="PatientPhoto" ) {
     if ( titlearray == null ) {
         document.getElementById( "titlebox" ).innerHTML = "" ;
     } else {
-        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='G.objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
     }
 }
 
@@ -2944,7 +2940,7 @@ class PatientTable extends SortTable {
     }
 
     selectId() {
-        return G.patientId;
+        return patientId;
     }
 
     selectFunc(id) {
@@ -2952,7 +2948,7 @@ class PatientTable extends SortTable {
     }
 
     editpage() {
-        G.objectPage.show("PatientPhoto");
+        objectPage.show("PatientPhoto");
     }
 }
 
@@ -2976,7 +2972,7 @@ class SelectPatientTable extends SortTable {
 
     selectFunc(id) {
         this.pid = id
-        G.db.get(id)
+        db.get(id)
         .then( doc => window.top.postMessage({
             frame: frame_name,
             doc: doc,
@@ -2984,7 +2980,7 @@ class SelectPatientTable extends SortTable {
     }
 
     editpage() {
-        //G.objectPage.show("PatientPhoto");
+        //objectPage.show("PatientPhoto");
     }
 }
 
@@ -2998,7 +2994,7 @@ class DatabaseTable extends SortTable {
             ] 
             );
          // starting databaseId
-        this.databaseId = this.makeId( G.remoteCouch.database ) ;
+        this.databaseId = this.makeId( remoteCouch.database ) ;
         this.loadedId = this.databaseId ;
         // set titlebox
         objectCollation.db.get(this.databaseId)
@@ -3013,7 +3009,7 @@ class DatabaseTable extends SortTable {
 
     unselect() {
         this.databaseId = null;
-        if ( G.objectPage.test("DBTable") ) {
+        if ( objectPage.test("DBTable") ) {
             let pt = document.getElementById("DBTable");
             if ( pt ) {
                 let rows = pt.rows;
@@ -3038,8 +3034,8 @@ class DatabaseTable extends SortTable {
         .then( (doc) => {
             this.databaseId = did;
             // highlight the list row
-            if ( G.objectPage.test('DBTable') && G.objectTable ) {
-                G.objectTable.highlight();
+            if ( objectPage.test('DBTable') && objectTable ) {
+                objectTable.highlight();
             }
             })
         .catch( _ => this.unselect() )
@@ -3051,18 +3047,18 @@ class DatabaseTable extends SortTable {
             // changed!
             objectCollation.db.get(this.databaseId)
             .then( (doc) => {
-                G.remoteCouch.address = doc.server ;
-                G.remoteCouch.database = doc.dbname ;
+                remoteCouch.address = doc.server ;
+                remoteCouch.database = doc.dbname ;
                 Patient.unselect();
-                Cookie.set( "remoteCouch", Object.assign({},G.remoteCouch) ) ;
+                Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
                 })
-            .catch( (err) => G.objectLog.err(err,"Loading patient database") )
+            .catch( (err) => objectLog.err(err,"Loading patient database") )
             .finally( () => {
-                G.objectPage.reset();
+                objectPage.reset();
                 window.location.href="/index.html"; // force reload
                 }) ;
         } else {
-            G.objectPage.show( "MainMenu" ) ;
+            objectPage.show( "MainMenu" ) ;
         }        
     }
 }
@@ -3079,7 +3075,7 @@ class AllOperationTable extends SortTable {
     }
 
     selectId() {
-        return G.operationId;
+        return operationId;
     }
 
     selectFunc(id) {
@@ -3087,7 +3083,7 @@ class AllOperationTable extends SortTable {
     }
 
     editpage() {
-        G.objectPage.show("OperationEdit");
+        objectPage.show("OperationEdit");
     }
 }
 
@@ -3103,7 +3099,7 @@ class OperationTable extends SortTable {
     }
 
     selectId() {
-        return G.operationId;
+        return operationId;
     }
 
     selectFunc(id) {
@@ -3111,7 +3107,7 @@ class OperationTable extends SortTable {
     }
 
     editpage() {
-        G.objectPage.show("OperationEdit");
+        objectPage.show("OperationEdit");
     }
 }
 
@@ -3129,52 +3125,52 @@ class SearchTable extends SortTable {
 
     selectFunc(id) {
         objectSearch.select_id = id ;
-        G.objectTable.highlight();
+        objectTable.highlight();
     }
     
     // for search -- go to a result of search
     editpage() {
         let id = objectSearch.select_id;
         if ( id == null ) {
-            G.objectPage.show( null );
+            objectPage.show( null );
         } else if ( id == missionId ) {
             Mission.select();
-            G.objectPage.show( 'MissionInfo' ) ;
+            objectPage.show( 'MissionInfo' ) ;
         } else {
-            G.db.get( id )
+            db.get( id )
             .then( doc => {
                 switch (doc.type) {
                     case 'patient':
                         Patient.select( id );
-                        G.objectPage.show( 'PatientPhoto' ) ;
+                        objectPage.show( 'PatientPhoto' ) ;
                         break ;
                     case 'mission':
                         Mission.select( id );
-                        G.objectPage.show( 'MissionInfo' ) ;
+                        objectPage.show( 'MissionInfo' ) ;
                         break ;
                     case 'operation':
                         Patient.select( doc.patient_id );
                         Operation.select( id );
-                        G.objectPage.show( 'OperationEdit' );
+                        objectPage.show( 'OperationEdit' );
                         break ;
                     case 'note':
-                        if ( doc.G.patientId == missionId ) {
+                        if ( doc.patientId == missionId ) {
                             Mission.select();
                         } else {
                             Patient.select( doc.patient_id );
                         }
                         Note.select( id );
-                        G.objectPage.show( 'NoteList' );
+                        objectPage.show( 'NoteList' );
                         break ;
 
                     default:
-                        G.objectPage.show( null );
+                        objectPage.show( null );
                         break ;
                     }
             })
             .catch( err => {
-                G.objectLog.err(err);
-                G.objectPage.show(null);
+                objectLog.err(err);
+                objectPage.show(null);
                 });
         }
     }
@@ -3265,12 +3261,12 @@ class NoteLister {
     }
     
     select() {
-        // select G.noteId in list and highlight (if there)
+        // select noteId in list and highlight (if there)
         document.getElementById("NoteListContent")
         .querySelectorAll("fieldset")
         .forEach( fs => fs.querySelectorAll("li")
             .forEach(li=>{
-                if ( li.getAttribute("data-id") == G.noteId ) {
+                if ( li.getAttribute("data-id") == noteId ) {
                     li.classList.add('choice');
                     this.open(fs);
                     li.scrollIntoView();
@@ -3325,7 +3321,7 @@ class NoteLister {
         let li = document.createElement("li");
         li.setAttribute("data-id", note.id );
         let img;
-        if ( G.noteId == note.id ) {
+        if ( noteId == note.id ) {
             li.classList.add("choice");
         }
         if ( "doc" in note ) {
@@ -3356,7 +3352,7 @@ class NoteLister {
     }
 
     noteAuthor( doc ) {
-        let author = G.remoteCouch.username;
+        let author = remoteCouch.username;
         if ( doc  && doc.id ) {
             if ( doc.doc && doc.doc.author ) {
                 author = doc.doc.author;
@@ -3380,14 +3376,14 @@ class Log{
     
     err( err, title=null ) {
         // generic console.log of error
-        let ttl = title ?? G.objectPage.current() ;
+        let ttl = title ?? objectPage.current() ;
         let msg = err.message ?? err ;
         this.list.push(`${ttl}: ${msg}`);
         console.group() ;
         console.log( ttl, msg ) ;
         console.trace();
         console.groupEnd();
-        if ( G.objectPage.current() == "ErrorLog" ) {
+        if ( objectPage.current() == "ErrorLog" ) {
             // update
             this.show()
         }
@@ -3413,7 +3409,7 @@ class Log{
     }
 }
 
-G.objectLog = new Log() ;
+objectLog = new Log() ;
 
 function parseQuery() {
     // returns a dict of keys/values or null
@@ -3430,10 +3426,10 @@ function clearLocal() {
     if ( remove ) {
         Cookie.clear();
         // clear (local) database
-        G.db.destroy()
+        db.destroy()
         .finally( _ => location.reload() ); // force reload
     } else {
-        G.objectPage.show( "MainMenu" );
+        objectPage.show( "MainMenu" );
     }
 }
 
@@ -3441,12 +3437,12 @@ function URLparse() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    G.objectRemote = new RemoteReplicant( qline ) ;
+    objectRemote = new RemoteReplicant( qline ) ;
     
     // first try the search field
-    if ( qline && ( "G.patientId" in qline ) ) {
-        Patient.select( qline.G.patientId );
-        G.objectPage.next("PatientPhoto");
+    if ( qline && ( "patientId" in qline ) ) {
+        Patient.select( qline.patientId );
+        objectPage.next("PatientPhoto");
     }
 
     // frame
@@ -3461,13 +3457,12 @@ function URLparse() {
 // Application starting point
 window.onload = () => {
     // Get Cookies
-    test("XXXXX");
     Cookie.initialGet() ;
-    G.objectPage = new Page();
+    objectPage = new Page();
     
     Page.setButtons(); // load some common html elements
     document.querySelectorAll(".headerboxlink")
-    .forEach( q => q.addEventListener("click",()=>G.objectPage.show("MainMenu")));
+    .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
 
     if ( window.frameElement ) {
         in_frame = true ;
@@ -3481,25 +3476,25 @@ window.onload = () => {
     if ( 'serviceWorker' in navigator ) {
         navigator.serviceWorker
         .register('/sw.js')
-        .catch( err => G.objectLog.err(err,"Service worker registration") );
+        .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
     // set state from URL
-    URLparse() ; // look for G.remoteCouch and other cookies
+    URLparse() ; // look for remoteCouch and other cookies
 
     // database list
     objectCollation = new Collation();
 
-    // Start pouchG.db database       
-    if ( G.credentialList.every( c => G.remoteCouch[c] !== "" ) ) {
-        G.db = new PouchDB( G.remoteCouch.database, {auto_compaction: true} ); // open local copy
+    // Start pouchdb database       
+    if ( credentialList.every( c => remoteCouch[c] !== "" ) ) {
+        db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy
 
         // Set up text search
         objectSearch = new Search();
         objectSearch.fill()
         .then ( _ =>
             // now start listening for any changes to the database
-            G.db.changes({ since: 'now', live: true, include_docs: true, })
+            db.changes({ since: 'now', live: true, include_docs: true, })
             .on('change', (change) => {
                 // update search index
                 if ( change?.deleted ) {
@@ -3509,62 +3504,62 @@ window.onload = () => {
                 }
                 // update screen display
                 if ( in_frame ) {
-                    G.objectPage.show("SelectPatient");
+                    objectPage.show("SelectPatient");
                 } else {
                     switch ( change?.doc?.type ) {
                         case "patient":
-                            if ( G.objectPage.test("AllPatients") ) {
-                                G.objectPage.show("AllPatients");
+                            if ( objectPage.test("AllPatients") ) {
+                                objectPage.show("AllPatients");
                             }
                             break;
                         case "note":
-                            if ( G.objectPage.test("NoteList") && change.doc?.patient_id==G.patientId ) {
-                                G.objectPage.show("NoteList");
-                            } else if ( G.objectPage.test("MissionList") && change.doc?.patient_id==missionId ) {
-                                G.objectPage.show("MissionList");
+                            if ( objectPage.test("NoteList") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("NoteList");
+                            } else if ( objectPage.test("MissionList") && change.doc?.patient_id==missionId ) {
+                                objectPage.show("MissionList");
                             }
                             break;
                         case "operation":
-                            if ( G.objectPage.test("OperationList") && change.doc?.patient_id==G.patientId ) {
-                                G.objectPage.show("OperationList");
-                            } else if ( G.objectPage.test("AllOperations") && change.doc?.patient_id==G.patientId ) {
-                                G.objectPage.show("AllOperations");
+                            if ( objectPage.test("OperationList") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("OperationList");
+                            } else if ( objectPage.test("AllOperations") && change.doc?.patient_id==patientId ) {
+                                objectPage.show("AllOperations");
                             }
                             break;
                     }
                 }
                 })
             )
-        .catch( err => G.objectLog.err(err,"Initial search database") );
+        .catch( err => objectLog.err(err,"Initial search database") );
 
         // start sync with remote database
-        G.objectRemote.foreverSync();
+        objectRemote.foreverSync();
 
         // set link for mission
         Mission.link();
 
         // Secondary indexes
         createQueries();
-        G.db.viewCleanup()
-        .catch( err => G.objectLog.err(err,"Query cleanup") );
+        db.viewCleanup()
+        .catch( err => objectLog.err(err,"Query cleanup") );
 
         // now jump to proper page
-        G.objectPage.show( null ) ;
+        objectPage.show( null ) ;
 
         // Set patient, operation and note -- need page shown first
         if ( Patient.isSelected() ) { // mission too
             Patient.select() ;
         }
-        if ( G.operationId ) {
-            Operation.select(G.operationId) ;
+        if ( operationId ) {
+            Operation.select(operationId) ;
         }
-        if ( G.noteId ) {
+        if ( noteId ) {
             Note.select() ;
         }
 
     } else {
-        G.db = null;
-        G.objectPage.reset();
-        G.objectPage.show("FirstTime");
+        db = null;
+        objectPage.reset();
+        objectPage.show("FirstTime");
     }
 };

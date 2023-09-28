@@ -17,49 +17,49 @@
                     <!-- top: SuperUser DatabaseInfo SendUser PrintYourself -->
                     <div class= "SuperUser DatabaseInfo SendUser PrintYourself topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
                     <!-- top: Administration -->
                     <div class= "Administration topButtons pageOverlay">
                         <div class="headerboxlink mainOnly"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'MainMenu' )" title="Show main menu">Return</button>
                     </div>
                     <!-- top: UserList -->
                     <div class="UserList topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="G.objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
                     </div>
                     <!-- top: MissionMembers  -->
                     <div class="MissionMembers topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Return</button>
-                        <button type="button" class="divbutton" onclick="G.objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton" onclick="objectPage.show( 'UserNew' )" title="Add a new database user">Add User</button>
                     </div>
                     <!-- top: SuperUser -->
                     <div class="PatientData SuperUser topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton discarddata return" onclick="G.objectPage.show( 'back' )" title="Discard changes">Cancel</button>
+                        <button type="button" class="divbutton discarddata return" onclick="objectPage.show( 'back' )" title="Discard changes">Cancel</button>
                     </div>
                     <!-- top: UserNew -->
                     <div class="PatientData UserNew topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: UserEdit -->
                     <div class="PatientData UserEdit topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
                         <button type="button" class="divbutton delete" onclick="User.del()">Delete User</button>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                     <!-- top: ErrorLog -->
                     <div class="ErrorLog topButtons pageOverlay">
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Return</button>
-                        <button type="button" class="divbutton delete" onclick="G.objectLog.clear()">Erase Log</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton delete" onclick="objectLog.clear()">Erase Log</button>
                     </div>
                     <!-- top: EditMode (for any of the PatientData derivatives -->
                     <div class="patientDataEdit pageOverlay">
                         <button type="button" class="divbutton edit_data" disabled>Edit</button>
                         <button type="button" class="divbutton savedata">Save Changes</button>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                         <button type="button" class="divbutton Qmark"><B>?</B></button>
                         <button type="button" class="divbutton missionButton"><img src="/style/NoPhoto.png" class="missionButtonImage mainOnly"></button>
                     </div>
@@ -71,8 +71,8 @@
                     <!-- top: RemoteDatabaseInput -->
                     <div class="RemoteDatabaseInput topButtons pageOverlay">
                         <button type="button" class="divbutton edit_data">Edit</button>
-                        <button type="button" class="divbutton" onClick="G.objectPage.show( 'PrintYourself' )" title="Print current credentials for storage">Print Your Credentials</button>
-                        <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )">Cancel</button>
+                        <button type="button" class="divbutton" onClick="objectPage.show( 'PrintYourself' )" title="Print current credentials for storage">Print Your Credentials</button>
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -83,12 +83,12 @@
             <!-- body: Administration -->
             <div class="Administration pageOverlay">
                 <div id="AdministrationContent" class="buttonmenu" >
-                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'SuperUser','UserList' )">User Management</button>
-                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'SuperUser','MissionMembers' )">Mission Members</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'SuperUser','UserList' )">User Management</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'SuperUser','MissionMembers' )">Mission Members</button>
                     <button type="button" class="divbutton"  style="visibility:hidden"> </button>
-                    <button type="button" class="divbutton" onClick="G.objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
-                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'DatabaseInfo' )">Database Information</button>
-                    <button type="button" class="divbutton" onclick="G.objectPage.show( 'PatientMerge' )">Merge Patient Records</button>
+                    <button type="button" class="divbutton" onClick="objectRemote.link()" hint="Open Couchdb Fauxton console">Database Console</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'DatabaseInfo' )">Database Information</button>
+                    <button type="button" class="divbutton" onclick="objectPage.show( 'PatientMerge' )">Merge Patient Records</button>
                 </div>
             </div>
             <!-- body: UserList MissionMembers -->
@@ -232,7 +232,7 @@
                 </div>
                 <div class="entryfield_text choice" contenteditable></div>
             </div>
-            <fieldset class="dataFieldset"><legend><button type="button" value="show" onclick="G.objectPatientData.fsclick(this)">&#10134;</button></legend></fieldset>
+            <fieldset class="dataFieldset"><legend><button type="button" value="show" onclick="objectPatientData.fsclick(this)">&#10134;</button></legend></fieldset>
             <fieldset class="noteFieldset">
                 <legend>
                     <button type="button" class="triggerbutton">&#10134;</button>
@@ -255,14 +255,14 @@
         <footer class="work_screen mainOnly">
             <div id="footerflex">
                 <div><label>User:<input type="text" readonly id="userstatus"></label></div>
-                <div ><label>Sync status:<input type="text" readonly id="syncstatus" onclick="G.objectPage.show( 'ErrorLog' )"></label></div>
+                <div ><label>Sync status:<input type="text" readonly id="syncstatus" onclick="objectPage.show( 'ErrorLog' )"></label></div>
             </div>
         </footer>
         <!-- User print -->
         <div class="print_user">
             <div id="printUser">
                 <div id="printCardButtons">
-                    <button type="button" class="divbutton return" onclick="G.objectPage.show( 'back' )" title="Did not print">Back</button>
+                    <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )" title="Did not print">Back</button>
                 </div>
                 Simple QR code link:
                 
@@ -285,7 +285,7 @@
         </div>
         
         <!-- scripts -->
-        <!-- pouchdb --> <script src="js/pouchG.db-8.0.1.min.js"></script>
+        <!-- pouchdb --> <script src="js/pouchdb-8.0.1.min.js"></script>
         <!-- qr --> <script src="js/qrenc-4.0.0.min.js"></script>
         <!-- new data-time --> <script src="js/flatpickr.min.js"></script>
         <!-- application code --> <script src="js/adminapp.js"></script>
