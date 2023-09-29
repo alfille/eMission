@@ -43,3 +43,11 @@ globalThis. objectSecurity = null;
 // singleton class instances
 globalThis. objectPPTX = null;
 globalThis. objectZIP = null;
+
+// Commonly used function
+export function cloneClass( fromClass, target ) {
+    let c = document.getElementById("templates").querySelector(fromClass);
+    target.innerHTML = "";
+    c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
+}    
+

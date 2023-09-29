@@ -11,6 +11,9 @@
 /* jshint esversion: 11 */
 
 import {
+	} from "./globals_mod.js" ;
+
+import {
 	ImageImbedded,
 	} from "./image_mod.js" ;
 
