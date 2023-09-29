@@ -15,7 +15,8 @@ globalThis. remoteCouch = null ;
 
 // other globals
 globalThis. credentialList = ["database", "username", "password", "address" ] ;
-globalThis. missionId = null ;
+globalThis. in_frame = false ;
+globalThis. frame_name = "" ;
 
 // singleton class instances
 globalThis. objectPage = null ;

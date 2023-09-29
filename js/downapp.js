@@ -14,6 +14,17 @@ import {
 	ImageImbedded,
 } from "./image_mod.js" ;
 
+import {
+	Id,
+	Id_patient,
+	Id_mission,
+	Id_note,
+	Id_operation,
+} from "./id_mod.js";
+
+import {
+	Cookie,
+} from "./cookie_mod.js" ;
 
 class Patient { // convenience class
     static getRecordId(id=patientId ) {
@@ -98,111 +109,6 @@ class Patient { // convenience class
         return ( patientId != null ) && ( patientId != missionId ) ;
     }
 }
-
-class Id {
-    static version = 0;
-    static start="";
-    static end="\\fff0";
-    
-    static splitId( id ) {
-        if ( id ) {
-            const spl = id.split(";");
-            return {
-                type:    spl[0] ?? null,
-                version: spl[1] ?? null, // 0 so far
-                last:    spl[2] ?? null,
-                first:   spl[3] ?? null,
-                dob:     spl[4] ?? null,
-                key:     spl[5] ?? null, // really creation date
-            };
-        }
-        return null;
-    }
-    
-    static joinId( obj ) {
-        return [
-            obj.type,
-            obj.version,
-            obj.last,
-            obj.first,
-            obj.dob,
-            obj.key
-            ].join(";");
-    }
-    
-    static makeIdKey( pid, key=null ) {
-        let obj = this.splitId( pid ) ;
-        if ( key==null ) {
-            obj.key = new Date().toISOString();
-        } else {
-            obj.key = key;
-        }
-        obj.type = this.type;
-        return this.joinId( obj );
-    }
-    
-    static makeId( pid=patientId ) { // Make a new Id for a note or operation using current time as the last field
-        return this.makeIdKey(pid);
-    }
-    
-    static allStart() { // Search entire database
-        return [this.type, this.start].join(";");
-    }
-    
-    static allEnd() { // Search entire database
-        return [this.type, this.end].join(";");
-    }
-
-    static patStart( pid=patientId ) { // Search just this patient's records
-        return this.makeIdKey( pid, this.start ) ;
-    }    
-
-    static patEnd( pid=patientId ) { // Search just this patient's records
-        return this.makeIdKey( pid, this.end ) ;
-    }    
-}
-      
-class Id_patient extends Id{
-    static type = "p";
-    static makeId( doc ) {
-        // remove any ';' in the name
-        return [
-            this.type,
-            this.version,
-            (doc.LastName??"").replace(/;/g,"_"),
-            (doc.FirstName??"").replace(/;/g,"_"),
-            (doc.DOB??"").replace(/;/g,"_")
-            ].join(";");
-    }
-    static splitId( id=patientId ) {
-        return super.splitId(id);
-    }
-}
-
-class Id_note extends Id{
-    static type = "c";        
-    static splitId( id=noteId ) {
-        return super.splitId(id);
-    }
-}
-
-class Id_operation extends Id{
-    static type = "o";
-    static splitId( id=operationId ) {
-        return super.splitId(id);
-    }
-}
-
-class Id_mission extends Id_patient{
-    static type = "m";
-    static makeId() {
-        return super.makeId({});
-    }
-    static splitId( id=missionId ) {
-        return super.splitId(id);
-    }
-}
-missionId = Id_mission.makeId() ;
 
 class Note { // convenience class
     static getAllIdDoc() {
@@ -457,41 +363,6 @@ class RemoteReplicant { // convenience class
             port = spl[1];
         }
         return [prot,[addr,port].join(":")].join("://");
-    }
-}
-
-class Cookie { //convenience class
-    static set( cname, value ) {
-      // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
-        globalThis[cname] = value;
-        let date = new Date();
-        date.setTime(date.getTime() + (400 * 24 * 60 * 60 * 1000)); // > 1year
-        document.cookie = `${cname}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; SameSite=None; Secure; path=/`;
-    }
-
-    static del( cname ) {
-        globalThis[cname] = null;
-        document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-    }
-
-    static get( cname ) {
-        const name = `${cname}=`;
-        let ret = null;
-        decodeURIComponent(document.cookie).split('; ').filter( val => val.indexOf(name) === 0 ).forEach( val => {
-            try {
-                ret = JSON.parse( val.substring(name.length) );
-                }
-            catch(err) {
-                ret =  val.substring(name.length);
-                }
-        });
-        globalThis[cname] = ret;
-        return ret;
-    }
-
-
-    static initialGet() {
-        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.get(c) );
     }
 }
 
