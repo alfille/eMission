@@ -12,7 +12,7 @@
 
 import {
 	ImageImbedded,
-} from "./image_mod.js" ;
+	} from "./image_mod.js" ;
 
 import {
 	Id,
@@ -20,11 +20,11 @@ import {
 	Id_mission,
 	Id_note,
 	Id_operation,
-} from "./id_mod.js";
+	} from "./id_mod.js";
 
 import {
 	Cookie,
-} from "./cookie_mod.js" ;
+	} from "./cookie_mod.js" ;
 
 class Patient { // convenience class
     static getRecordId(id=patientId ) {
