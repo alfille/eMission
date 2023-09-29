@@ -10,8 +10,12 @@
 
 /* jshint esversion: 11 */
 
+import {
+	ImageImbedded,
+} from "./image_mod.js" ;
+
+
 // Database handles and  
-var security_db = null ;
 const remoteUser = {
     database: "_users" ,
     username: "admin",
@@ -99,7 +103,7 @@ class RemoteSecurity {
     }
 }
 
-var objectSecurity = new RemoteSecurity();
+objectSecurity = new RemoteSecurity();
 
 class Id {
     static version = 0;
@@ -204,7 +208,7 @@ class Id_mission extends Id_patient{
         return super.splitId(id);
     }
 }
-var missionId = Id_mission.makeId() ;
+missionId = Id_mission.makeId() ;
 
 // used to generate data entry pages "PatientData" type
 const structDatabase = [
@@ -335,128 +339,6 @@ const structSuperUser = [
         type: "password",
     } ,
 ];
-
-
-class ImageImbedded {
-    static srcList = [] ;
-    
-    constructor( parent, doc, backup ) {
-        this.doc = doc;
-        this.parent = parent;
-        this.backup=backup;
-        this.fromDoc();
-    }
-    
-    fromDoc() {
-        let data = this.doc ?._attachments ?.image ?.data;
-        if ( data === undefined ) {
-            this.src = this.backup ?? null ;
-        } else {
-            this.src = URL.createObjectURL(data);
-            this.addSrc();
-        }
-        this.upload=null;
-    }
-
-    addSrc() {
-        ImageImbedded.srcList.push( this.src ) ;
-    }
-
-    static clearSrc() {
-        ImageImbedded.srcList.forEach( s => URL.revokeObjectURL( s ) );
-        ImageImbedded.srcList = [] ;
-    }
-
-    source() {
-        return this.src;
-    }
-
-    static showBigPicture( target ) {
-        let big = document.querySelector( ".FloatPicture" );
-        big.src = target.src;
-        big.style.display = "block";
-    }
-    
-    static hideBigPicture( target ) {
-        target.src = "";
-        target.style.display = "none";
-    }
-
-    display_image() {
-        let img = this.parent.querySelector( "img");
-        if ( img ) {
-            img.addEventListener( 'click', () => ImageImbedded.showBigPicture(img) );
-            if ( this.src ) {
-                img.src = this.src;
-                img.style.display = "block";
-            } else {
-                img.src = "//:0";
-                img.style.display = "none" ;
-            }
-        }
-    }
-        
-    addListen() {
-        try { this.parent.querySelector( ".imageGet").addEventListener( 'click', () => this.getImage() ); }
-            catch { // empty 
-                }
-        try { this.parent.querySelector( ".imageRemove").addEventListener( 'click', () => this.remove() ); }
-            catch { // empty 
-                }
-        try { this.parent.querySelector( ".imageBar").addEventListener( 'change', () => this.handle() ); }
-            catch { // empty 
-                }
-    }
-
-    remove() {
-        this.upload="remove";
-        this.src=this.backup ?? null ;
-        this.display_image();
-    }
-
-    getImage() {
-        let inp = this.parent.querySelector(".imageBar");
-        if ( isAndroid() ) {
-            inp.removeAttribute("capture");
-        } else {
-            inp.setAttribute("capture","environment");
-        }
-        inp.click();
-    }
-
-    handle() {
-        const files = this.parent.querySelector('.imageBar') ;
-        this.upload = files.files[0];
-        this.src = URL.createObjectURL(this.upload);
-        this.addSrc();
-        this.display_image();
-        try { this.parent.querySelector(".imageRemove").disabled = false; }
-            catch{ // empty
-                }
-    }
-
-    save(doc) {
-        if ( this.upload == null ) { // ignore
-        } else if ( this.upload == "remove" ) {
-            if ( "_attachments" in doc ) {
-                delete doc._attachments;
-            }
-        } else {
-            Object.assign(
-                doc,
-                { _attachments: {
-                    image: {
-                        content_type: this.upload.type,
-                        data: this.upload,
-                        }
-                }} );
-        }
-    }
-
-    changed() {
-        return this.upload != null;
-    }
-}
 
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
@@ -948,7 +830,6 @@ class SuperUserData extends PatientDataEditMode {
 
             objectPage.show( this.nextpage ); })
         .catch( err => {
-            alert( err );
             objectPage.show( "SuperUser",this.nextpage );
             });
     }
@@ -1671,7 +1552,7 @@ class MissionMembers extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user.db == null ) {
+        if ( User.user_db == null ) {
             objectPage.show( "SuperUser","MissionMembers" );
         } else {
             let rows = [] ;
@@ -1804,6 +1685,7 @@ class PatientMerge extends Pagelist {
         PatientMerge.leave();
     }
 }
+globalThis. PatientMerge = PatientMerge ;
 
 class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
@@ -1911,10 +1793,6 @@ class UserNew extends Pagelist {
             objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
         }
     }
-}
-
-function isAndroid() {
-    return navigator.userAgent.toLowerCase().indexOf("android") > -1;
 }
 
 class SortTable {

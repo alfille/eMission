@@ -10,46 +10,10 @@
 
 /* jshint esversion: 11 */
 
-// singleton class instances
-var objectPPTX = null;
-var objectZIP = null;
+import {
+	ImageImbedded,
+} from "./image_mod.js" ;
 
-
-class ImageImbedded {
-    static srcList = [] ;
-    
-    constructor( parent, doc, backup ) {
-        this.doc = doc;
-        this.parent = parent;
-        this.backup=backup;
-        this.fromDoc();
-    }
-    
-    fromDoc() {
-        let data = this.doc ?._attachments ?.image ?.data;
-        if ( data === undefined ) {
-            this.src = this.backup ?? null ;
-        } else {
-            this.src = URL.createObjectURL(data);
-            this.addSrc();
-        }
-        this.upload=null;
-    }
-
-    addSrc() {
-        ImageImbedded.srcList.push( this.src ) ;
-    }
-
-    static clearSrc() {
-        ImageImbedded.srcList.forEach( s => URL.revokeObjectURL( s ) );
-        ImageImbedded.srcList = [] ;
-    }
-
-    source() {
-        return this.src;
-    }
-
-}
 
 class Patient { // convenience class
     static getRecordId(id=patientId ) {
@@ -238,7 +202,7 @@ class Id_mission extends Id_patient{
         return super.splitId(id);
     }
 }
-var missionId = Id_mission.makeId() ;
+missionId = Id_mission.makeId() ;
 
 class Note { // convenience class
     static getAllIdDoc() {
@@ -655,6 +619,7 @@ class CSV { // convenience class
             });
     }
 }
+globalThis. CSV = CSV;
 
 class Backup {
     static download( j, filename ) {
@@ -675,6 +640,7 @@ class Backup {
             );
     }
 }
+globalThis. Backup = Backup ;
 
 // From https://bigcodenerd.org/resolving-promises-sequentially-javascript/
 function PromiseSeq( promiseArray ) {
