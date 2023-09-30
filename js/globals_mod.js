@@ -22,11 +22,12 @@ globalThis. frame_name = "" ;
 globalThis. objectPage = null ;
 globalThis. objectPatientData = null ;
 globalThis. objectNoteList = {
-	category: 'Uncategorized',
-	};
+    category: 'Uncategorized',
+    };
 globalThis. objectTable = null ;
 globalThis. objectRemote = null ;
 globalThis. objectLog = null ;
+globalThis. objectPatient = null ;
 
 // Database handles
 globalThis.db = null ; // will be Pouchdb local copy 

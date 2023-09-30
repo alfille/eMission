@@ -7,7 +7,7 @@
  * */
  
 export {
-	SortTable,
+    SortTable,
 } ;
 
 class SortTable {

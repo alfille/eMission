@@ -11,34 +11,38 @@
 /* jshint esversion: 11 */
 
 import {
-	cloneClass,
-	} from "./globals_mod.js" ;
+    cloneClass,
+    } from "./globals_mod.js" ;
 
 import {
-	ImageImbedded,
-	} from "./image_mod.js" ;
+    ImageImbedded,
+    } from "./image_mod.js" ;
 
 import {
-	Id,
-	Id_patient,
-	Id_mission,
-	Id_note,
-	Id_operation,
-	} from "./id_mod.js";
+    Id,
+    Id_patient,
+    Id_mission,
+    Id_note,
+    Id_operation,
+    } from "./id_mod.js";
 
 import {
-	Cookie,
-	} from "./cookie_mod.js" ;
+    Cookie,
+    } from "./cookie_mod.js" ;
 
 import {
-	SortTable,
-	} from "./sorttable_mod.js" ;
+    SortTable,
+    } from "./sorttable_mod.js" ;
 
 import {
-	PatientData,
-	PatientDataEditMode,
-	PatientDataRaw,
-	} from "./patientdata_mod.js" ;
+    PatientData,
+    PatientDataEditMode,
+    PatientDataRaw,
+    } from "./patientdata_mod.js" ;
+
+import {
+    Log,
+    } from "./log_mod.js" ;
 
 // Database handles and  
 const remoteUser = {
@@ -666,7 +670,7 @@ class RemoteReplicant { // convenience class
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-			remoteCouch = {} ;
+            remoteCouch = {} ;
             credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
@@ -1301,46 +1305,6 @@ class MissionMembersTable extends SortTable {
 
     editpage() {
         objectPage.show("UserEdit");
-    }
-}
-
-class Log{
-    constructor() {
-        this.list = [];
-    }
-    
-    err( err, title=null ) {
-        // generic console.log of error
-        let ttl = title ?? objectPage.current() ;
-        let msg = err.message ?? err ;
-        this.list.push(`${ttl}: ${msg}`);
-        console.group() ;
-        console.log( ttl, msg ) ;
-        console.trace();
-        console.groupEnd();
-        if ( objectPage.current() == "ErrorLog" ) {
-            // update
-            this.show();
-        }
-    }
-    
-    clear() {
-        this.list = [] ;
-        this.show();
-    }
-    
-    show() {
-        let cont = document.getElementById("ErrorLogContent") ;
-        cont.innerHTML="";
-        let ul = document.createElement('ul');
-        cont.appendChild(ul);
-        this.list
-        .forEach( e => {
-            let l = document.createElement('li');
-            l.innerText=e;
-            //l.appendChild( document.createTextNode(e) ) ;
-            ul.appendChild(l) ;
-        });
     }
 }
 

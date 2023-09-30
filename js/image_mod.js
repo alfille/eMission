@@ -7,10 +7,10 @@
  * */
  
 export {
-	ImageDrop,
-	ImageImbedded,
-	ImageNote,
-	ImageQuick,
+    ImageDrop,
+    ImageImbedded,
+    ImageNote,
+    ImageQuick,
 } ;
 
 class ImageImbedded {

@@ -233,10 +233,10 @@
                 </div>
                 <div id="PatientPhotoButtons1">
                     <div class="PatientProcButtons">
-                        <button type="button" class="divbutton" onclick="Patient.printCard()">Print Card</button>
+                        <button type="button" class="divbutton" onclick="objectPatient.printCard()">Print Card</button>
                     </div>
                     <div class="PatientProcButtons">
-                        <button type="button" class="divbutton delete" onclick="Patient.del()">Delete Patient</button>
+                        <button type="button" class="divbutton delete" onclick="objectPatient.del()">Delete Patient</button>
                     </div>
                 </div>
             </div>
@@ -406,9 +406,9 @@
         <div class="print_patient">
             <div id="printCard">
                 <div class="rowCard">
-                    <div><img id="photoCard" alt="Patient photo"></div>
+                    <div><img id="photoCard" alt="objectPatient photo"></div>
                     <div id="printCardButtons">
-                        <button type="button" class="divbutton return" onclick="Patient.ActuallyPrint()" title="Do not print">Print</button>
+                        <button type="button" class="divbutton return" onclick="objectPatient.ActuallyPrint()" title="Do not print">Print</button>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )" title="Do not print">Cancel</button>
                     </div>
                 </div>
@@ -452,6 +452,7 @@
         <!-- application code --> <script type="module" src="js/cookie_mod.js"></script>
         <!-- application code --> <script type="module" src="js/sorttable_mod.js"></script>
         <!-- application code --> <script type="module" src="js/patientdata_mod.js"></script>
+        <!-- application code --> <script type="module" src="js/log_mod.js"></script>
         <!-- print --> <script src="js/print.min.js"></script>
         <!-- application code --> <script type="module" src="js/app.js"></script>
     </body>

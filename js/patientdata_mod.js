@@ -7,14 +7,14 @@
  * */
  
 export {
-	PatientData,
-	PatientDataEditMode,
-	PatientDataRaw,
-	} ;
+    PatientData,
+    PatientDataEditMode,
+    PatientDataRaw,
+    } ;
 
 import {
-	cloneClass,
-	} from "./globals_mod.js" ;
+    cloneClass,
+    } from "./globals_mod.js" ;
 
 // data entry page type
 // except for Noteslist and some html entries, this is the main type

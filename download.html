@@ -19,6 +19,11 @@
                         <div class="headerboxlink"><img class="missionLogo" src="images/DCTOHC11.jpg"></div>
                         <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
                     </div>
+                     <!-- top: ErrorLog -->
+                    <div class="ErrorLog topButtons pageOverlay">
+                        <button type="button" class="divbutton return" onclick="objectPage.show( 'back' )">Return</button>
+                        <button type="button" class="divbutton delete" onclick="objectLog.clear()">Erase Log</button>
+                    </div>
                 </div>
             </div>
                 <div id="titlebox">
@@ -74,6 +79,10 @@
                     <button type="button" class="divbutton" id="createZIP" onclick="objectZIP.print()">Create archive</button>
                 </div>
             </div>
+            <!-- body: ErrorLog -->
+            <div class="ErrorLog pageOverlay">
+                <div id="ErrorLogContent"></div>
+            </div>
         </div>
         <!-- copyable parts -->
         <!-- copyable parts -->
@@ -112,6 +121,7 @@
         <!-- application code --> <script type="module" src="js/image_mod.js"></script>
         <!-- application code --> <script type="module" src="js/id_mod.js"></script>
         <!-- application code --> <script type="module" src="js/cookie_mod.js"></script>
+        <!-- application code --> <script type="module" src="js/log_mod.js"></script>
         <!-- application code --> <script type="module" src="js/downapp.js"></script>
     </body>
 </html>

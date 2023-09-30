@@ -11,34 +11,38 @@
 /* jshint esversion: 11 */
 
 import {
-	} from "./globals_mod.js" ;
+    } from "./globals_mod.js" ;
 
 import {
-	ImageImbedded,
-	} from "./image_mod.js" ;
+    ImageImbedded,
+    } from "./image_mod.js" ;
 
 import {
-	Id,
-	Id_patient,
-	Id_mission,
-	Id_note,
-	Id_operation,
-	} from "./id_mod.js";
+    Id,
+    Id_patient,
+    Id_mission,
+    Id_note,
+    Id_operation,
+    } from "./id_mod.js";
 
 import {
-	Cookie,
-	} from "./cookie_mod.js" ;
+    Cookie,
+    } from "./cookie_mod.js" ;
 
-class Patient { // convenience class
-    static getRecordId(id=patientId ) {
+import {
+    Log,
+    } from "./log_mod.js" ;
+
+class SimplePatient { // convenience class
+    getRecordId(id=patientId ) {
         return db.get( id );
     }
 
-    static getRecordIdPix(id=patientId ) {
-        return db.get( id, { attachments:true, binary:false } );
+    getRecordIdPix(id=patientId, binary=false ) {
+        return db.get( id, { attachments:true, binary:binary } );
     }
 
-    static getAllId() {
+    getAllId() {
         let doc = {
             startkey: Id_patient.allStart(),
             endkey:   Id_patient.allEnd(),
@@ -47,19 +51,19 @@ class Patient { // convenience class
         return db.allDocs(doc);
     }
         
-    static getAllIdDoc() {
+    getAllIdDoc(binary=false) {
         let doc = {
             startkey: Id_patient.allStart(),
             endkey:   Id_patient.allEnd(),
             include_docs: true,
             attachments: true,
-            binary: false,
+            binary: binary,
         };
 
         return db.allDocs(doc);
     }
         
-    static getAllIdDocPix(binary=false) {
+    getAllIdDocPix(binary=false) {
         // Note: using base64 here
         let doc = {
             startkey: Id_patient.allStart(),
@@ -72,7 +76,7 @@ class Patient { // convenience class
         return db.allDocs(doc);
     }
 
-    static select( pid = patientId ) {
+    select( pid = patientId ) {
         patientId = pid ;
         if ( pid == missionId ) {
             Mission.select() ;
@@ -90,28 +94,11 @@ class Patient { // convenience class
         }
     }
 
-    static splitId( pid = patientId ) {
-        if ( pid ) {
-            let spl = pid.split(";");
-            if ( spl.length !== 5 ) {
-                console.log("Bad Id_patient",pid);
-                return null;
-            }
-            return {
-                type: spl[0],
-                version: spl[1],
-                last: spl[2],
-                first: spl[3],
-                dob: spl[4],
-            };
-        }
-        return null;
-    }
-
-    static isSelected() {
+    isSelected() {
         return ( patientId != null ) && ( patientId != missionId ) ;
     }
 }
+objectPatient = new SimplePatient() ;
 
 class Note { // convenience class
     static getAllIdDoc() {
@@ -257,7 +244,7 @@ class RemoteReplicant { // convenience class
         
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
-			remoteCouch = {} ;
+            remoteCouch = {} ;
             credentialList.forEach( c => remoteCouch[c] = "" );
         }
 
@@ -406,7 +393,7 @@ class CSV { // convenience class
         // First line titles 
         let csv = fields.map( f => '"'+f+'"' ).join(',')+'\n';
         // Add data
-        Patient.getAllIdDoc()
+        objectPatient.getAllIdDoc()
         .then( doclist => { // full list of patients
             csv += doclist.rows
                 .map( row => fields // per wanted field
@@ -458,7 +445,7 @@ class CSV { // convenience class
         let plist;
         let olist = {};
         let nlist = {};
-        Patient.getAllIdDoc()
+        objectPatient.getAllIdDoc()
         .then( doclist => {
             plist = doclist.rows;
             plist.forEach( p => nlist[p.id] = 0 );
@@ -608,7 +595,7 @@ class PPTX {
         .then( _ => this.add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) ) )
         .then( notes => this.notelist( notes ) )
         // patient list
-        .then( _ => Patient.getAllIdDocPix() )
+        .then( _ => objectPatient.getAllIdDocPix() )
         .then( doclist => {
             this.numpats = doclist.rows.length ;
             this.pat = 0 ;
@@ -824,7 +811,7 @@ class ZIP {
                 }
                 })
             )
-        .then( _ => Patient.getAllIdDocPix( true ) )
+        .then( _ => objectPatient.getAllIdDocPix( true ) )
         .then( doclist => {
             this.numpats = doclist.rows.length ;
             this.pat = 0 ;
@@ -1064,47 +1051,6 @@ class ErrorLog extends Pagelist {
     }
 }
 
-class Log{
-    constructor() {
-        this.list = [];
-    }
-    
-    err( err, title=null ) {
-        // generic console.log of error
-        let ttl = title ?? objectPage.current() ;
-        let msg = err.message ?? err ;
-        this.list.push(`${ttl}: ${msg}`);
-        console.group() ;
-        console.log( ttl, msg ) ;
-        console.trace();
-        console.groupEnd();
-        if ( objectPage.current() == "ErrorLog" ) {
-            // update
-            this.show();
-        }
-    }
-    
-    clear() {
-        this.list = [] ;
-        this.show();
-    }
-    
-    show() {
-        let cont = document.getElementById("ErrorLogContent") ;
-        cont.innerHTML="";
-        let ul = document.createElement('ul');
-        cont.appendChild(ul);
-        this.list
-        .forEach( e => {
-            let l = document.createElement('li');
-            l.innerText=e;
-            //l.appendChild( document.createTextNode(e) ) ;
-            ul.appendChild(l) ;
-        });
-    }
-}
-
-
 objectLog = new Log() ;
 
 function TitleBox( titlearray=null, show="PatientPhoto" ) {
@@ -1227,8 +1173,8 @@ window.onload = () => {
         objectPage.show( null ) ;
 
         // Set patient, operation and note -- need page shown first
-        if ( Patient.isSelected() ) { // mission too
-            Patient.select() ;
+        if ( objectPatient.isSelected() ) { // mission too
+            objectPatient.select() ;
         }
 
     } else {
