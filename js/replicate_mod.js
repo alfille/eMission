@@ -5,10 +5,13 @@
  * by Paul H Alfille 2023
  * MIT license
  * */
- 
+
 export {
     RemoteReplicant,
     } ;
+
+import {
+    } from "./globals_mod.js" ;
 
 class RemoteReplicant { // convenience class
     // Access to remote (cloud) version of database
@@ -129,7 +132,7 @@ class RemoteReplicant { // convenience class
             
     closeRemoteDB() {
         return Promise.all( [
-            User.user_db ? User.user_db.close() : Promise.resolve(true),
+            objectUser.user_db ? objectUser.user_db.close() : Promise.resolve(true),
             security_db ? security_db.close() : Promise.resolve(true),
             ]);
     }

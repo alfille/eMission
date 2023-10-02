@@ -41,6 +41,7 @@ globalThis. objectCollation = null;
 // admin only
 globalThis. security_db = null ;
 globalThis. objectSecurity = null;
+globalThis. objectUser = null;
 
 // download only
 // singleton class instances

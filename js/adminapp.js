@@ -318,7 +318,7 @@ class SuperUserData extends PatientDataEditMode {
             // remote User database
             remoteUser.username = this.doc[0].username;
             remoteUser.password = this.doc[0].password;
-            User.user_db = objectRemote.openRemoteDB( remoteUser );
+            objectUser.user_db = objectRemote.openRemoteDB( remoteUser );
 
             // admin access to this database
             objectSecurity.setup( remoteUser.username, remoteUser.password ) ;
@@ -348,8 +348,8 @@ class NewUserData extends PatientDataEditMode {
             'database':remoteCouch.database,
             'address' :remoteCouch.address,
         };
-        User.user_db.put( this.doc[0] )
-        .then( response => User.select( response.id ))
+        objectUser.user_db.put( this.doc[0] )
+        .then( response => objectUser.select( response.id ))
         .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
         .then( _ => objectPage.show( "SendUser" ) )
         .catch( err => {
@@ -369,7 +369,7 @@ class EditUserData extends PatientData {
             this.doc[0].quad.username = this.doc[0].name ;
             this.doc[0].quad.password = this.doc[0].password ;
 
-            User.user_db.put( this.doc[0] )
+            objectUser.user_db.put( this.doc[0] )
             .then( _ => objectSecurity.setUser( this.doc[0].name, status ) )
             .then( _ => objectPage.show( "SendUser" ) )
             .catch( err => {
@@ -392,44 +392,46 @@ objectNote = new SimpleNote() ;
 objectOperation = new SimpleOperation() ;
 
 class User { // convenience class
-    static user_db = null ; // the special user couchdb database for access control
-    static id = null; // not cookie backed
-    static del() {
-        if ( User.id ) {
-            User.user_db.get( User.id )
+    constructor() {
+    this.user_db = null ; // the special user couchdb database for access control
+    this.id = null; // not cookie backed
+    }
+    del() {
+        if ( this.id ) {
+            this.user_db.get( this.id )
             .then( (doc) => {
                 if ( confirm(`Delete user ${doc.name}.\n -- Are you sure?`) ) {
-                    return User.user_db.remove(doc) ;
+                    return this.user_db.remove(doc) ;
                 } else {
                     throw "No delete";
                 }
                 })              
-            .then( () => User.unselect() )
+            .then( () => this.unselect() )
             .catch( (err) => objectLog.err(err) )
             .finally( () => objectPage.show( "UserList" ) );
         }
         return true;
     }    
     
-    static select( uid ) {
-        User.id = uid;
+    select( uid ) {
+        this.id = uid;
         if ( objectPage.test("UserList") ) {
             objectTable.highlight();
         }
     }    
 
-    static unselect() {
-        User.id = null;
+    unselect() {
+        this.id = null;
     }
 
-    static getAllIdDoc() {
+    getAllIdDoc() {
         let doc = {
             include_docs: true,
         } ;
-        return User.user_db.allDocs(doc);
+        return this.user_db.allDocs(doc);
     }
     
-    static simple_url() {
+    simple_url() {
         let url = new URL( "/index.html", window.location.href ) ;
         if ( url.hostname == 'localhost' ) {
             url = new URL( "/index.html", remoteCouch.address ) ;
@@ -439,7 +441,7 @@ class User { // convenience class
     }
 
     static make_url( user_dict ) {
-        let url = User.simple_url() ;
+        let url = objectUser.simple_url() ;
         credentialList.forEach( c => url.searchParams.append( c, user_dict[c] ) );
         return url ;
     }
@@ -470,7 +472,7 @@ We are looking forward to your participation.
         if ( 'quad' in doc ) {
             document.getElementById("SendUserMail").href = "";
             document.getElementById("SendUserPrint").onclick=null;
-            let url = User.make_url(doc.quad);
+            let url = objectUser.make_url(doc.quad);
             new QR(
                 document.getElementById("SendUserQR"),
                 url.toString(),
@@ -481,16 +483,16 @@ We are looking forward to your participation.
 
             let mail_url = new URL( "mailto:" + doc.email );
             mail_url.searchParams.append( "subject", "Welcome to eMission" );
-            mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
+            mail_url.searchParams.append( "body", objectUser.bodytext(doc.quad) );
             document.getElementById("SendUserMail").href = mail_url.toString();
-            document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad);
+            document.getElementById("SendUserPrint").onclick=()=>objectUser.printUserCard(doc.quad);
         }
     }
 
     static printUserCard(user_dict) {
         let card = document.getElementById("printUser");
-        let url = User.make_url(user_dict);
-        card.querySelector("#printUserText").innerText=User.bodytext( user_dict ) ;
+        let url = objectUser.make_url(user_dict);
+        card.querySelector("#printUserText").innerText=objectUser.bodytext( user_dict ) ;
         new QR(
             card.querySelector(".qrUser"),
             url.toString(),
@@ -500,6 +502,7 @@ We are looking forward to your participation.
         objectPage.show_screen( "user" ) ;
     }
 }
+objectUser = new User() ;
 
 class Mission { // convenience class
     static select() {
@@ -737,12 +740,12 @@ class MissionMembers extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user_db == null ) {
+        if ( objectUser.user_db == null ) {
             objectPage.show( "SuperUser","MissionMembers" );
         } else {
             let rows = [] ;
             objectTable = new MissionMembersTable();
-            User.getAllIdDoc()
+            objectUser.getAllIdDoc()
             .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _ => objectSecurity.getUsers() )
             .then( sec => rows.forEach( row => row.doc.mission = 
@@ -876,7 +879,7 @@ class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="MainMenu") {
-        User.printUserCard(remoteCouch);
+        objectUser.printUserCard(remoteCouch);
     }
 }
 
@@ -884,13 +887,13 @@ class SendUser extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user_db == null ) {
+        if ( objectUser.user_db == null ) {
             objectPage.show( "SuperUser","SendUser" );
-        } else if ( User.id == null ) {
+        } else if ( objectUser.id == null ) {
             objectPage.show( "back" );
         } else {
-            User.user_db.get( User.id )
-            .then( doc => User.send( doc ) )
+            objectUser.user_db.get( objectUser.id )
+            .then( doc => objectUser.send( doc ) )
             .catch( err => {
                 objectLog.err(err);
                 objectPage.show( "back" );
@@ -913,15 +916,15 @@ class UserEdit extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user_db == null ) {
+        if ( objectUser.user_db == null ) {
             objectPage.show( "SuperUser","UserEdit" );
-        } else if ( User.id == null ) {
+        } else if ( objectUser.id == null ) {
             objectPage.show( "back" );
         } else {
             let sec=null;
             objectSecurity.getUsers()
             .then( s => sec=s )
-            .then( _ => User.user_db.get( User.id ) )
+            .then( _ => objectUser.user_db.get( objectUser.id ) )
             .then( doc => {
                 // membership in this mission
                 doc.status = ["member","admin"].filter(role=>sec[role+"s"].names && sec[role+"s"].names.includes(doc.name));
@@ -935,7 +938,7 @@ class UserEdit extends Pagelist {
                 })
             .catch( err => {
                 objectLog.err(err);
-                User.unselect();
+                objectUser.unselect();
                 objectPage.show( "back" );
                 });
         }
@@ -946,12 +949,12 @@ class UserList extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user_db == null ) {
+        if ( objectUser.user_db == null ) {
             objectPage.show( "SuperUser","UserList" );
         } else {
             let rows = [] ;
             objectTable = new UserTable();
-            User.getAllIdDoc()
+            objectUser.getAllIdDoc()
             .then( docs => rows = docs.rows.filter( r=> r?.doc?.type == "user" ) )
             .then( _=> rows.forEach( r => r.doc.mission = "-none-" ) )
             .then( _ => objectSecurity.getUsers() )
@@ -971,10 +974,10 @@ class UserNew extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="") {
-        if ( User.user_db == null ) {
+        if ( objectUser.user_db == null ) {
             objectPage.show( "SuperUser","UserNew" );
         } else {
-            User.unselect();
+            objectUser.unselect();
             objectPatientData = new NewUserData( {status:["member"]}, structNewUser );
         }
     }
@@ -989,11 +992,11 @@ class UserTable extends SortTable {
     }
 
     selectId() {
-        return User.id;
+        return objectUser.id;
     }
 
     selectFunc(id) {
-        User.select(id) ;
+        objectUser.select(id) ;
     }
 
     editpage() {
@@ -1031,11 +1034,11 @@ class MissionMembersTable extends SortTable {
     }
     
     selectId() {
-        return User.id;
+        return objectUser.id;
     }
 
     selectFunc(id) {
-        User.select(id) ;
+        objectUser.select(id) ;
     }
 
     editpage() {
