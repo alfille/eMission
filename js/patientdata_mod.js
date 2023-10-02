@@ -15,7 +15,7 @@ export {
 import {
     cloneClass,
     } from "./globals_mod.js" ;
-
+    
 // data entry page type
 // except for Noteslist and some html entries, this is the main type
 class PatientDataRaw { // singleton class
@@ -337,7 +337,7 @@ class PatientDataRaw { // singleton class
                         enableTime: true,
                         noCalendar: true,
                         minuteIncrement: 5,
-                        formatDate: "H:i",
+//                        formatDate: "H:i",
                         //defaultDate: "09:00",
                     });
                 break;

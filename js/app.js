@@ -47,6 +47,12 @@ import {
     Log,
     } from "./log_mod.js" ;
 
+import {
+	SimplePatient,
+	SimpleNote,
+    SimpleOperation,
+    } from "./simple_mod.js" ;
+
 // other globals
 const NoPhoto = "style/NoPhoto.png";
 
@@ -539,54 +545,6 @@ class DateMath { // convenience class
     }
 }
 
-class SimplePatient { // convenience class
-    getRecordId(id=patientId ) {
-        return db.get( id );
-    }
-
-    getRecordIdPix(id=patientId, binary=false ) {
-        return db.get( id, { attachments:true, binary:binary } );
-    }
-
-    getAllId() {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    getAllIdDoc(binary=false) {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-            include_docs: true,
-            attachments: true,
-            binary: binary,
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    getAllIdDocPix(binary=false) {
-        // Note: using base64 here
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-            include_docs: true,
-            binary: binary,
-            attachments: true,
-        };
-
-        return db.allDocs(doc);
-    }
-
-    isSelected() {
-        return ( patientId != null ) && ( patientId != missionId ) ;
-    }
-}
-
 class Patient extends SimplePatient { // convenience class
     del() {
         if ( this.isSelected() ) {        
@@ -595,9 +553,9 @@ class Patient extends SimplePatient { // convenience class
             let odocs;
             this.getRecordIdPix(patientId)
             .then( (doc) => pdoc = doc ) // patient
-            .then( _ => Note.getRecordsIdDoc(patientId) ) // notes
+            .then( _ => objectNote.getRecordsIdDoc(patientId) ) // notes
             .then( (docs) => ndocs = docs.rows ) // get notes
-            .then( _ => Operation.getRecordsIdDoc(patientId) ) // operations
+            .then( _ => objectOperation.getRecordsIdDoc(patientId) ) // operations
             .then( (docs) => {
                 // get operations
                 odocs = docs.rows;
@@ -644,7 +602,7 @@ class Patient extends SimplePatient { // convenience class
     select( pid = patientId ) {
         if ( patientId != pid ) {
             // change patient -- notes dont apply
-            Note.unselect();
+            objectNote.unselect();
             objectNoteList.category = 'Uncategorized' ;
         }
 
@@ -672,9 +630,9 @@ class Patient extends SimplePatient { // convenience class
     unselect() {
         patientId = null;
         Cookie.del ( "patientId" );
-        Note.unselect();
+        objectNote.unselect();
         objectNoteList.category = 'Uncategorized' ;
-        Operation.unselect();
+        objectOperation.unselect();
         if ( objectPage.test("AllPatients") ) {
             let pt = document.getElementById("PatientTable");
             if ( pt ) {
@@ -744,7 +702,7 @@ class Patient extends SimplePatient { // convenience class
             }) 
         .then( _ => db.query("Pid2Name",{key:patientId}) )
         .then( (doc) => t[0].rows[0].cells[1].innerText = doc.rows[0].value[0] )
-        .then( _ => Operation.getRecordsIdDoc(patientId) )
+        .then( _ => objectOperation.getRecordsIdDoc(patientId) )
         .then( (docs) => {
             let oleng = docs.rows.length;
             switch(oleng) {
@@ -784,51 +742,8 @@ class Patient extends SimplePatient { // convenience class
 }
 objectPatient = new Patient() ;
 
-class Note { // convenience class
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_note.allStart(),
-            endkey:   Id_note.allEnd(),
-            include_docs: true,
-            binary: false,
-            attachments: false,
-        };
-        return db.allDocs(doc);
-    }
-
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdDoc(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdPix(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-            binary: true,
-            attachments: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
-    }
-
-    static select( nid=noteId ) {
+class Note extends SimpleNote { // convenience class
+    select( nid=noteId ) {
         // Check patient existence
         db.get(nid)
         .then( doc => {
@@ -843,7 +758,7 @@ class Note { // convenience class
         .catch( err => objectLog.err(err,"note select"));
     }
 
-    static unselect() {
+    unselect() {
         Cookie.del ( "noteId" );
         if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
             document.getElementById("NoteListContent").querySelectorAll("li")
@@ -851,15 +766,16 @@ class Note { // convenience class
         }
     }
 
-    static create() { // new note, not class
+    create() { // new note, not class
         let d = document.getElementById("NoteNewContent");
         cloneClass ( ".newnotetemplate_edit", d );
-        let doc = Note.template();
+        objectPage.forget() ;
+        let doc = this.template();
         let img = new ImageNote( d, doc );
         img.edit();
     }
 
-    static dropPictureinNote( target ) {
+    dropPictureinNote( target ) {
             // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
         target.addEventListener('dragover', e => {
             e.stopPropagation();
@@ -881,13 +797,13 @@ class Note { // convenience class
                         fetch(e2.target.result)
                         .then( b64 => b64.blob() )
                         .then( blb => {
-                            let doc = Note.template();
+                            let doc = this.template();
                             new ImageDrop(blb).save(doc);
                             return db.put(doc);
                             });
                     reader.readAsDataURL(file); // start reading the file data.
                     }))
-                    .then( () => Note.getRecordsId(patientId) ) // refresh the list
+                    .then( () => this.getRecordsId(patientId) ) // refresh the list
                     .catch( err => objectLog.err(err,"Photo drop") )
                     .finally( () => {
                         if (objectNoteList.category=='Uncategorized') {
@@ -899,7 +815,7 @@ class Note { // convenience class
             });
     }
 
-    static template(category=objectNoteList.category) {
+    template(category=objectNoteList.category) {
         if ( category=='' ) {
             category = 'Uncategorized' ;
         }
@@ -915,16 +831,16 @@ class Note { // convenience class
         };
     }
 
-    static quickPhoto() {
+    quickPhoto() {
         let inp = document.getElementById("QuickPhotoContent");
         cloneClass( ".imagetemplate_quick", inp );
-        let doc = Note.template();
+        let doc = this.template();
         let img = new ImageQuick( inp, doc );
         function handleImage() {
             img.handleImage();
             img.save(doc);
             db.put(doc)
-            .then( () => Note.getRecordsId(patientId) ) // to try to prime the list
+            .then( () => this.getRecordsId(patientId) ) // to try to prime the list
             .catch( err => objectLog.err(err) )
             .finally( objectPage.show( null ) );
         }
@@ -932,11 +848,11 @@ class Note { // convenience class
         img.addListen(handleImage);
         img.getImage();
     }
-
 }
+objectNote = new Note() ;
 
-class Operation { // convenience class
-    static select( oid=operationId ) {
+class Operation extends SimpleOperation { // convenience class
+    select( oid=operationId ) {
         // Check patient existence
         operationId=oid ;
         db.get(oid)
@@ -952,11 +868,11 @@ class Operation { // convenience class
             })
         .catch( err => {
             objectLog.err(err,"operation select");
-            Operation.unselect();
+            this.unselect();
             });             
     }
 
-    static unselect() {
+    unselect() {
         operationId = null;
         Cookie.del( "operationId" );
         if ( objectPage.test("OperationList") ) {
@@ -970,28 +886,7 @@ class Operation { // convenience class
         }
     }
 
-    static create() {
-        let doc = {
-            _id: Id_operation.makeId(),
-            author: remoteCouch.username,
-            type: "operation",
-            Procedure: "Enter new procedure",
-            Surgeon: "",
-            "Date-Time": "",
-            Duration: "",
-            Laterality: "?",
-            Status: "none",
-            Equipment: "",
-            patient_id: patientId,
-        };
-        return db.put( doc );
-    }
-
-    static nullOp( doc ) {
-        return doc.Procedure == "Enter new procedure" ;
-    }
-
-    static del() {
+    del() {
         if ( operationId ) {
             let pdoc;
             objectPatient.getRecordId()
@@ -1007,87 +902,30 @@ class Operation { // convenience class
                 }           
                 })
             .then( (doc) =>db.remove(doc) )
-            .then( () => Operation.unselect() )
+            .then( () => this.unselect() )
             .catch( (err) => objectLog.err(err) )
             .finally( () => objectPage.show( "back" ) );
         }
         return true;
     }    
         
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_operation.allStart(),
-            endkey:   Id_operation.allEnd(),
-            include_docs: true,
-        };
-        return db.allDocs(doc);
-    }
-
-    static getAllIdDocCurated() {
+    getAllIdDocCurated() {
         // only real cases or placeholder if no others for that paitent
-        return Operation.getAllIdDoc()
+        return this.getAllIdDoc()
         .then( doclist => {
             const pids = new Set(
                 doclist.rows
-                .filter( r => ! Operation.nullOp(r.doc) )
+                .filter( r => ! this.nullOp(r.doc) )
                 .map( r => r.doc.patient_id ) 
                 );
             return doclist.rows
-                   .filter( r => (! Operation.nullOp(r.doc)) || (!pids.has( r.doc.patient_id )) ) ;
+                   .filter( r => (! this.nullOp(r.doc)) || (!pids.has( r.doc.patient_id )) ) ;
             });
     }
 
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-    static getRecordsIdDoc( pid=patientId ) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-
-        // Adds a single "blank"
-        // also purges excess "blanks"
-        return db.allDocs(doc)
-        .then( (doclist) => {
-            let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
-                .map( row => row.doc );
-            switch ( newlist.length ) {
-                case 0 :
-                    throw null;
-                case 1 :
-                    return Promise.resolve( doclist );
-                default:
-                    throw newlist.slice(1);
-                }
-            })
-        .catch( (dlist) => {
-            if ( dlist == null ) {
-                // needs an empty
-                throw null;
-            }
-            // too many empties
-            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-                .then( ()=> Operation.getRecordsIdDoc( pid )
-                );
-            })
-        .catch( () => {
-            return Operation.create().then( () => db.allDocs(doc) );
-            });
-    }
-
-    static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
-    }
 }
-globalThis. Operation = Operation ;
+
+objectOperation = new Operation() ;
 
 class Mission { // convenience class
     static select() {
@@ -1368,7 +1206,7 @@ class AllOperations extends Pagelist {
     static subshow(extra="") {
         objectPatient.unselect();
         let olist;
-        Operation.getAllIdDocCurated()
+        objectOperation.getAllIdDocCurated()
         .then( doclist => olist = doclist)
         .then( _ => db.query( "Pid2Name",{keys:olist.map(r=>r.doc.patient_id),}))  
         .then( nlist => {
@@ -1391,11 +1229,11 @@ class AllPatients extends Pagelist {
     static subshow(extra="") {
         objectTable = new PatientTable();
         let o2pid = {} ; // oplist
-        Operation.getAllIdDocCurated()
+        objectOperation.getAllIdDocCurated()
         .then( oplist => {
             oplist.forEach( r => o2pid[r.doc.patient_id] = ({
                 "Procedure": r.doc["Procedure"],
-                "Date-Time": Operation.dateFromDoc(r.doc),
+                "Date-Time": objectOperation.dateFromDoc(r.doc),
                 "Surgeon": r.doc["Surgeon"],
                 }))
             })
@@ -1507,7 +1345,7 @@ class MissionList extends Pagelist {
     static subshow(extra="") {
         Mission.select() ;
         Mission.getRecordId()
-        .then( () => Note.getRecordsIdPix(patientId) )
+        .then( () => objectNote.getRecordsIdPix(patientId,true) )
         .then( notelist => objectNoteList = new NoteLister(notelist,'Uncategorized') )
         .catch( ()=> objectPage.show( "MissionInfo" ) ) ;
     }
@@ -1518,7 +1356,7 @@ class NoteListCategory extends Pagelist {
 
     static subshow(extra="") {
         if ( objectPatient.isSelected() ) {
-            Note.getRecordsIdPix(patientId)
+            objectNote.getRecordsIdPix(patientId,true)
             .then( notelist => objectNoteList = new NoteLister(notelist,extra) )
             .catch( (err) => {
                 objectLog.err(err,`Notelist (${extra})`);
@@ -1537,7 +1375,7 @@ class NoteList extends NoteListCategory {
         if ( objectPatient.isSelected() || (patientId == missionId) ) {
             super.subshow('Uncategorized');
         } else {
-            Note.unselect();
+            objectNote.unselect();
             objectPage.show( "back" );
         }
     }
@@ -1549,8 +1387,8 @@ class NoteNew extends Pagelist {
     static subshow(extra="") {
         if ( objectPatient.isSelected() || (patientId == missionId) ) {
             // New note only
-            Note.unselect();
-            Note.create();
+            objectNote.unselect();
+            objectNote.create();
         } else {
             objectPage.show( "back" );
         }
@@ -1592,7 +1430,7 @@ class OperationList extends Pagelist {
     static subshow(extra="") {
         if ( objectPatient.isSelected() ) {
             objectTable = new OperationTable();
-            Operation.getRecordsIdDoc(patientId)
+            objectOperation.getRecordsIdDoc(patientId)
             .then( (docs) => objectTable.fill(docs.rows ) )
             .catch( (err) => objectLog.err(err) );
         } else {
@@ -1606,7 +1444,7 @@ class OperationNew extends Pagelist {
 
     static subshow(extra="") {
         if ( objectPatient.isSelected() ) {
-            Operation.unselect();
+            objectOperation.unselect();
             objectPage.show( "OperationEdit" );
         } else {
             objectPage.show( "back" ) ;
@@ -1639,7 +1477,7 @@ class PatientMedical extends Pagelist {
             let args;
             objectPatient.getRecordId()
             .then( (doc) => args = [doc,structMedical] )
-            .then( _ => Operation.getRecordsIdDoc(patientId) )
+            .then( _ => objectOperation.getRecordsIdDoc(patientId) )
             .then( ( olist ) => {
                 olist.rows.forEach( (r) => args.push( r.doc, structOperation ) );
                 objectPatientData = new PatientData( ...args );
@@ -1677,9 +1515,9 @@ class PatientPhoto extends Pagelist {
             let onum ;
             objectPatient.getRecordIdPix(patientId,true)
             .then( (doc) => pdoc = doc )
-            .then( _ => Operation.getRecordsIdDoc(patientId) )
-            .then ( (doclist) => onum = doclist.rows.filter( r=> ! Operation.nullOp(r.doc) ).length )
-            .then( _ => Note.getRecordsIdDoc(patientId) )
+            .then( _ => objectOperation.getRecordsIdDoc(patientId) )
+            .then ( (doclist) => onum = doclist.rows.filter( r=> ! objectOperation.nullOp(r.doc) ).length )
+            .then( _ => objectNote.getRecordsIdDoc(patientId) )
             .then ( (notelist) => objectPatient.menu( pdoc, notelist, onum ) )
             .catch( (err) => {
                 objectLog.err(err);
@@ -1698,7 +1536,7 @@ class QuickPhoto extends Pagelist {
     static subshow(extra="") {
         objectPage.forget(); // don't return here!
         if ( patientId ) { // patient or Mission!
-            Note.quickPhoto(this.extra);
+            objectNote.quickPhoto(this.extra);
         } else {
             objectPage.show( "back" );
         }
@@ -1724,7 +1562,7 @@ class SelectPatient extends Pagelist {
         objectTable = new SelectPatientTable();
         let onum= {} ;
         let nnum = {} ;
-        Operation.getAllIdDoc() // Operations
+        objectOperation.getAllIdDoc() // Operations
         .then( doclist => doclist.rows
             .forEach( d => {
                 let p = d.doc.patient_id;
@@ -1734,7 +1572,7 @@ class SelectPatient extends Pagelist {
                     onum[p] = 0 ; // excludes placeholders
                 }
                 }))
-        .then( _ => Note.getAllIdDoc() ) // Notes
+        .then( _ => objectNote.getAllIdDoc() ) // Notes
         .then( doclist => doclist.rows
             .forEach( d => {
                 let p = d.doc.patient_id;
@@ -2069,7 +1907,7 @@ class AllOperationTable extends SortTable {
         [ "Date-Time","Name","Procedure","Surgeon" ], 
         "OperationsList",
         [
-            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
+            ["Date-Time","Date",(doc)=>objectOperation.dateFromDoc(doc).substring(0,10)]
         ]
         );
     }
@@ -2079,7 +1917,7 @@ class AllOperationTable extends SortTable {
     }
 
     selectFunc(id) {
-        Operation.select(id) ;
+        objectOperation.select(id) ;
     }
 
     editpage() {
@@ -2093,7 +1931,7 @@ class OperationTable extends SortTable {
         [ "Date-Time","Procedure", "Surgeon" ], 
         "OperationsList",
         [
-            ["Date-Time","Date",(doc)=>Operation.dateFromDoc(doc).substring(0,10)]
+            ["Date-Time","Date",(doc)=>objectOperation.dateFromDoc(doc).substring(0,10)]
         ]
         );
     }
@@ -2103,7 +1941,7 @@ class OperationTable extends SortTable {
     }
 
     selectFunc(id) {
-        Operation.select(id) ;
+        objectOperation.select(id) ;
     }
 
     editpage() {
@@ -2150,7 +1988,7 @@ class SearchTable extends SortTable {
                         break ;
                     case 'operation':
                         objectPatient.select( doc.patient_id );
-                        Operation.select( id );
+                        objectOperation.select( id );
                         objectPage.show( 'OperationEdit' );
                         break ;
                     case 'note':
@@ -2159,7 +1997,7 @@ class SearchTable extends SortTable {
                         } else {
                             objectPatient.select( doc.patient_id );
                         }
-                        Note.select( id );
+                        objectNote.select( id );
                         objectPage.show( 'NoteList' );
                         break ;
 
@@ -2239,7 +2077,7 @@ class NoteLister {
         }
         
         
-        Note.dropPictureinNote( parent );        
+        objectNote.dropPictureinNote( parent );        
     }
     
     open( fs ) {
@@ -2278,7 +2116,7 @@ class NoteLister {
     }
 
     yearTitle(row) {
-        return Note.dateFromDoc(row.doc).substr(0,4);
+        return objectNote.dateFromDoc(row.doc).substr(0,4);
     }
         
     fsclick( target ) {
@@ -2305,8 +2143,8 @@ class NoteLister {
         li.appendChild( document.getElementById("templates").querySelector(".notelabel").cloneNode(true) );
 
         li.querySelector(".inly").appendChild( document.createTextNode( ` by ${this.noteAuthor(note)}` ));
-        li.querySelector(".flatpickr").value = flatpickr.formatDate(new Date(Note.dateFromDoc(note.doc)),"Y-m-d h:i K");
-        li.addEventListener( 'click', () => Note.select( note.id ) );
+        li.querySelector(".flatpickr").value = flatpickr.formatDate(new Date(objectNote.dateFromDoc(note.doc)),"Y-m-d h:i K");
+        li.addEventListener( 'click', () => objectNote.select( note.id ) );
 
         return li;
     }
@@ -2333,11 +2171,11 @@ class NoteLister {
                     dateFormat: "Y-m-d h:i K",
                     onChange: (d) => note.doc.date=d[0].toISOString(),
                 });
-            Note.select( note.id );
+            objectNote.select( note.id );
             cloneClass( ".notetemplate_edit", li );
             img.edit();
             } ;
-        li.addEventListener( 'click', () => Note.select( note.id ) );
+        li.addEventListener( 'click', () => objectNote.select( note.id ) );
         ['dblclick','swiped-right','swiped-left'].forEach( ev =>
             [li, label].forEach( targ => targ.addEventListener( ev, edit_note )));
         label.querySelector(".edit_note").addEventListener( 'click', edit_note );
@@ -2506,10 +2344,10 @@ window.onload = () => {
             objectPatient.select() ;
         }
         if ( operationId ) {
-            Operation.select(operationId) ;
+            objectOperation.select(operationId) ;
         }
         if ( noteId ) {
-            Note.select() ;
+            objectNote.select() ;
         }
 
     } else {

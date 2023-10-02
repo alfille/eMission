@@ -44,6 +44,11 @@ import {
     Log,
     } from "./log_mod.js" ;
 
+import {
+	SimpleNote,
+    SimpleOperation,
+    } from "./simple_mod.js" ;
+
 // Database handles and  
 const remoteUser = {
     database: "_users" ,
@@ -375,134 +380,10 @@ class EditUserData extends PatientData {
     }
 }
 
-class Note { // convenience class
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_note.allStart(),
-            endkey: Id_note.allEnd(),
-            include_docs: true,
-            binary: false,
-            attachments: false,
-        };
-        return db.allDocs(doc);
-    }
-
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdDoc(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdPix(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-            binary: true,
-            attachments: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
-    }
-}
+objectNote = new SimpleNote() ;
 
 
-
-class Operation { // convenience class
-    static create() {
-        let doc = {
-            _id: Id_operation.makeId(),
-            author: remoteCouch.username,
-            type: "operation",
-            Procedure: "Enter new procedure",
-            Surgeon: "",
-            "Date-Time": "",
-            Duration: "",
-            Laterality: "?",
-            Status: "none",
-            Equipment: "",
-            patient_id: patientId,
-        };
-        return db.put( doc );
-    }
-    
-    static nullOp( doc ) {
-        return doc.Procedure == "Enter new procedure" ;
-    }
-
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_operation.allStart(),
-            endkey: Id_operation.allEnd(),
-            include_docs: true,
-        };
-        return db.allDocs(doc);
-    }
-
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-    static getRecordsIdDoc( pid=patientId ) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-
-        // Adds a single "blank"
-        // also purges excess "blanks"
-        return db.allDocs(doc)
-        .then( (doclist) => {
-            let newlist = doclist.rows
-                .filter( (row) => ( row.doc.Status === "none" ) && Operation.nullOp( row.doc ) )
-                .map( row => row.doc );
-            switch ( newlist.length ) {
-                case 0 :
-                    throw null;
-                case 1 :
-                    return Promise.resolve( doclist );
-                default:
-                    throw newlist.slice(1);
-                }
-            })
-        .catch( (dlist) => {
-            if ( dlist == null ) {
-                // needs an empty
-                throw null;
-            }
-            // too many empties
-            return Promise.all(dlist.map( (doc) => db.remove(doc) ))
-                .then( ()=> Operation.getRecordsIdDoc( pid )
-                );
-            })
-        .catch( () => {
-            return Operation.create().then( () => db.allDocs(doc) );
-            });
-    }
-
-    static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
-    }
-}
+objectOperation = new SimpleOperation() ;
 
 class User { // convenience class
     static user_db = null ; // the special user couchdb database for access control
@@ -1101,7 +982,7 @@ class PatientMerge extends Pagelist {
                 }
                 return Promise.all([db.put(doc),db.remove(fromdoc)]);
             })
-            .then( _ => Note.getRecordsId( PatientMerge.transfer.from ) )
+            .then( _ => objectNote.getRecordsId( PatientMerge.transfer.from ) )
             .then( nlist => Promise.all( nlist.rows.map( r => 
                 // convert notes to new id and delete old
                 db.get(r.id,{attachments:true})
@@ -1113,12 +994,12 @@ class PatientMerge extends Pagelist {
                     return Promise.all([db.put(newdoc),db.remove(doc)]);
                     })
                  )))
-            .then( _ => Operation.getRecordsId( PatientMerge.transfer.from ) )
+            .then( _ => objectOperation.getRecordsId( PatientMerge.transfer.from ) )
             .then( olist => Promise.all( olist.rows.map( r => 
                 // convert operations to new id and delete old
                 db.get(r.id,{attachments:true})
                 .then(doc => {
-                    if ( Operation.nullOp(doc) ) {
+                    if ( objectOperation.nullOp(doc) ) {
                         // no real operations -- just delete
                         return db.remove(doc);
                     } else {

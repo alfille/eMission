@@ -33,159 +33,17 @@ import {
     Log,
     } from "./log_mod.js" ;
 
-class SimplePatient { // convenience class
-    getRecordId(id=patientId ) {
-        return db.get( id );
-    }
+import {
+	SimplePatient,
+	SimpleNote,
+    SimpleOperation,
+    } from "./simple_mod.js" ;
 
-    getRecordIdPix(id=patientId, binary=false ) {
-        return db.get( id, { attachments:true, binary:binary } );
-    }
-
-    getAllId() {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    getAllIdDoc(binary=false) {
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-            include_docs: true,
-            attachments: true,
-            binary: binary,
-        };
-
-        return db.allDocs(doc);
-    }
-        
-    getAllIdDocPix(binary=false) {
-        // Note: using base64 here
-        let doc = {
-            startkey: Id_patient.allStart(),
-            endkey:   Id_patient.allEnd(),
-            include_docs: true,
-            binary: binary,
-            attachments: true,
-        };
-
-        return db.allDocs(doc);
-    }
-
-    select( pid = patientId ) {
-        patientId = pid ;
-        if ( pid == missionId ) {
-            Mission.select() ;
-        } else {
-            Cookie.set( "patientId", pid );
-            // Check patient existence
-            db.query("Pid2Name",{key:pid})
-            .then( (doc) => {
-                // highlight the list row
-                TitleBox([doc.rows[0].value[1]]) ;
-                })
-            .catch( (err) => {
-                objectLog.err(err,"patient select");
-                });
-        }
-    }
-
-    isSelected() {
-        return ( patientId != null ) && ( patientId != missionId ) ;
-    }
-}
 objectPatient = new SimplePatient() ;
 
-class Note { // convenience class
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_note.allStart(),
-            endkey:   Id_note.allEnd(),
-            include_docs: true,
-            binary: false,
-            attachments: false,
-        };
-        return db.allDocs(doc);
-    }
+objectNote = new SimpleNote() ;
 
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdDoc(pid=patientId) {
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdPix( pid = patientId, binary=false) {
-        // Bse64 encoding
-        let doc = {
-            startkey: Id_note.patStart(pid),
-            endkey: Id_note.patEnd(pid),
-            include_docs: true,
-            binary: binary,
-            attachments: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static dateFromDoc( doc ) {
-        return ((doc["date"] ?? "") + Id_note.splitId(doc._id).key).substring(0,24) ;
-    }
-}
-
-class Operation { // convenience class
-    static getAllIdDoc() {
-        let doc = {
-            startkey: Id_operation.allStart(),
-            endkey:   Id_operation.allEnd(),
-            include_docs: true,
-        };
-        return db.allDocs(doc);
-    }
-
-    static getRecordsId(pid=patientId) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-        return db.allDocs(doc) ;
-    }
-
-    static getRecordsIdDoc( pid=patientId ) {
-        let doc = {
-            startkey: Id_operation.patStart(pid),
-            endkey: Id_operation.patEnd(pid),
-            include_docs: true,
-        };
-
-        // Adds a single "blank"
-        // also purges excess "blanks"
-        return db.allDocs(doc);
-    }
-
-
-    static dateFromDoc( doc ) {
-        return ((doc["Date-Time"] ?? "") + Id_operation.splitId(doc._id).key).substring(0,24) ;
-    }
-    
-    static nullOp( doc ) {
-        return doc.Procedure == "Enter new procedure" ;
-    }
-}
+objectOperation = new SimpleOperation() ;
 
 class Mission { // convenience class
     static select() {
@@ -414,10 +272,10 @@ class CSV { // convenience class
         let csv = ['"Patient"'].concat(fields.map( f => '"'+f+'"' )).join(',')+'\n';
         // Add data
         let olist = null;
-        Operation.getAllIdDoc()
+        objectOperation.getAllIdDoc()
         .then( doclist => {
-            doclist.rows.forEach( row => row.doc["Date-List"] = Operation.dateFromDoc(row.doc) );
-            olist = doclist.rows.filter( r => ! Operation.nullOp(r.doc) ) ;
+            doclist.rows.forEach( row => row.doc["Date-List"] = objectOperation.dateFromDoc(row.doc) );
+            olist = doclist.rows.filter( r => ! objectOperation.nullOp(r.doc) ) ;
             })
         .then( _ => db.query( "Pid2Name", {keys:olist.map(r=>r.doc.patient_id)} ))
         .then( nlist => {
@@ -450,14 +308,14 @@ class CSV { // convenience class
             plist = doclist.rows;
             plist.forEach( p => nlist[p.id] = 0 );
             })
-        .then( _ => Operation.getAllIdDoc() )
+        .then( _ => objectOperation.getAllIdDoc() )
         .then( doclist =>
             doclist.rows.forEach( row => {
-                row.doc["Date-List"] = Operation.dateFromDoc(row.doc) ;
+                row.doc["Date-List"] = objectOperation.dateFromDoc(row.doc) ;
                 olist[row.doc.patient_id] = row.doc ;
                 })
             )
-        .then( _ => Note.getAllIdDoc() )
+        .then( _ => objectNote.getAllIdDoc() )
         .then( doclist => {
             doclist.rows.forEach( row => ++nlist[row.doc.patient_id] );
             csv += plist
@@ -592,7 +450,7 @@ class PPTX {
             this.mission( doc ) ;
             })
         // mission notelist
-        .then( _ => this.add_notes ? Note.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) ) )
+        .then( _ => this.add_notes ? objectNote.getRecordsIdPix( missionId ) : Promise.resolve( ({ rows:[]}) ) )
         .then( notes => this.notelist( notes ) )
         // patient list
         .then( _ => objectPatient.getAllIdDocPix() )
@@ -610,10 +468,10 @@ class PPTX {
                         return this.patient( pt.doc ) ;
                         })
                     // Get operations
-                    .then( _ => this.add_ops ? Operation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
+                    .then( _ => this.add_ops ? objectOperation.getRecordsIdDoc( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
                     .then( ops => this.oplist( ops ) )
                     // Get notes
-                    .then( _ => this.add_notes ? Note.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
+                    .then( _ => this.add_notes ? objectNote.getRecordsIdPix( pt.id ) : Promise.resolve( ({ rows:[]}) ) )
                     .then( notes => this.notelist( notes ) )
                     .catch( err => console.log(err) ) ;
                     }));
@@ -665,7 +523,7 @@ class PPTX {
     notelist( nlist ) {
         return PromiseSeq( 
             nlist.rows
-            .sort((a,b)=>Note.dateFromDoc(a.doc).localeCompare(Note.dateFromDoc(b.doc)))
+            .sort((a,b)=>objectNote.dateFromDoc(a.doc).localeCompare(objectNote.dateFromDoc(b.doc)))
             .map( r => this.note(r.doc) )
             ) ;         
     }
@@ -692,9 +550,9 @@ class PPTX {
         .then( (img) => {
             let slide = this.pptx
                 .addSlide({masterName:"Template"})
-                .addNotes([doc?.text,doc._id,doc?.author,Note.dateFromDoc(doc).substring(0,10)].join("\n"))
+                .addNotes([doc?.text,doc._id,doc?.author,objectNote.dateFromDoc(doc).substring(0,10)].join("\n"))
                 .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-                .addTable([[this.category(doc)],[Note.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
+                .addTable([[this.category(doc)],[objectNote.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
                 ;
 
             if (img) {
@@ -715,8 +573,8 @@ class PPTX {
     oplist( olist ) {
         return PromiseSeq( 
             olist.rows
-            .filter( r => ! Operation.nullOp(r.doc) )
-            .sort((a,b)=>Operation.dateFromDoc(a.doc).localeCompare(Operation.dateFromDoc(b.doc)))
+            .filter( r => ! objectOperation.nullOp(r.doc) )
+            .sort((a,b)=>objectOperation.dateFromDoc(a.doc).localeCompare(objectOperation.dateFromDoc(b.doc)))
             .map( r => {
                 return _ => this.operation(r.doc) ;
                 })
@@ -735,9 +593,9 @@ class PPTX {
     operation( doc ) {
         this.pptx
         .addSlide({masterName:"Template"})
-        .addNotes([doc?.Procedure,doc._id,doc?.author,Operation.dateFromDoc(doc).substring(0,10)].join("\n"))
+        .addNotes([doc?.Procedure,doc._id,doc?.author,objectOperation.dateFromDoc(doc).substring(0,10)].join("\n"))
         .addText(this.pname,{placeholder:"title",color:"e4e444",isTextBox:true,align:"center"})
-        .addTable([["Operation"],[Operation.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
+        .addTable([["Operation"],[objectOperation.dateFromDoc(doc).substring(0,10)]],{x:6.6,y:.7,w:3.3,color:"e4e444",fontSize:28})
         .addTable(
             this.table(doc,["Procedure","Complaint","Surgeon","Equipment"]),
             {x:.5,y:1,w:6,fill:"114cc6",color:"ffffff",fontSize:24})
@@ -800,7 +658,7 @@ class ZIP {
                     }) ;
             }
             })
-        .then(_=> Note.getRecordsIdPix(missionId,true))
+        .then(_=> objectNote.getRecordsIdPix(missionId,true))
         .then(notelist => notelist.rows
             .forEach( row => {
                 if ( qimg ) {
@@ -829,7 +687,7 @@ class ZIP {
                                 }) ;
                         }
                         })
-                    .then( _ => Note.getRecordsIdPix( pt.id, true) )                    
+                    .then( _ => objectNote.getRecordsIdPix( pt.id, true) )                    
                     .then( notelist => notelist.rows.forEach( row => {
                         if ( qimg ) {
                             this.one_note_image( this.pname, row.doc );

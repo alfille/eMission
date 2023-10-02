@@ -39,7 +39,6 @@ class ImageImbedded {
             this.filename = fl[0][0];
             this.file = URL.createObjectURL(fl[0][1]["data"]);
             this.addSrc(this.file);
-            console.log(this.filename);
         } else {
             this.filename = "";
             this.file = null;
@@ -242,8 +241,8 @@ class ImageNote extends ImageImbedded {
         this.save( this.doc );
         db.put( this.doc )
         .then( resp => {
-            Note.select( resp.id );
-            return Note.getAllIdDoc(); // to prime list
+            objectNote.select( resp.id );
+            return objectNote.getAllIdDoc(); // to prime list
             })
         .catch( err => objectLog.err(err) )
         .finally( () => this.leave() );
@@ -295,7 +294,7 @@ class ImageNote extends ImageImbedded {
             }           
             })
         .then( (doc) => db.remove(doc) )
-        .then( () => Note.unselect() )
+        .then( () => objectNote.unselect() )
         .catch( (err) => objectLog.err(err) )
         .finally( () => this.leave() );
     }
