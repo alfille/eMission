@@ -11,14 +11,18 @@ export {
     SimpleNote,
     SimpleOperation,
     } ;
+    
+import {
+    TitleBox,
+    } from "./globals_mod.js" ;
 
 import {
-	Id,
-	Id_patient,
-	Id_mission,
-	Id_note,
-	Id_operation,
-	} from "./id_mod.js" ;
+    Id,
+    Id_patient,
+    Id_mission,
+    Id_note,
+    Id_operation,
+    } from "./id_mod.js" ;
 
 class SimplePatient { // convenience class
     getRecordId(id=patientId ) {

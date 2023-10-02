@@ -52,5 +52,67 @@ export function cloneClass( fromClass, target ) {
     let c = document.getElementById("templates").querySelector(fromClass);
     target.innerHTML = "";
     c.childNodes.forEach( cc => target.appendChild(cc.cloneNode(true) ) );
-}    
+}
+
+export function setButtons() {
+    // Add Extra buttons
+    document.querySelector("#moreTop").querySelectorAll("button")
+    .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
+
+    // set Help buttons
+    document.querySelectorAll(".Qmark").forEach( h => {
+        h.title = "Open explanation in another tab" ;
+        h.addEventListener("click",()=>objectPage.link());
+        });
+
+    // set Search buttons
+    document.querySelectorAll(".Search").forEach( s => {
+        s.title = "Search everywhere for a word or phrase" ;
+        s.addEventListener("click",()=>objectPage.show('SearchList'));
+        });
+
+    // set Quick Photo buttons
+    document.querySelectorAll(".Qphoto").forEach( q => {
+        q.title = "Quick photo using camera or from gallery" ;
+        q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
+        });
+
+    // set edit details for PatientData edit pages -- only for "top" portion
+    document.querySelectorAll(".edit_data").forEach( e => {
+        e.title = "Unlock record to allow changes" ;
+        e.addEventListener("click",()=>objectPatientData.clickEdit());
+        });
+
+    // set save details for PatientData save pages
+    document.querySelectorAll(".savedata").forEach( s => {
+        s.title = "Save your changes to this record" ;
+        s.addEventListener("click",()=>objectPatientData.savePatientData());
+        });
+    // remove redundant mission buttons
+    [...document.querySelectorAll(".topButtons")]
+    .filter(d => d.querySelector(".missionLogo"))
+    .forEach( d => d.removeChild(d.querySelector(".missionButton")));
+
+    document.querySelectorAll(".headerboxlink")
+    .forEach( q => q.addEventListener("click",() => {
+            if ( objectPage && objectPage.current() != "MainMenu" ) {
+                objectPage.show("MainMenu") ;
+            } else {
+                if ( objectPage ) {
+                    objectPage.reset();
+                }
+                window.location.href="/index.html"; // force reload
+            }
+        })
+        );
+}
+
+export function TitleBox( titlearray=null, show="PatientPhoto" ) {
+    if ( titlearray == null ) {
+        document.getElementById( "titlebox" ).innerHTML = "" ;
+    } else {
+        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
+    }
+}
+
 

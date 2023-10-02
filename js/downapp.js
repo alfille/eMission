@@ -11,6 +11,8 @@
 /* jshint esversion: 11 */
 
 import {
+    setButtons,
+    TitleBox,
     } from "./globals_mod.js" ;
 
 import {
@@ -34,10 +36,14 @@ import {
     } from "./log_mod.js" ;
 
 import {
-	SimplePatient,
-	SimpleNote,
+    SimplePatient,
+    SimpleNote,
     SimpleOperation,
     } from "./simple_mod.js" ;
+    
+import {
+    RemoteReplicant,
+    } from "./replicate_mod.js" ;
 
 objectPatient = new SimplePatient() ;
 
@@ -90,127 +96,6 @@ class Mission { // convenience class
             .forEach( logo => logo.src=src??"images/Null.png" );
             })
         .catch( err => objectLog.err(err,"Mission info") ) ;
-    }
-}
-
-class RemoteReplicant { // convenience class
-    // Access to remote (cloud) version of database
-    constructor() {
-        this.remoteDB = null;
-        this.problem = false ; // separates real connection problem from just network offline
-        this.synctext = document.getElementById("syncstatus");
-        
-        // Get remote DB from cookies if available
-        if ( remoteCouch == null ) {
-            remoteCouch = {} ;
-            credentialList.forEach( c => remoteCouch[c] = "" );
-        }
-
-        // set up monitoring
-        window.addEventListener("offline", _ => this.not_present() );
-        window.addEventListener("online", _ => this.present() );
-
-        // initial status
-        navigator.onLine ? this.present() : this.not_present() ;
-    }
-    
-    present() {
-        this.status( "good", "--network present--" ) ;
-    }
-
-    not_present() {
-        this.status( "disconnect", "--network offline--" ) ;
-    }
-
-    // Initialise a sync process with the remote server
-    foreverSync() {
-        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
-        document.getElementById( "userstatus" ).value = remoteCouch.username;
-        if ( this.remoteDB ) {
-            this.status( "good","download remote database");
-            db.replicate.from( this.remoteDB )
-                .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
-                .finally( _ => this.syncer() );
-        } else {
-            this.status("problem","No remote database specified!");
-        }
-    }
-    
-    syncer() {
-        this.status("good","Starting database intermittent sync");
-        db.sync( this.remoteDB ,
-            {
-                live: true,
-                retry: true,
-                filter: (doc) => doc._id.indexOf('_design') !== 0,
-            } )
-            .on('change', ()       => this.status( "good", "changed" ))
-            .on('paused', ()       => this.status( "good", "quiescent" ))
-            .on('active', ()       => this.status( "good", "actively syncing" ))
-            .on('denied', ()    => this.status( "problem", "Credentials or database incorrect" ))
-            .on('complete', ()     => this.status( "good", "sync stopped" ))
-            .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
-    }
-    
-    status( state, msg ) {
-        switch (state) {
-            case "disconnect":
-                document.body.style.background="#7071d3"; // Orange
-                if ( this.lastState !== state ) {
-                    objectLog.err(msg,"Network status");
-                }
-                break ;
-            case "problem":
-                document.body.style.background="#d72e18"; // grey
-                objectLog.err(msg,"Network status");
-                this.problem = true ;
-                break ;
-            case "good":
-            default:
-                document.body.style.background="#172bae"; // heppy blue
-                if ( this.lastState !== state ) {
-                    objectLog.err(msg,"Network status");
-                }
-                this.problem = false ;
-                break ;
-        }
-        this.synctext.value = msg ;
-    }
-            
-    openRemoteDB( DBstruct ) {
-        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
-            return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
-                "skip_setup": "true",
-                "auth": {
-                    "username": DBstruct.username,
-                    "password": DBstruct.password,
-                    },
-                });
-        } else {
-            objectLog.err("Bad DB specification");
-            return null;
-        }
-    }
-            
-    SecureURLparse( url ) {
-        let prot = "https";
-        let addr = url;
-        let port = "6984";
-        let spl = url.split("://") ;
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            prot = spl[0];
-            addr = spl[1];
-        }
-        spl = addr.split(":");
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            addr = spl[0];
-            port = spl[1];
-        }
-        return [prot,[addr,port].join(":")].join("://");
     }
 }
 
@@ -799,28 +684,6 @@ class Page { // singleton class
     }    
 
 
-    static setButtons() {
-        // Add Extra buttons
-        document.querySelector("#moreTop").querySelectorAll("button")
-        .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
-
-        // set Help buttons
-        document.querySelectorAll(".Qmark").forEach( h => {
-            h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>objectPage.link());
-            });
-
-        // set Search buttons
-        document.querySelectorAll(".Search").forEach( s => {
-            s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>objectPage.show('SearchList'));
-            });
-
-        // remove redundant mission buttons
-        [...document.querySelectorAll(".topButtons")]
-        .filter(d => d.querySelector(".missionLogo"))
-        .forEach( d => d.removeChild(d.querySelector(".missionButton")));
-    }
 }
 
 class Pagelist {
@@ -911,14 +774,6 @@ class ErrorLog extends Pagelist {
 
 objectLog = new Log() ;
 
-function TitleBox( titlearray=null, show="PatientPhoto" ) {
-    if ( titlearray == null ) {
-        document.getElementById( "titlebox" ).innerHTML = "" ;
-    } else {
-        document.getElementById( "titlebox" ).innerHTML = `<button type="button" onClick='objectPage.show("${show}")'>${titlearray.join(" ")}</button>` ;
-    }
-}
-
 // Create pouchdb indexes.
 // Used for links between records and getting list of choices
 // change version number to force a new version
@@ -1008,11 +863,11 @@ window.onload = () => {
         .catch( err => objectLog.err(err,"Service worker registration") );
     }
     
-    Page.setButtons() ;
-
     // set state from URL or cookies
     URLparse() ; // setup remoteCouch and exclude command line parameters
 
+    setButtons();
+    
     // Start pouchdb database       
     if ( credentialList.every( c => remoteCouch[c] !== "" ) ) {
         db = new PouchDB( remoteCouch.database, {auto_compaction: true} ); // open local copy

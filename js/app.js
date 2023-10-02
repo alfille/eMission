@@ -12,6 +12,7 @@
 
 import {
     cloneClass,
+    setButtons,
     } from "./globals_mod.js" ;
 
 import {
@@ -48,10 +49,14 @@ import {
     } from "./log_mod.js" ;
 
 import {
-	SimplePatient,
-	SimpleNote,
+    SimplePatient,
+    SimpleNote,
     SimpleOperation,
     } from "./simple_mod.js" ;
+    
+import {
+    RemoteReplicant,
+    } from "./replicate_mod.js" ;
 
 // other globals
 const NoPhoto = "style/NoPhoto.png";
@@ -976,145 +981,6 @@ class Mission { // convenience class
     }
 }
 
-class RemoteReplicant { // convenience class
-    // Access to remote (cloud) version of database
-    constructor( qline ) {
-        this.remoteDB = null;
-        this.problem = false ; // separates real connection problem from just network offline
-        this.synctext = document.getElementById("syncstatus");
-        
-        // Get remote DB from cookies if available
-        if ( remoteCouch == null ) {
-            remoteCouch = {} ;
-            credentialList.forEach( c => remoteCouch[c] = "" );
-        }
-
-        // Get Remote DB fron command line if available
-        if ( credentialList.every( k => k in qline ) ) {
-            let updateCouch = false ;
-            credentialList
-            .filter( f => f in qline )
-            .filter( f => remoteCouch[f] != qline[f] )
-            .forEach( f => {
-                updateCouch = true ;
-                remoteCouch[f] = qline[f] ;
-                });
-            // Changed, so reset page
-            if ( updateCouch ) {
-                objectPage.reset() ;               
-                Cookie.set( "remoteCouch", remoteCouch );
-            }
-        }
-        
-
-        // set up monitoring
-        window.addEventListener("offline", _ => this.not_present() );
-        window.addEventListener("online", _ => this.present() );
-
-        // initial status
-        navigator.onLine ? this.present() : this.not_present() ;
-    }
-    
-    present() {
-        this.status( "good", "--network present--" ) ;
-    }
-
-    not_present() {
-        this.status( "disconnect", "--network offline--" ) ;
-    }
-
-    // Initialise a sync process with the remote server
-    foreverSync() {
-        this.remoteDB = this.openRemoteDB( remoteCouch ); // null initially
-        document.getElementById( "userstatus" ).value = remoteCouch.username;
-        if ( this.remoteDB ) {
-            this.status( "good","download remote database");
-            db.replicate.from( this.remoteDB )
-                .catch( (err) => this.status("problem",`Replication from remote error ${err.message}`) )
-                .finally( _ => this.syncer() );
-        } else {
-            this.status("problem","No remote database specified!");
-        }
-    }
-    
-    syncer() {
-        this.status("good","Starting database intermittent sync");
-        db.sync( this.remoteDB ,
-            {
-                live: true,
-                retry: true,
-                filter: (doc) => doc._id.indexOf('_design') !== 0,
-            } )
-            .on('change', ()       => this.status( "good", "changed" ))
-            .on('paused', ()       => this.status( "good", "quiescent" ))
-            .on('active', ()       => this.status( "good", "actively syncing" ))
-            .on('denied', ()       => this.status( "problem", "Credentials or database incorrect" ))
-            .on('complete', ()     => this.status( "good", "sync stopped" ))
-            .on('error', (err)     => this.status( "problem", `Sync problem: ${err.reason}` ));
-    }
-    
-    status( state, msg ) {
-        switch (state) {
-            case "disconnect":
-                document.body.style.background="#7071d3"; // Orange
-                if ( this.lastState !== state ) {
-                    objectLog.err(msg,"Network status");
-                }
-                break ;
-            case "problem":
-                document.body.style.background="#d72e18"; // grey
-                objectLog.err(msg,"Network status");
-                this.problem = true ;
-                break ;
-            case "good":
-            default:
-                document.body.style.background="#172bae"; // heppy blue
-                if ( this.lastState !== state ) {
-                    objectLog.err(msg,"Network status");
-                }
-                this.problem = false ;
-                break ;
-        }
-        this.synctext.value = msg ;
-    }
-            
-    openRemoteDB( DBstruct ) {
-        if ( DBstruct && credentialList.every( k => k in DBstruct )  ) {
-            return new PouchDB( [DBstruct.address, DBstruct.database].join("/") , {
-                "skip_setup": "true",
-                "auth": {
-                    "username": DBstruct.username,
-                    "password": DBstruct.password,
-                    },
-                });
-        } else {
-            objectLog.err("Bad DB specification");
-            return null;
-        }
-    }
-            
-    SecureURLparse( url ) {
-        let prot = "https";
-        let addr = url;
-        let port = "6984";
-        let spl = url.split("://") ;
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            prot = spl[0];
-            addr = spl[1];
-        }
-        spl = addr.split(":");
-        if (spl.length < 2 ) {
-            addr=spl[0];
-        } else {
-            addr = spl[0];
-            port = spl[1];
-        }
-        return [prot,[addr,port].join(":")].join("://");
-    }
-}
-
 class Pagelist {
     // list of subclasses = displayed "pages"
     // Note that these classes are never "instantiated -- only used statically
@@ -1715,46 +1581,6 @@ class Page { // singleton class
             }
         }
     }    
-
-    static setButtons() {
-        // Add Extra buttons
-        document.querySelector("#moreTop").querySelectorAll("button")
-        .forEach( b => document.querySelectorAll(".topButtons").forEach(t=>t.appendChild(b.cloneNode(true))) );
-
-        // set Help buttons
-        document.querySelectorAll(".Qmark").forEach( h => {
-            h.title = "Open explanation in another tab" ;
-            h.addEventListener("click",()=>objectPage.link());
-            });
-
-        // set Search buttons
-        document.querySelectorAll(".Search").forEach( s => {
-            s.title = "Search everywhere for a word or phrase" ;
-            s.addEventListener("click",()=>objectPage.show('SearchList'));
-            });
-
-        // set Quick Photo buttons
-        document.querySelectorAll(".Qphoto").forEach( q => {
-            q.title = "Quick photo using camera or from gallery" ;
-            q.addEventListener("click",()=>objectPage.show('QuickPhoto'));
-            });
-
-        // set edit details for PatientData edit pages -- only for "top" portion
-        document.querySelectorAll(".edit_data").forEach( e => {
-            e.title = "Unlock record to allow changes" ;
-            e.addEventListener("click",()=>objectPatientData.clickEdit());
-            });
-
-        // set save details for PatientData save pages
-        document.querySelectorAll(".savedata").forEach( s => {
-            s.title = "Save your changes to this record" ;
-            s.addEventListener("click",()=>objectPatientData.savePatientData());
-            });
-        // remove redundant mission buttons
-        [...document.querySelectorAll(".topButtons")]
-        .filter(d => d.querySelector(".missionLogo"))
-        .forEach( d => d.removeChild(d.querySelector(".missionButton")));
-    }
 }
 
 function TitleBox( titlearray=null, show="PatientPhoto" ) {
@@ -2253,9 +2079,7 @@ window.onload = () => {
     Cookie.initialGet() ;
     objectPage = new Page();
     
-    Page.setButtons(); // load some common html elements
-    document.querySelectorAll(".headerboxlink")
-    .forEach( q => q.addEventListener("click",()=>objectPage.show("MainMenu")));
+    setButtons(); // load some common html elements
 
     if ( window.frameElement ) {
         in_frame = true ;
