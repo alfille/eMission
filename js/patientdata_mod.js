@@ -451,4 +451,3 @@ class PatientDataEditMode extends PatientDataRaw {
         this.clickEditButtons() ;
     }
 }
-

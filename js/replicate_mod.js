@@ -39,7 +39,7 @@ class RemoteReplicant { // convenience class
             // Changed, so reset page
             if ( updateCouch ) {
                 objectPage.reset() ;               
-                Cookie.set( "remoteCouch", remoteCouch );
+                objectCookie.set( "remoteCouch", remoteCouch );
             }
         }
         

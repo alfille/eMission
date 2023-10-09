@@ -11,7 +11,7 @@ export {
 } ;
 
 class Cookie { //convenience class
-    static set( cname, value ) {
+    set( cname, value ) {
         // From https://www.tabnine.com/academy/javascript/how-to-set-cookies-javascript/
         if ( ! in_frame ) {
             // Don't store values for in-frame instances -- it gets too confusing
@@ -22,12 +22,12 @@ class Cookie { //convenience class
         }
     }
 
-    static del( cname ) {
+    del( cname ) {
         globalThis[cname] = null;
         document.cookie = cname +  "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     }
 
-    static get( cname ) {
+    get( cname ) {
         const name = `${cname}=`;
         let ret = null;
         decodeURIComponent(document.cookie).split('; ').filter( val => val.indexOf(name) === 0 ).forEach( val => {
@@ -42,11 +42,12 @@ class Cookie { //convenience class
         return ret;
     }
 
-    static initialGet() {
-        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.get(c) );
+    initialGet() {
+        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => this.get(c) );
     }
 
-    static clear() {
-        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => Cookie.del(c) );
+    clear() {
+        [ "patientId", "noteId", "operationId", "remoteCouch", "displayState" ].forEach( c => this.del(c) );
     }
 }
+objectCookie = new Cookie() ;

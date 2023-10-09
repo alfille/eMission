@@ -29,7 +29,6 @@ import {
     } from "./id_mod.js";
 
 import {
-    Cookie,
     } from "./cookie_mod.js" ;
 
 import {
@@ -297,7 +296,7 @@ class DatabaseData extends PatientDataRaw {
                 this.doc[0].address=objectRemote.SecureURLparse(this.doc[0].address); // fix up URL
             }
             delete this.doc[0].raw ;
-            Cookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
+            objectCookie.set ( "remoteCouch", Object.assign({},this.doc[0]) );
         }
         objectPage.reset();
         location.reload(); // force reload
@@ -567,7 +566,7 @@ class Page { // singleton class
     reset() {
         // resets to just MainMenu
         this.path = [ "MainMenu" ] ;
-        Cookie.set ( "displayState", this.path ) ;
+        objectCookie.set ( "displayState", this.path ) ;
     }
 
     back() {
@@ -599,7 +598,7 @@ class Page { // singleton class
                 // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
             }
-            Cookie.set ( "displayState", this.path ) ;
+            objectCookie.set ( "displayState", this.path ) ;
         }
     }
 
@@ -1076,7 +1075,7 @@ function URLparse() {
 // Application starting point
 window.onload = () => {
     // Get Cookies
-    Cookie.initialGet() ;
+    objectCookie.initialGet() ;
     objectPage = new Page();
         
     // Stuff into history to block browser BACK button

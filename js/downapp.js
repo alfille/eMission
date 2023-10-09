@@ -28,7 +28,6 @@ import {
     } from "./id_mod.js";
 
 import {
-    Cookie,
     } from "./cookie_mod.js" ;
 
 import {
@@ -602,7 +601,7 @@ class Page { // singleton class
     reset() {
         // resets to just MainMenu
         this.path = [ "MainMenu" ] ;
-        Cookie.set ( "displayState", this.path ) ;
+        objectCookie.set ( "displayState", this.path ) ;
     }
 
     back() {
@@ -635,7 +634,7 @@ class Page { // singleton class
                 this.path = this.path.slice( iop ) ;
             }
         }
-        Cookie.set ( "displayState", this.path ) ;
+        objectCookie.set ( "displayState", this.path ) ;
     }
 
     test( page ) {
@@ -847,7 +846,7 @@ function URLparse() {
 // Application starting point
 window.onload = () => {
     // Get Cookies
-    Cookie.initialGet() ;
+    objectCookie.initialGet() ;
     objectPage = new Page();
     
     // Initial splash screen

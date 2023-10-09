@@ -30,6 +30,7 @@ globalThis. objectLog = null ;
 globalThis. objectPatient = null ;
 globalThis. objectNote = null ;
 globalThis. objectOperation = null ;
+globalThis. objectCookie = null ;
 
 // Database handles
 globalThis.db = null ; // will be Pouchdb local copy 

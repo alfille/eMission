@@ -31,7 +31,6 @@ import {
     } from "./id_mod.js";
 
 import {
-    Cookie,
     } from "./cookie_mod.js" ;
 
 import {
@@ -615,7 +614,7 @@ class Patient extends SimplePatient { // convenience class
         if ( pid == missionId ) {
             Mission.select() ;
         } else {
-            Cookie.set( "patientId", pid );
+            objectCookie.set( "patientId", pid );
             // Check patient existence
             db.query("Pid2Name",{key:pid})
             .then( (doc) => {
@@ -634,7 +633,7 @@ class Patient extends SimplePatient { // convenience class
 
     unselect() {
         patientId = null;
-        Cookie.del ( "patientId" );
+        objectCookie.del ( "patientId" );
         objectNote.unselect();
         objectNoteList.category = 'Uncategorized' ;
         objectOperation.unselect();
@@ -755,7 +754,7 @@ class Note extends SimpleNote { // convenience class
             if ( doc.patient_id != patientId ) {
                 objectPatient.select( doc.patient_id);
             }
-            Cookie.set( "noteId", nid );
+            objectCookie.set( "noteId", nid );
             if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
                 objectNoteList.select() ;
             }
@@ -764,7 +763,7 @@ class Note extends SimpleNote { // convenience class
     }
 
     unselect() {
-        Cookie.del ( "noteId" );
+        objectCookie.del ( "noteId" );
         if ( objectPage.test("NoteList") || objectPage.test("NoteListCategory") || objectPage.test("MissionList")) {
             document.getElementById("NoteListContent").querySelectorAll("li")
             .forEach( l => l.classList.remove('choice') );
@@ -865,7 +864,7 @@ class Operation extends SimpleOperation { // convenience class
             if ( doc.patient_id != patientId ) {
                 objectPatient.select( doc.patient_id);
             }
-            Cookie.set ( "operationId", oid  );
+            objectCookie.set ( "operationId", oid  );
             // highlight the list row
             if ( objectPage.test('OperationList') || objectPage.test('AllOperations')  ) {
                 objectTable.highlight();
@@ -879,7 +878,7 @@ class Operation extends SimpleOperation { // convenience class
 
     unselect() {
         operationId = null;
-        Cookie.del( "operationId" );
+        objectCookie.del( "operationId" );
         if ( objectPage.test("OperationList") ) {
             let ot = document.getElementById("OperationsList");
             if ( ot ) {
@@ -1480,7 +1479,7 @@ class Page { // singleton class
     reset() {
         // resets to just MainMenu
         this.path = [ "MainMenu" ] ;
-        Cookie.set ( "displayState", this.path ) ;
+        objectCookie.set ( "displayState", this.path ) ;
     }
 
     back() {
@@ -1489,7 +1488,7 @@ class Page { // singleton class
             this.reset();
         }
         if ( Pagelist.subclass(this.path[0]).safeLanding ) {
-            Cookie.set ( "displayState", this.path ) ;
+            objectCookie.set ( "displayState", this.path ) ;
         } else {
             this.back() ;
         }
@@ -1516,7 +1515,7 @@ class Page { // singleton class
                 // trim page list back to prior occurence of this page (no loops, finite size)
                 this.path = this.path.slice( iop ) ;
             }
-            Cookie.set ( "displayState", this.path ) ;
+            objectCookie.set ( "displayState", this.path ) ;
         }
     }
 
@@ -1714,7 +1713,7 @@ class DatabaseTable extends SortTable {
                 remoteCouch.address = doc.server ;
                 remoteCouch.database = doc.dbname ;
                 objectPatient.unselect();
-                Cookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
+                objectCookie.set( "remoteCouch", Object.assign({},remoteCouch) ) ;
                 })
             .catch( (err) => objectLog.err(err,"Loading patient database") )
             .finally( () => {
@@ -2042,7 +2041,7 @@ function parseQuery() {
 function clearLocal() {
     const remove = confirm("Remove the eMission data and your credentials from this device?\nThe central database will not be affected.") ;
     if ( remove ) {
-        Cookie.clear();
+        objectCookie.clear();
         // clear (local) database
         db.destroy()
         .finally( _ => location.reload() ); // force reload
@@ -2076,7 +2075,7 @@ function URLparse() {
 // Application starting point
 window.onload = () => {
     // Get Cookies
-    Cookie.initialGet() ;
+    objectCookie.initialGet() ;
     objectPage = new Page();
     
     setButtons(); // load some common html elements
