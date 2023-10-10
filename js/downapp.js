@@ -31,7 +31,6 @@ import {
     } from "./cookie_mod.js" ;
 
 import {
-    Log,
     } from "./log_mod.js" ;
 
 import {
@@ -41,7 +40,6 @@ import {
     } from "./simple_mod.js" ;
     
 import {
-    RemoteReplicant,
     } from "./replicate_mod.js" ;
 
 objectPatient = new SimplePatient() ;
@@ -771,8 +769,6 @@ class ErrorLog extends Pagelist {
     }
 }
 
-objectLog = new Log() ;
-
 // Create pouchdb indexes.
 // Used for links between records and getting list of choices
 // change version number to force a new version
@@ -840,7 +836,7 @@ function URLparse() {
         window.location.href = u.toString()
     }
 
-    objectRemote = new RemoteReplicant() ;
+    objectRemote.start() ;
 }
 
 // Application starting point

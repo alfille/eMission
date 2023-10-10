@@ -8,7 +8,7 @@
 ## Inspiration
 Dr. Gennadiy Fuzaylov, a pediatric anesthesiologist at Massachusetts General Hospital and veteran of over 60 medical missions to the Ukraine and  Columbia and found keeping track of patients, procedures and results was increasingly difficult. 
 
-![[Doctors Collaborating To Help Children](http://dctohc.org/)](src/images/dctohc_logo.png)
+![[Doctors Collaborating To Help Children](https://dctohc.org/)](src/images/dctohc_logo.png)
 
 He needed a way to:
 

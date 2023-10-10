@@ -10,6 +10,9 @@ export {
     Log,
 } ;
 
+import {
+    } from "./globals_mod.js" ;
+
 class Log{
     constructor() {
         this.list = [];
@@ -49,3 +52,4 @@ class Log{
         });
     }
 }
+objectLog = new Log() ;

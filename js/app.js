@@ -44,7 +44,6 @@ import {
     } from "./patientdata_mod.js" ;
 
 import {
-    Log,
     } from "./log_mod.js" ;
 
 import {
@@ -54,7 +53,6 @@ import {
     } from "./simple_mod.js" ;
     
 import {
-    RemoteReplicant,
     } from "./replicate_mod.js" ;
 
 // other globals
@@ -2026,8 +2024,6 @@ class Collation {
     }
 }
 
-objectLog = new Log() ;
-
 function parseQuery() {
     // returns a dict of keys/values or null
     let url = new URL(location.href);
@@ -2055,7 +2051,7 @@ function URLparse() {
     // need to establish remote db and credentials
     // first try the search field
     const qline = parseQuery();
-    objectRemote = new RemoteReplicant( qline ) ;
+    objectRemote.start( qline ) ;
     
     // first try the search field
     if ( qline && ( "patientId" in qline ) ) {

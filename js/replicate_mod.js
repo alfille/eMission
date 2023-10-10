@@ -15,11 +15,13 @@ import {
 
 class RemoteReplicant { // convenience class
     // Access to remote (cloud) version of database
-    constructor( qline={} ) {
+    constructor() {
         this.remoteDB = null;
         this.problem = false ; // separates real connection problem from just network offline
         this.synctext = document.getElementById("syncstatus");
-        
+    }
+    
+    start( qline={} ) {        
         // Get remote DB from cookies if available
         if ( remoteCouch == null ) {
             remoteCouch = {} ;
@@ -163,3 +165,4 @@ class RemoteReplicant { // convenience class
         window.open( `${remoteCouch.address}/_utils`, '_blank' );
     }
 }
+objectRemote = new RemoteReplicant() ;

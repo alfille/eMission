@@ -42,7 +42,6 @@ import {
     } from "./patientdata_mod.js" ;
 
 import {
-    Log,
     } from "./log_mod.js" ;
 
 import {
@@ -51,7 +50,6 @@ import {
     } from "./simple_mod.js" ;
 
 import {
-    RemoteReplicant,
     } from "./replicate_mod.js" ;
 
 // Database handles and  
@@ -1045,8 +1043,6 @@ class MissionMembersTable extends SortTable {
     }
 }
 
-objectLog = new Log() ;
-
 function parseQuery() {
     // returns a dict of keys/values or null
     const url = new URL(location.href);
@@ -1069,7 +1065,7 @@ function URLparse() {
         u.pathname = "/index.html" ;
         window.location.href = u.toString()
     }
-    objectRemote = new RemoteReplicant() ;
+    objectRemote.start() ;
 }
 
 // Application starting point
