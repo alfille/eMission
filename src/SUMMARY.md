@@ -80,7 +80,7 @@
   - [Domain Name](domain.md)
   - [Needed Services](services.md)
     - [Firewall](firewall.md)
-    - [Couchdb Database](couchdb_intial.md)
+    - [Couchdb Database](couchdb_initial.md)
     - [Caddy Webserver](caddy.md)
     - [MDBook Documentation Server](mdbook.md)
     - [eMission Code](emission_code.md)
