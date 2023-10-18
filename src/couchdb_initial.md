@@ -4,12 +4,12 @@ There are several ways to install couchdb on your server, but the clearest and e
 
 ### Password
 
-You will need to select a couchdb adminpassword
+You will need to select a couchdb [__*database_password*__](essential_info.html)
 
 couchdb administration:
 
 * username: admin
-* password: your *adminpassword*
+* password: your __*database_password*__
 
 ### Install software
 
@@ -41,7 +41,7 @@ curl http://127.0.0.1:5984
 
 The couchdb configuration file is at:
 
-`/var/snap/couchdb/9/etc/local.ini`
+`/var/snap/couchdb/current/etc/local.ini`
 
 The first pass edit should be, in the *chttpd* setion:
 ```
