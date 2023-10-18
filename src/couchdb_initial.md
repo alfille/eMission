@@ -1,10 +1,10 @@
 # Couchdb Database
 
-There are several ways to install couchdb on your server, but the clearest and easiest is via snaps. Our reference is this [2023 Cyrus Brett article](https://techviewleo.com/how-to-install-apache-couchdb-in-debian/?expand_article=1). 
+There are several ways to install couchdb on your server, but the clearest and easiest is via *snap*s. Our reference is this [2023 Cyrus Brett article](https://techviewleo.com/how-to-install-apache-couchdb-in-debian/?expand_article=1). 
 
 ### Password
 
-You will need to select a couchdb [__*database_password*__](essential_info.html)
+You will need your couchdb administrator [__*database_password*__](essential_info.html)
 
 couchdb administration:
 
@@ -28,7 +28,7 @@ systemctl status snapd
 snap install core
 snap install couchdb
 # Basic setup and start of couchdb
-snap set couchdb admin=adminpassword
+snap set couchdb admin=database_password
 snap start couchdb
 # some needed snap permissions 
 snap connect couchdb:mount-observe

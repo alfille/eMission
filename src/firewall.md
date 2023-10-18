@@ -9,11 +9,8 @@ Ports to allow:
   * regular port=80
   * secure port=443
 * couchdb database
-  * regular port=5984
   * secure port=6984
   
-
-Eventually we will close 5984 and redirect web traffic to secure.
 
 Log into the server console as root via ssh and your __*server_password*__
 
@@ -30,7 +27,6 @@ apt install ufw
 ufw allow ssh
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw allow 5984/tcp
 ufw allow 6984/tcp
 # start and test
 ufw enable

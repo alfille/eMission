@@ -25,10 +25,13 @@ snap install core
 snap install mdbook
 ```
 
-Use ** mebook** every time you update the code or documentation in the [github repository](https://github.com/alfille/eMission). If you've "forked" the repository to customize, use that repository instead.
+If this is the first time you've install *snapd* you will need to log out and back in to realize the changes the installation did for your *PATH*.
+
+### Usage
+
+Use **mdbook** every time you update the code or documentation in the [github repository](https://github.com/alfille/eMission). If you've "forked" the repository to customize, use that repository version instead.
 
 Obviously this is after you've done the initial [directory creation and code pull](emission_code.html).
-
 ```
 # go to web directory
 cd /srv/www
