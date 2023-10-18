@@ -15,6 +15,12 @@ Ports to allow:
 
 Eventually we will close 5984 and redirect web traffic to secure.
 
+Log into the server console as root via ssh and your __*server_password*__
+
+`ssh root@domain_name`
+
+using your actual __*domain_name*__
+
 ```
 apt update
 apt upgrade

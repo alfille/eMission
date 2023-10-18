@@ -29,3 +29,9 @@ The fee is $4/month. (This is from [Kamatera](try.kamatera.com), although roughl
 Domain name will be extra.
 
 An IP address, SSH and web console access are provided as well. There is also a management screen with overall statistics on usage.
+
+## Essential information:
+
+Make note of the provided __*ip_addess*__ to assign to your [domain](domain.html)
+
+At this time, you will also be asked to create a __*server_password*__

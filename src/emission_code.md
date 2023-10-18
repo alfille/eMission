@@ -4,11 +4,13 @@
 
 ### Initial setup
 
-We will clone the **eMission** repository into that directory and later update by pulling changes into that directory.
+We will clone the **eMission** repository into `/srv/www` and later update by pulling changes into that directory.
 
 Note that you can fork the eMission repository, make changes, and use that repository instead.
 
 ```
+# get "git"
+apt install git
 # Clear out any existing web content
 rm -rf /srv/www
 # clone in code
@@ -17,7 +19,7 @@ git clone https://github.com/alfille/eMission /srv/www
 
 ### Rebuild instructions
 
-The only other suggested step is to run `mdbook`
+You will also need to run `mdbook` to translate the instructions into HTML
 
 ```
 cd /srv/www
