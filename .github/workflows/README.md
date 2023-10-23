@@ -10,9 +10,15 @@ __*Is series of partial sums ever an integer?*__
 
 Consider:
 
-1/2 + 1/3 + 1/4 + ...
+`1/2 + 1/3 + 1/4 + ...`
 
 Carried out to infinity, the series does not converge (i.e. it's infinite). But each partial sum is finite. Indeed each partial sum is rational. Is it ever an even integer?
+
+* It's not implausible. `1/2 + 1/3 + 1/6 = 1` 
+* What about `1/2 + 1/4 + 1/6 + ...` ?
+* Or `1/3 + 1/5 + 1/7 + ...` ?
+* Or more geneally a series of 1/n where `n = r mod m`
+
 
 ### Exploration
 
