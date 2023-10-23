@@ -2,6 +2,11 @@
 
 **eMission** will be served from the `/srv/www/` directory -- this is the actual application code and instructions.
 
+### Setup
+
+If you have followed the setup sequentially, *git* should already be installed. Otherwise use the steps in [initial setup](initial_server.html) to access the server and install *git*
+
+
 ### Initial setup
 
 We will clone the **eMission** repository into `/srv/www` and later update by pulling changes into that directory.
@@ -9,26 +14,15 @@ We will clone the **eMission** repository into `/srv/www` and later update by pu
 Note that you can fork the eMission repository, make changes, and use that repository instead.
 
 ```
-# Get "git"
-apt install git
 # Clear out any existing web content
 rm -rf /srv/www
 # Pull in code
 git clone https://github.com/alfille/eMission /srv/www
 ```
 
-### Rebuild instructions
+### Initial Build and Update of eMission
 
-You will also need to run [`mdbook`](mdbook.html) to translate the instructions into HTML
-
-```
-# Go to website directory
-cd /srv/www
-# Build HTML structure from Markdown
-mdbook build
-```
-
-### Update eMission (later)
+For simplicity, we'll use the update code for the first time as well as all subsequent times:
 
 ```
 # Go to website directory

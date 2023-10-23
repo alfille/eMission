@@ -10,19 +10,35 @@ There are simpler ways to [set up a mission](NewMission.html). Specifically [usi
 
 At the most basic level, implementing a *web server*, and a *database* that follows [couchdb protocol](https://docs.couchdb.org/en/stable/replication/protocol.html) is sufficient. Even the Instructions can be served from the [original site](https://emissionsystem.org/book/index.html) with appropriate *server redirect*.
 
-## Implemented Structure
+## Current Implemented Structure
 
-![](images/server_struct2.png)
+![](images/server_struct1.png)
 
 For better maintainability and security, the actual implementation includes: 
 
 * Firewall
-	* filters http access to couchdb
-	* could substitute *reverse proxy* in web server instead
+	* locks down server (optional but safer)
 * git
   * easy update of code and markdown documentation
 * mdbook
   * build html from markdown
+* Web server
+  * Implements SSL encryption of application and data
+  * Filters database access (reverse proxy) to isolate from external attack
+    * All communication goes through Web Server
+    * Web Server has high-quality SSL implementation
+  * Serves Javascript application and instructional HTML
+  
+## Prior Implemented Structure
+
+![](images/server_struct2.png)
+
+Prior implementation included external access to CouchDB: 
+
+* Firewall
+	* filters non-SSL access to couchdb
+* Web server with SSL certificates
+* CouchDB with SSL certificates
   
 ## Platform	
 

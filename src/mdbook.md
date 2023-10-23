@@ -12,26 +12,18 @@
 
 ### Installation
 
-Since we will use *snap* packaging for couchdb, we'll use it for [mdbook](https://snapcraft.io/install/mdbook/debian) as well
+If you have been following the setup steps sequentially [snap](snap.html) should have been install already.
 
 ```
-# Standard updating
-apt update
-apt upgrade
-# Install snap (if not already there)
-apt install snapd
-snap install core
-# Install mdbook itself
 snap install mdbook
 ```
 
-If this is the first time you've install *snapd* you will need to log out and back in to realize the changes the installation did for your *PATH*.
-
-### Usage
+## Usage
 
 Use **mdbook** every time you update the code or documentation in the [github repository](https://github.com/alfille/eMission). If you've "forked" the repository to customize, use that repository version instead.
 
 Obviously this is after you've done the initial [directory creation and code pull](emission_code.html).
+
 ```
 # go to web directory
 cd /srv/www
