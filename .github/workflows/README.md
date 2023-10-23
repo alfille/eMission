@@ -1,6 +1,6 @@
 # Reciprocols
 
-Using basic Number Theory, and investigation of sums of reciprocols.
+Using basic Number Theory, an investigation of sums of reciprocols.
 
 ## Question
 
