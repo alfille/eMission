@@ -87,6 +87,7 @@
     - [eMission Code](emission_code.md)
     - [Couchdb Database](couchdb.md)
     - [Caddy Webserver](caddy.md)
+    - [CORS](CORS.md)
     - [SSL sercure](ssl_secure.md)
     - [Management scripts](scripts.md)
    
