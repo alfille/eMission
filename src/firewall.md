@@ -29,11 +29,15 @@ ufw allow 5984/tcp
 ufw allow 6984/tcp
 # start and test
 ufw enable
+```
+
+### Test
+Input:
+```
 ufw status
 ```
 
-The response should be:
-
+Output:
 ```
 Status: active
 

@@ -20,6 +20,10 @@ While you can duplicate our setup, the following components are what's really ne
   * Suggest SSL (port 6984) and block port 5984
   * Couchdb should be in the same domain as the web address, though of course it can be a different machine
   
+### Instructions
+
+There are [complete setup instructions](server.html).
+  
 ### First time
 
 * Set up database (use Fauxton couchdb console)
@@ -31,4 +35,4 @@ While you can duplicate our setup, the following components are what's really ne
 
 ### Operating system
 
-While the development and deployment has been on linux, all the software is platform agnostic.
+While the development and deployment has been on Linux, all the software is platform agnostic.

@@ -15,9 +15,10 @@ Note that you can fork the eMission repository, make changes, and use that repos
 
 ```
 # Clear out any existing web content
-rm -rf /srv/www
+cd /srv
+rm -rf www
 # Pull in code
-git clone https://github.com/alfille/eMission /srv/www
+git clone https://github.com/alfille/eMission www
 ```
 
 ### Initial Build and Update of eMission

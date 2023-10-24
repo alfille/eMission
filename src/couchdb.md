@@ -61,6 +61,27 @@ snap start couchdb
 
 where you substitute your real *database_password*
 
+### Test installation
+
+Input:
+```
+wget localhost:15984 -O-
+```
+
+Output:
+```
+Resolving localhost (localhost)... 127.0.0.1
+Connecting to localhost (localhost)|127.0.0.1|:15984... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 247 [application/json]
+Saving to: ‘STDOUT’
+
+-                                0%[                                                     ]       0  --.-KB/s               {"couchdb":"Welcome","version":"3.1.1","git_sha":"ce596c65d","uuid":"27448ab2956df57e98f006406bd8da31","features":["access-ready","partitioned","pluggable-storage-engines","reshard","scheduler"],"vendor":{"name":"The Apache Software Foundation"}}
+-                              100%[====================================================>]     247  --.-KB/s    in 0s      
+
+2023-10-24 13:09:54 (32.5 MB/s) - written to stdout [247/247]
+```
+
 ### Current Status
 
 We now have *CouchDB* running, but we can't access it until we set up our web server.

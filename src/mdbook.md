@@ -10,12 +10,25 @@
 * Images are in the `images` subdirectory of `src`
 * `mdbook build` translates content to html in the `book` subdirectory
 
+
+
 ### Installation
+
+#### Future state, using snap when updated
+
+__The snap version of mdbook (v0.0.28) doesn not support the features we use, so use direct binaries__
 
 If you have been following the setup steps sequentially [snap](snap.html) should have been install already.
 
 ```
 snap install mdbook
+```
+
+#### Current state, using direct binary importqqq
+
+```
+wget -c https://github.com/rust-lang/mdBook/releases/download/v0.4.35/mdbook-v0.4.35-x86_64-unknown-linux-musl.tar.gz -O - | tar -xz
+mv mdbook /usr/bin
 ```
 
 ## Usage
@@ -32,3 +45,15 @@ git pull
 # rebuild HTML structure from Markdown
 mdbook build
 ```
+
+### Test
+
+Input:
+```
+mdbook --version
+```
+Output:
+```
+mdbook v0.4.35
+```
+
