@@ -19,4 +19,5 @@ We have found maintainance needs to be small.
   * We recommend backups -- which are easy via [replication](replication.html)
   * Each portable device also contains a replica of it's mission data
 * Users
-  * Adding and managing users should be a small part of typical mission support.
+  * Adding and managing users should be a small part of typical mission support.mathjax
+  * 

@@ -68,12 +68,33 @@ function d_list() {
             .filter( d => d != "databases" ) 
             .filter( d => d.slice(0,1) != '_' ) 
             ;
+            return Promise.resolve(true);
             });
 }
+const summary = {
+    database:  new Set(),
+    files:     new Set(),
+    unchanged: new Set(),
+    updated:   new Set(),
+    added:     new Set(),
+    deleted:   new Set(),
+};
+
 d_list()
 .then( _ => {
     console.log("DB",database_list);
     dbs_handle - DB.use("databases");
+    try {
+        dbs_handle.list()
+        .then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)));
+    } catch ({name,message}) {
+        console.log(`${name}: ${message}`);
+    } finally {
+        console.log("post try/catch");
+    }
+//    console.log("databases handle",dbs_handle);
+//    dbs_handle.info().then(i => console.log("info2",i));
+//    dbs_handle.list().then( doclist => doclist.rows.forEach( d => console.log(d)));
     database_list.forEach( d => get_mission( d ) )
     }) ;
 
