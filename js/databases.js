@@ -119,26 +119,30 @@ function new_databases( db_id, doc) {
 
 function check_databases( db_id, doc ) {
     const changed = false ;
-    dbs_handle.get( db_id )
-    .then( docs => 
-        ["server", "Organization","Name","Location","StartDate","EndDate","Mission","Link"]
-        .forEach( f => {
-            if ( doc[f] != docs[f] ) {
-                changed = true ;
-                docs[f] = doc[f] ;
+    if ( summary.database.has(db_id.split(1)) ) {
+        dbs_handle.get( db_id )
+        .then( docs => 
+            ["server", "Organization","Name","Location","StartDate","EndDate","Mission","Link"]
+            .forEach( f => {
+                if ( doc[f] != docs[f] ) {
+                    changed = true ;
+                    docs[f] = doc[f] ;
+                }
+                })
+            )
+        .catch( err => console.log(`cannot open databases record for ${db_id}` ) )
+        .finally( _ => {
+            if ( changed ) {
+                dbs_handle.insert(docs)
+                .catch(err => {
+                    console.log(`cannot update databases file for ${db_id}`);
+                    console.log(err);
+                    });
             }
-            })
-        )
-    .catch( _ => new_databases( db_id, doc ) )
-    .finally( _ => {
-        if ( changed ) {
-            dbs_handle.insert(docs)
-            .catch(err => {
-                console.log(`cannot update databases file for ${db_id}`);
-                console.log(err);
-                });
-        }
-        });
+            });
+    } else {
+        return new_databases( db_id, doc ) ;
+    }
 }
 
 function get_mission( db ) {
