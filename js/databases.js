@@ -41,36 +41,6 @@ const nano = require('./nano.js')(`${http_mode}://admin:${password}@${site}:${po
 
 let DB = nano.db ;
 
-function databases_create() {
-    DB.create("databases")
-    .catch( err => {
-        console.log(`Cannot create "databases"`); 
-        console.log(err);
-        process.exit(1);
-    });
-}
-
-let database_list = [] ;
-let dbs_handle = null ;
-function d_list() {
-    return DB.list()
-        .then(db => database_list = db )
-        .catch( err => {
-            console.log("cannot get list");
-            console.log(err);
-            process.exit(1);
-            })
-        .finally( _ => {
-            if ( database_list.indexOf("databases") == -1 ) {
-                return databases_create() ;
-            }
-            database_list = database_list 
-            .filter( d => d != "databases" ) 
-            .filter( d => d.slice(0,1) != '_' ) 
-            ;
-            return Promise.resolve(true);
-            });
-}
 const summary = {
     database:  new Set(),
     files:     new Set(),
@@ -80,25 +50,61 @@ const summary = {
     deleted:   new Set(),
 };
 
+function create_dbs() {
+    DB.create("databases")
+    .catch( err => {
+        console.log(`Cannot create "databases"`); 
+        console.log(err);
+        process.exit(1);
+    });
+}
+
+let dbs_handle = null ;
+
+function d_list() {
+	// create a list of database files
+	// and create "databases"
+    return DB.list()
+	.then(db => db
+		.filter( d => d.slice(0,1) != '_' )
+		.map( d => "0"+d )
+		.forEach( d => summary.files.add(d) )
+		)
+	.catch( err => {
+		console.log("cannot get file list");
+		console.log(err);
+		process.exit(1);
+		})
+	.finally( _ => {
+		let exist = summary.files.has("0databases");
+		summary.files.delete("0databases");
+		if ( ! exist ) {
+			return create_dbs() ;
+		} else {
+			return Promise.resolve(true);
+		}
+		});
+}
+
 d_list()
 .then( _ => {
-    console.log("DB",database_list);
-    dbs_handle - DB.use("databases");
-    try {
-        dbs_handle.list()
-        .then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)));
-    } catch ({name,message}) {
-        console.log(`${name}: ${message}`);
-    } finally {
-        console.log("post try/catch");
-    }
-//    console.log("databases handle",dbs_handle);
-//    dbs_handle.info().then(i => console.log("info2",i));
-//    dbs_handle.list().then( doclist => doclist.rows.forEach( d => console.log(d)));
-    database_list.forEach( d => get_mission( d ) )
+    console.log("DB",summary);
+    dbs_handle = DB.use("databases");
+	dbs_handle.list()
+	.then(doclist=>doclist.rows.forEach(d=>summary.database.add("0"+d.id)));
+	// files -> databases
+    summary.files.forEach( d => get_db_mission( d ) )
+    // databases -files
+    summary.database.forEach( d => {
+		if ( ! summary.files.has(d) ) {
+			summary.deleted.add(d);
+			dbs_handle.get(d)
+			.then( doc => dbs_handle.destroy( d, doc.rev ) )
+			.catch( err => console.log(`could not remove record ${d}`,err) );
+		}
     }) ;
 
-function new_databases( db_id, doc) {
+function new_dbs_record( db_id, doc) {
     dbs_handle.insert( {
         _id: db_id,
         db_name: db_id.slice(1),
@@ -117,9 +123,9 @@ function new_databases( db_id, doc) {
         });
 }
 
-function check_databases( db_id, doc ) {
+function check_dbs_record( db_id, doc ) {
     const changed = false ;
-    if ( summary.database.has(db_id.split(1)) ) {
+    if ( summary.database.has(db_id) ) {
         dbs_handle.get( db_id )
         .then( docs => 
             ["server", "Organization","Name","Location","StartDate","EndDate","Mission","Link"]
@@ -133,25 +139,27 @@ function check_databases( db_id, doc ) {
         .catch( err => console.log(`cannot open databases record for ${db_id}` ) )
         .finally( _ => {
             if ( changed ) {
+				summary.updated.add(db_id);
                 dbs_handle.insert(docs)
                 .catch(err => {
                     console.log(`cannot update databases file for ${db_id}`);
                     console.log(err);
                     });
-            }
+            } else {
+				summary.unchanged.add(db_id);
             });
     } else {
-        return new_databases( db_id, doc ) ;
+		summary.added.add(db_id);
+        return new_dbs_record( db_id, doc ) ;
     }
 }
 
-function get_mission( db ) {
-    const db_handle = DB.use(db) ;
-    const db_id = "0"+db;
+function get_db_mission( db_id ) {
+    const db_handle = DB.use(db_id.slice(1)) ;
     db_handle.get( "m;0;;;")
-    .then( doc => check_databases( db_id, doc ) )
+    .then( doc => check_dbs_record( db_id, doc ) )
     .catch( err=> {
-        console.log(`get mission error database ${db}`);
+        console.log(`get mission error database ${db_id}`);
         console.log(err);
         });
 }
