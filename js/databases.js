@@ -33,9 +33,9 @@ switch ( args.length ) {
         process.exit(1);
 }
 
-console.log("password",password);
-console.log("site",site);
-console.log("port",port);
+//console.log("password",password);
+//console.log("site",site);
+//console.log("port",port);
 
 const nano = require('./nano.js')(`${http_mode}://admin:${password}@${site}:${port}`);
 
@@ -53,8 +53,7 @@ const summary = {
 function create_dbs() {
     DB.create("databases")
     .catch( err => {
-        console.log(`Cannot create "databases"`); 
-        console.log(err);
+        console.log(`Cannot create "databases"`.err); 
         process.exit(1);
     });
 }
@@ -62,49 +61,52 @@ function create_dbs() {
 let dbs_handle = null ;
 
 function d_list() {
-	// create a list of database files
-	// and create "databases"
+    // create a list of database files
+    // and create "databases"
     return DB.list()
-	.then(db => db
-		.filter( d => d.slice(0,1) != '_' )
-		.map( d => "0"+d )
-		.forEach( d => summary.files.add(d) )
-		)
-	.catch( err => {
-		console.log("cannot get file list");
-		console.log(err);
-		process.exit(1);
-		})
-	.finally( _ => {
-		let exist = summary.files.has("0databases");
-		summary.files.delete("0databases");
-		if ( ! exist ) {
-			return create_dbs() ;
-		} else {
-			return Promise.resolve(true);
-		}
-		});
+    .then(db => db
+        .filter( d => d.slice(0,1) != '_' )
+        .map( d => "0"+d )
+        .forEach( d => summary.files.add(d) )
+        )
+    .catch( err => {
+        console.log("cannot get file list",err);
+        process.exit(1);
+        })
+    .finally( _ => {
+        let exist = summary.files.has("0databases");
+        summary.files.delete("0databases");
+        if ( ! exist ) {
+            return create_dbs() ;
+        } else {
+            return Promise.resolve(true);
+        }
+        });
 }
 
 d_list()
 .then( _ => {
-    console.log("DB",summary);
+    console.log("Starting",summary);
     dbs_handle = DB.use("databases");
-	dbs_handle.list()
-	.then(doclist=>doclist.rows.forEach(d=>summary.database.add("0"+d.id)));
-	// files -> databases
+    dbs_handle.list()
+    .then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)))
+    .finally( _ => console.log("+ Database",summary));
+    // files -> databases
     summary.files.forEach( d => get_db_mission( d ) )
     // databases -files
     summary.database.forEach( d => {
-		if ( ! summary.files.has(d) ) {
-			summary.deleted.add(d);
-			dbs_handle.get(d)
-			.then( doc => dbs_handle.destroy( d, doc.rev ) )
-			.catch( err => console.log(`could not remove record ${d}`,err) );
-		}
-    }) ;
+        if ( ! summary.files.has(d) ) {
+            summary.deleted.add(d);
+            dbs_handle.get(d)
+            .then( doc => dbs_handle.destroy( d, doc.rev ) )
+            .catch( err => console.log(`could not remove record ${d}`,err) );
+        }
+        }) ;
+    })
+.finally( _=> console.log("Finishing",summary)) ;
 
 function new_dbs_record( db_id, doc) {
+    // add a database record to databases 
     dbs_handle.insert( {
         _id: db_id,
         db_name: db_id.slice(1),
@@ -117,39 +119,35 @@ function new_dbs_record( db_id, doc) {
         Mission:doc?.Mission,
         Link:doc?.Link,
         })
-    .catch( err =>{
-        console.log(`cannot add record for database ${db.id}`);
-        console.log(err);
-        });
+    .catch( err =>console.log(`cannot add record for database ${db_id}`,err) ) ;
 }
 
 function check_dbs_record( db_id, doc ) {
-    const changed = false ;
+    // see if a database is changed, not yet present, or unchanged
     if ( summary.database.has(db_id) ) {
         dbs_handle.get( db_id )
-        .then( docs => 
+        .then( docs => {
+            let changed = false ;
             ["server", "Organization","Name","Location","StartDate","EndDate","Mission","Link"]
             .forEach( f => {
-                if ( doc[f] != docs[f] ) {
+                if ( docs[f] != doc[f] ) {
                     changed = true ;
                     docs[f] = doc[f] ;
                 }
-                })
-            )
-        .catch( err => console.log(`cannot open databases record for ${db_id}` ) )
-        .finally( _ => {
-            if ( changed ) {
-				summary.updated.add(db_id);
-                dbs_handle.insert(docs)
-                .catch(err => {
-                    console.log(`cannot update databases file for ${db_id}`);
-                    console.log(err);
-                    });
-            } else {
-				summary.unchanged.add(db_id);
-            });
+                });
+                if ( changed ) {
+                    summary.updated.add(db_id);
+                    dbs_handle.insert(docs)
+                    .catch(err => {
+                        console.log(`cannot update databases file for ${db_id}`,err);
+                        });
+                } else {
+                    summary.unchanged.add(db_id);
+                }
+            })
+        .catch( err => console.log(`cannot open databases record for ${db_id}`,err ) );
     } else {
-		summary.added.add(db_id);
+        summary.added.add(db_id);
         return new_dbs_record( db_id, doc ) ;
     }
 }
@@ -159,11 +157,6 @@ function get_db_mission( db_id ) {
     db_handle.get( "m;0;;;")
     .then( doc => check_dbs_record( db_id, doc ) )
     .catch( err=> {
-        console.log(`get mission error database ${db_id}`);
-        console.log(err);
+        console.log(`get mission error database ${db_id}`,err);
         });
 }
-    
-    
-
-
