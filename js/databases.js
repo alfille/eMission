@@ -59,6 +59,8 @@ const summary = {
     deleted:   new Set(),
 };
 
+let dbs_handle = null ;
+
 function create_dbs() {
     DB.create("databases")
     .catch( err => {
@@ -66,8 +68,6 @@ function create_dbs() {
         process.exit(1);
     });
 }
-
-let dbs_handle = null ;
 
 function d_list() {
     // create a list of database files
@@ -78,11 +78,7 @@ function d_list() {
         .map( d => "0"+d )
         .forEach( d => summary.files.add(d) )
         )
-    .catch( err => {
-        console.log("cannot get file list",err);
-        process.exit(1);
-        })
-    .finally( _ => {
+    .then( _ => {
         let exist = summary.files.has("0databases");
         summary.files.delete("0databases");
         if ( ! exist ) {
@@ -90,29 +86,24 @@ function d_list() {
         } else {
             return Promise.resolve(true);
         }
-        });
+        })
+    .catch( err => {
+        console.log("cannot get file list",err);
+        process.exit(1);
+        })
+    ;
 }
 
 d_list()
-.then( _ => {
-    console.log("Starting",summary);
-    dbs_handle = DB.use("databases");
-    dbs_handle.list()
-    .then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)))
-    .finally( _ => console.log("+ Database",summary));
-    // files -> databases
-    summary.files.forEach( d => get_db_mission( d ) )
-    // databases -files
-    summary.database.forEach( d => {
-        if ( ! summary.files.has(d) ) {
-            summary.deleted.add(d);
-            dbs_handle.get(d)
-            .then( doc => dbs_handle.destroy( d, doc.rev ) )
-            .catch( err => console.log(`could not remove record ${d}`,err) );
-        }
-        }) ;
-    })
-.finally( _=> console.log("Finishing",summary)) ;
+.then(_=> console.log("Starting",summary))
+.then(_=> dbs_handle = DB.use("databases") )
+.then(_=> dbs_handle.list() )
+.then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)))
+.then(_=> console.log("+ Database",summary))
+.then(_=> cull_the_dead())
+.then(_=> update_entries() )
+.then(_=> console.log("Finishing",summary)) 
+;
 
 function new_dbs_record( db_id, doc) {
     // add a database record to databases 
@@ -129,6 +120,26 @@ function new_dbs_record( db_id, doc) {
         Link:doc?.Link,
         })
     .catch( err =>console.log(`cannot add record for database ${db_id}`,err) ) ;
+}
+
+function cull_the_dead() {
+    console.log("Pre Cull",summary);
+    [...summary.database].filter(f => ! summary.files.has(f)).forEach(f=>summary.deleted.add(f));
+    return Promise.all(
+        [...summary.database]
+        .filter(f => ! summary.files.has(f))
+        .map(f=>dbs_handle
+            .get(f)
+            .then(d=>dbs_handle.destroy(d._id,d._rev))
+            )
+        );
+}
+
+function update_entries() {
+    console.log("Pre Update",summary);
+    return Promise.all(
+    [...summary.files].map( f => get_db_mission( f ))
+    );
 }
 
 function check_dbs_record( db_id, doc ) {
