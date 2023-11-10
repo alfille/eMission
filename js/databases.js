@@ -11,33 +11,42 @@
 // Load modules
 
 const args = process.argv;
-const http_mode = "https"
-let password = "";
-let site="127.0.0.1";
-let port = 5984;
-const server = `${http_mode}://${site}:${port}`;
+require("url");
+let remote_url = new URL("http://127.0.0.1:15984");
+let local_url = new URL("https://emissionsystem.org:6984");
 
 
 switch ( args.length ) {
     case 5:
-        port = args[4];
+        remote_url = new URL(args[4]);
         //fall through
     case 4:
-        site = args[3];
+        local_url = new URL(args[3]);
         //fall through
     case 3:
-        password = args[2];
+        local_url.username="admin";
+        local_url.password = args[2];
         break ;
     default:
-        console.log(`Create databases.\nUsage:\n\t${args[0]} ${args[1]} admin-password [site] [port]`);
+        console.log(
+        `
+Create databases.
+    Part of eMission medical mission support system
+    {c} Paul H Alfille 2013
+    https://emissionsystem.org/book/index.html
+
+Usage:
+    node database.js admin-password [local_url] [remote_url]
+  e.g:  
+    node database.js pssw0rd http://127.0.0.1:5984 https:/emissionsystem.org:6984
+`);
         process.exit(1);
 }
 
-//console.log("password",password);
-//console.log("site",site);
-//console.log("port",port);
+console.log("local",local_url.href);
+console.log("remote",remote_url.href);
 
-const nano = require('./nano.js')(`${http_mode}://admin:${password}@${site}:${port}`);
+const nano = require('./nano.js')(local_url.href);
 
 let DB = nano.db ;
 
@@ -110,7 +119,7 @@ function new_dbs_record( db_id, doc) {
     dbs_handle.insert( {
         _id: db_id,
         db_name: db_id.slice(1),
-        server: server,
+        server: remote_url.href,
         Organization: doc?.Organization,
         Name: doc?.Name,
         Location:doc?.Location,
@@ -128,22 +137,26 @@ function check_dbs_record( db_id, doc ) {
         dbs_handle.get( db_id )
         .then( docs => {
             let changed = false ;
-            ["server", "Organization","Name","Location","StartDate","EndDate","Mission","Link"]
+            ["Organization","Name","Location","StartDate","EndDate","Mission","Link"]
             .forEach( f => {
                 if ( docs[f] != doc[f] ) {
                     changed = true ;
                     docs[f] = doc[f] ;
                 }
                 });
-                if ( changed ) {
-                    summary.updated.add(db_id);
-                    dbs_handle.insert(docs)
-                    .catch(err => {
-                        console.log(`cannot update databases file for ${db_id}`,err);
-                        });
-                } else {
-                    summary.unchanged.add(db_id);
-                }
+            if ( docs?.server != remote_url.href ) {
+                docs.server = remote_url.href ;
+                changed = true ;
+            }
+            if ( changed ) {
+                summary.updated.add(db_id);
+                dbs_handle.insert(docs)
+                .catch(err => {
+                    console.log(`cannot update databases file for ${db_id}`,err);
+                    });
+            } else {
+                summary.unchanged.add(db_id);
+            }
             })
         .catch( err => console.log(`cannot open databases record for ${db_id}`,err ) );
     } else {
