@@ -107,7 +107,7 @@ d_list()
 
 function new_dbs_record( db_id, doc) {
     // add a database record to databases 
-    dbs_handle.insert( {
+    return dbs_handle.insert( {
         _id: db_id,
         db_name: db_id.slice(1),
         server: remote_url.href,
@@ -119,7 +119,23 @@ function new_dbs_record( db_id, doc) {
         Mission:doc?.Mission,
         Link:doc?.Link,
         })
+    .then( _=> summary.added.add(db_id) )
     .catch( err =>console.log(`cannot add record for database ${db_id}`,err) ) ;
+}
+
+function empty_dbs_record( db_id ) {
+    return {
+        _id: db_id,
+        db_name: db_id.slice(1),
+        server: remote_url.href,
+        Organization:"Unknown",
+        Name:db_id.slice(1),
+        Location:"Unknown",
+        StartDate:"",
+        EndDate:"",
+        Mission:db_id.slice(1),
+        Link:"",
+    };
 }
 
 function cull_the_dead() {
@@ -138,7 +154,7 @@ function cull_the_dead() {
 function update_entries() {
     console.log("Pre Update",summary);
     return Promise.all(
-    [...summary.files].map( f => get_db_mission( f ))
+    [...summary.files].map( f => process_database( f ))
     );
 }
 
@@ -161,12 +177,10 @@ function check_dbs_record( db_id, doc ) {
             }
             if ( changed ) {
                 summary.updated.add(db_id);
-                dbs_handle.insert(docs)
-                .catch(err => {
-                    console.log(`cannot update databases file for ${db_id}`,err);
-                    });
+                return dbs_handle.insert(docs) ;
             } else {
                 summary.unchanged.add(db_id);
+                return Promise.resolve(true);
             }
             })
         .catch( err => console.log(`cannot open databases record for ${db_id}`,err ) );
@@ -176,11 +190,10 @@ function check_dbs_record( db_id, doc ) {
     }
 }
 
-function get_db_mission( db_id ) {
-    const db_handle = DB.use(db_id.slice(1)) ;
-    db_handle.get( "m;0;;;")
+function process_database( db_id ) {
+    return DB
+    .use(db_id.slice(1))
+    .get( "m;0;;;")
     .then( doc => check_dbs_record( db_id, doc ) )
-    .catch( err=> {
-        console.log(`get mission error database ${db_id}`,err);
-        });
+    .catch( err=> check_dbs_record( db_id, empty_dbs_record(db_id)));
 }
