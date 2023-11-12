@@ -12,39 +12,48 @@
 
 const args = process.argv;
 require("url");
-let remote_url = new URL("http://127.0.0.1:15984");
-let local_url = new URL("https://emissionsystem.org:6984");
 
+// defaults
+let config = {
+    remote: "https://emissionsystem.org:6984",
+    local: "http://127.0.0.1:15984",
+    username: "admin",
+    password: "",
+}
+    
+let config_file = "/etc/eMission.json";
 
 switch ( args.length ) {
-    case 5:
-        remote_url = new URL(args[4]);
-        //fall through
-    case 4:
-        local_url = new URL(args[3]);
-        //fall through
     case 3:
-        local_url.username="admin";
-        local_url.password = args[2];
+        config_file = args[2] ;
+        if (config_file.toLowerCase() == "help" || config_file=="?" ) {
+            help() ;
+        }
+        break ;
+    case 2:
+        console.log(`Using default config file: ${config_file}`);
         break ;
     default:
-        console.log(
-        `
-Create databases.
-    Part of eMission medical mission support system
-    {c} Paul H Alfille 2013
-    https://emissionsystem.org/book/index.html
-
-Usage:
-    node database.js admin-password [local_url] [remote_url]
-  e.g:  
-    node database.js pssw0rd http://127.0.0.1:5984 https:/emissionsystem.org:6984
-`);
-        process.exit(1);
+        help();
 }
 
-console.log("local",local_url.href);
-console.log("remote",remote_url.href);
+try {
+    const c = require(config_file) ;
+    //console.log(config,c);
+    Object.assign( config, c);
+    //console.log(config,c);
+} catch (err) {
+    console.log(`Trouble with JSON config file: ${config_file}`,err);
+    help();
+}
+
+const remote_url = new URL(config.remote);
+const local_url = new URL(config.local);
+local_url.username = config.username;
+local_url.password = config.password;
+
+//console.log("local",local_url.href);
+//console.log("remote",remote_url.href);
 
 const nano = require('./nano.js')(local_url.href);
 
@@ -95,14 +104,14 @@ function d_list() {
 }
 
 d_list()
-.then(_=> console.log("Starting",summary))
+//.then(_=> console.log("Starting",summary))
 .then(_=> dbs_handle = DB.use("databases") )
 .then(_=> dbs_handle.list() )
 .then(doclist=>doclist.rows.forEach(d=>summary.database.add(d.id)))
-.then(_=> console.log("+ Database",summary))
+.then(_=> console.log("Files and old data",summary))
 .then(_=> cull_the_dead())
 .then(_=> update_entries() )
-.then(_=> console.log("Finishing",summary)) 
+.then(_=> console.log("Final state",summary)) 
 ;
 
 function new_dbs_record( db_id, doc) {
@@ -139,7 +148,7 @@ function empty_dbs_record( db_id ) {
 }
 
 function cull_the_dead() {
-    console.log("Pre Cull",summary);
+    //console.log("Pre Cull",summary);
     [...summary.database].filter(f => ! summary.files.has(f)).forEach(f=>summary.deleted.add(f));
     return Promise.all(
         [...summary.database]
@@ -152,7 +161,7 @@ function cull_the_dead() {
 }
 
 function update_entries() {
-    console.log("Pre Update",summary);
+    //console.log("Pre Update",summary);
     return Promise.all(
     [...summary.files].map( f => process_database( f ))
     );
@@ -196,4 +205,29 @@ function process_database( db_id ) {
     .get( "m;0;;;")
     .then( doc => check_dbs_record( db_id, doc ) )
     .catch( err=> check_dbs_record( db_id, empty_dbs_record(db_id)));
+}
+
+function help() {
+    console.log(
+        `
+Create databases.
+    Part of eMission medical mission support system
+    {c} Paul H Alfille 2013
+    https://emissionsystem.org/book/index.html
+
+Usage:
+    node database.js [config-file]
+  e.g:  
+    node database.js /etc/eMission.json
+    
+JSON file format (must be .json file extension):
+{
+  "password": "your secret",
+  "remote": "https://emissionsystem.org:6984",
+  "local": "http://127.0.0.1:15984",
+  "username": "admin"
+}
+  
+`);
+    process.exit(1);
 }
