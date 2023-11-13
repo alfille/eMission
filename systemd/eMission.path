@@ -1,0 +1,9 @@
+[Unit]
+Description=Run eMission maintainance processes (e.g. databases collation)
+
+[Path]
+PathChanged=/var/snap/couchdb/common/data/shards/00000000\-7fffffff
+PathChanged=/var/snap/couchdb/common/data/shards/800000\-fffffff
+
+[Install]
+WantedBy=multi-user.target
