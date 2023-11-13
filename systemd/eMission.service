@@ -1,0 +1,7 @@
+[Unit]
+Description=Run eMission maintainance processes (e.g. databases collation)
+Wants=eMission.timer
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /srv/www/js/databases.js /etc/eMission.json

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run eMission maintainance processes (e.g. databases collation)
+
+[Timer]
+OnUnitInactiveSec=10min
+OnBootSec=10min
+
+[Install]
+WantedBy=timers.target
+
