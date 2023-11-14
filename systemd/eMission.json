@@ -1,0 +1,7 @@
+{
+    "local": "http://127.0.0.1:15984",
+    "remote":"https://eMissionsystem.org:6984",
+    "password":"database_password",
+    "username":"admin"
+}
+
