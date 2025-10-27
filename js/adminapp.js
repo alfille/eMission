@@ -469,7 +469,7 @@ We are looking forward to your participation.
         if ( 'quad' in doc ) {
             document.getElementById("SendUserMail").href = "";
             document.getElementById("SendUserPrint").onclick=null;
-            let url = objectUser.make_url(doc.quad);
+            let url = User.make_url(doc.quad);
             new QR(
                 document.getElementById("SendUserQR"),
                 url.toString(),
@@ -480,16 +480,16 @@ We are looking forward to your participation.
 
             let mail_url = new URL( "mailto:" + doc.email );
             mail_url.searchParams.append( "subject", "Welcome to eMission" );
-            mail_url.searchParams.append( "body", objectUser.bodytext(doc.quad) );
+            mail_url.searchParams.append( "body", User.bodytext(doc.quad) );
             document.getElementById("SendUserMail").href = mail_url.toString();
-            document.getElementById("SendUserPrint").onclick=()=>objectUser.printUserCard(doc.quad);
+            document.getElementById("SendUserPrint").onclick=()=>User.printUserCard(doc.quad);
         }
     }
 
     static printUserCard(user_dict) {
         let card = document.getElementById("printUser");
-        let url = objectUser.make_url(user_dict);
-        card.querySelector("#printUserText").innerText=objectUser.bodytext( user_dict ) ;
+        let url = User.make_url(user_dict);
+        card.querySelector("#printUserText").innerText=User.bodytext( user_dict ) ;
         new QR(
             card.querySelector(".qrUser"),
             url.toString(),
@@ -876,7 +876,7 @@ class PrintYourself extends Pagelist {
     static dummy_var=this.AddPage(); // add the Pagelist.pages -- class initiatialization block
 
     static subshow(extra="MainMenu") {
-        objectUser.printUserCard(remoteCouch);
+        User.printUserCard(remoteCouch);
     }
 }
 
@@ -890,7 +890,7 @@ class SendUser extends Pagelist {
             objectPage.show( "back" );
         } else {
             objectUser.user_db.get( objectUser.id )
-            .then( doc => objectUser.send( doc ) )
+            .then( doc => User.send( doc ) )
             .catch( err => {
                 objectLog.err(err);
                 objectPage.show( "back" );
